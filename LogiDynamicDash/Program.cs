@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using LogiDynamicDash.Displays;
 using LogiDynamicDash.Models;
-using Microsoft.Extensions.Logging.Abstractions;
+using LogiDynamicDash.Services;
 using SVappsLAB.iRacingTelemetrySDK;
 
 namespace LogiDynamicDash;
@@ -23,13 +23,13 @@ internal class Program
     private static readonly ConsoleDashboard Dashboard =
         new();
 
+    private static readonly IRacingTelemetryService
+        TelemetryService = new();
+
     private static async Task Main()
     {
         Dashboard.Initialize();
-
-        await using var client =
-            TelemetryClient<TelemetryData>.Create(
-                NullLogger.Instance);
+        Dashboard.Render(Snapshot);
 
         using var cancellationSource =
             new CancellationTokenSource();
@@ -40,62 +40,12 @@ internal class Program
             cancellationSource.Cancel();
         };
 
-        var handlers =
-            new TelemetryHandlers<TelemetryData>
-            {
-                OnConnectStateChanged = state =>
-                {
-                    Snapshot.ConnectionState =
-                        state
-                            .ToString()
-                            .ToUpperInvariant();
-
-                    Dashboard.Render(Snapshot);
-
-                    return Task.CompletedTask;
-                },
-
-                OnTelemetryUpdate = data =>
-                {
-                    Snapshot.IsOnTrack =
-                        data.IsOnTrackCar;
-
-                    Snapshot.Gear =
-                        data.Gear;
-
-                    Snapshot.Rpm =
-                        data.RPM;
-
-                    Snapshot.SpeedMetersPerSecond =
-                        data.Speed;
-
-                    if (RefreshTimer.ElapsedMilliseconds
-                        >= 100)
-                    {
-                        Dashboard.Render(Snapshot);
-                        RefreshTimer.Restart();
-                    }
-
-                    return Task.CompletedTask;
-                },
-
-                OnError = _ =>
-                {
-                    Snapshot.ConnectionState =
-                        "ERROR";
-
-                    Dashboard.Render(Snapshot);
-
-                    return Task.CompletedTask;
-                }
-            };
-
-        Dashboard.Render(Snapshot);
-
         try
         {
-            await client.Monitor(
-                handlers,
+            await TelemetryService.MonitorAsync(
+                Snapshot,
+                HandleTelemetryUpdated,
+                HandleStatusChanged,
                 cancellationSource.Token);
         }
         catch (OperationCanceledException)
@@ -106,5 +56,23 @@ internal class Program
         {
             Dashboard.Stop();
         }
+    }
+
+    private static void HandleTelemetryUpdated(
+        TelemetrySnapshot snapshot)
+    {
+        if (RefreshTimer.ElapsedMilliseconds < 100)
+        {
+            return;
+        }
+
+        Dashboard.Render(snapshot);
+        RefreshTimer.Restart();
+    }
+
+    private static void HandleStatusChanged(
+        TelemetrySnapshot snapshot)
+    {
+        Dashboard.Render(snapshot);
     }
 }
