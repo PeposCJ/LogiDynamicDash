@@ -48,6 +48,9 @@ internal sealed class IRacingTelemetryService
                     snapshot.BrakeBiasPercent =
                         data.dcBrakeBias;
 
+                    snapshot.LastLapTimeSeconds =
+                        data.LapLastLapTime;
+
                     onTelemetryUpdated(snapshot);
 
                     return Task.CompletedTask;

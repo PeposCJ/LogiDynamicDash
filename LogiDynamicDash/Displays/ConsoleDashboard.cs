@@ -32,6 +32,8 @@ internal sealed class ConsoleDashboard
             ? $"{bias:F1} %"
             : "N/A";
 
+        string lastLap = FormatLapTime(snapshot.LastLapTimeSeconds);
+
         string onTrack = snapshot.IsOnTrack switch
         {
             true => "YES",
@@ -61,6 +63,7 @@ internal sealed class ConsoleDashboard
         WriteDashboardLine($"SPEED:     {speedKph} km/h");
         WriteDashboardLine($"SPEED:     {speedMph} mph");
         WriteDashboardLine($"BRAKE BIAS: {brakeBias}");
+        WriteDashboardLine($"LAST LAP:   {lastLap}");
         WriteDashboardLine();
         WriteDashboardLine("Press Ctrl+C to stop.");
     }
@@ -72,6 +75,22 @@ internal sealed class ConsoleDashboard
         Console.WriteLine("Telemetry monitoring stopped.");
     }
 
+    private static string FormatLapTime(float? totalSeconds)
+    {
+        if (totalSeconds is null || totalSeconds <= 0)
+        {
+            return "N/A";
+        }
+
+        TimeSpan time =
+            TimeSpan.FromSeconds(totalSeconds.Value);
+
+        int minutes =
+            (int)time.TotalMinutes;
+
+        return
+            $"{minutes}:{time.Seconds:00}.{time.Milliseconds:000}";
+    }
     private static string FormatGear(int? gear)
     {
         return gear switch
