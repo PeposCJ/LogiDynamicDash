@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging.Abstractions;
+﻿using System.Diagnostics;
+using Microsoft.Extensions.Logging.Abstractions;
 using SVappsLAB.iRacingTelemetrySDK;
 
 namespace LogiDynamicDash;
@@ -11,19 +12,20 @@ namespace LogiDynamicDash;
 ])]
 internal class Program
 {
-    private static int _telemetryUpdateCount;
+    private const int DashboardWidth = 44;
+
+    private static readonly Stopwatch RefreshTimer = Stopwatch.StartNew();
+
+    private static string _connectionState = "WAITING";
+    private static bool? _isOnTrack;
+    private static int? _gear;
+    private static float? _rpm;
+    private static float? _speedMetersPerSecond;
 
     private static async Task Main()
     {
         Console.Title = "LogiDynamicDash";
-
-        Console.WriteLine("================================");
-        Console.WriteLine("       LogiDynamicDash");
-        Console.WriteLine("================================");
-        Console.WriteLine();
-        Console.WriteLine("Starting iRacing telemetry monitor...");
-        Console.WriteLine("Press Ctrl+C to stop.");
-        Console.WriteLine();
+        Console.CursorVisible = false;
 
         await using var client =
             TelemetryClient<TelemetryData>.Create(NullLogger.Instance);
@@ -40,48 +42,38 @@ internal class Program
         {
             OnConnectStateChanged = state =>
             {
-                Console.WriteLine($"Connection state: {state}");
+                _connectionState = state.ToString().ToUpperInvariant();
+                RenderDashboard();
+
                 return Task.CompletedTask;
             },
 
             OnTelemetryUpdate = data =>
             {
-                _telemetryUpdateCount++;
+                _isOnTrack = data.IsOnTrackCar;
+                _gear = data.Gear;
+                _rpm = data.RPM;
+                _speedMetersPerSecond = data.Speed;
 
-                if (_telemetryUpdateCount % 60 != 0)
+                if (RefreshTimer.ElapsedMilliseconds >= 100)
                 {
-                    return Task.CompletedTask;
+                    RenderDashboard();
+                    RefreshTimer.Restart();
                 }
-
-                float? speedKph = data.Speed * 3.6f;
-                float? speedMph = data.Speed * 2.23694f;
-
-                string gear = data.Gear switch
-                {
-                    -1 => "R",
-                    0 => "N",
-                    int value => value.ToString(),
-                    _ => "N/A"
-                };
-
-                string rpm = data.RPM?.ToString("F0") ?? "N/A";
-                string kph = speedKph?.ToString("F0") ?? "N/A";
-                string mph = speedMph?.ToString("F0") ?? "N/A";
-                string onTrack = data.IsOnTrackCar == true ? "Yes" : "No";
-
-                Console.WriteLine(
-                    $"On track: {onTrack} | Gear: {gear} | RPM: {rpm} | " +
-                    $"Speed: {kph} km/h ({mph} mph)");
 
                 return Task.CompletedTask;
             },
 
             OnError = error =>
             {
-                Console.WriteLine($"Telemetry error: {error.Message}");
+                _connectionState = "ERROR";
+                RenderDashboard();
+
                 return Task.CompletedTask;
             }
         };
+
+        RenderDashboard();
 
         try
         {
@@ -89,10 +81,71 @@ internal class Program
         }
         catch (OperationCanceledException)
         {
-            // Expected when the user presses Ctrl+C.
+            // This is expected when the user presses Ctrl+C.
+        }
+        finally
+        {
+            Console.CursorVisible = true;
+            Console.Clear();
+            Console.WriteLine("Telemetry monitoring stopped.");
+        }
+    }
+
+    private static void RenderDashboard()
+    {
+        string gear = FormatGear(_gear);
+        string rpm = _rpm?.ToString("F0") ?? "N/A";
+
+        string speedKph = _speedMetersPerSecond is float speed
+            ? (speed * 3.6f).ToString("F0")
+            : "N/A";
+
+        string speedMph = _speedMetersPerSecond is float speedInMeters
+            ? (speedInMeters * 2.23694f).ToString("F0")
+            : "N/A";
+
+        string onTrack = _isOnTrack switch
+        {
+            true => "YES",
+            false => "NO",
+            null => "N/A"
+        };
+
+        Console.SetCursorPosition(0, 0);
+
+        WriteDashboardLine("============================================");
+        WriteDashboardLine("              LOGIDYNAMICDASH");
+        WriteDashboardLine("============================================");
+        WriteDashboardLine();
+        WriteDashboardLine($"IRACING:   {_connectionState}");
+        WriteDashboardLine($"ON TRACK:  {onTrack}");
+        WriteDashboardLine();
+        WriteDashboardLine($"GEAR:      {gear}");
+        WriteDashboardLine($"RPM:       {rpm}");
+        WriteDashboardLine($"SPEED:     {speedKph} km/h");
+        WriteDashboardLine($"SPEED:     {speedMph} mph");
+        WriteDashboardLine();
+        WriteDashboardLine("Press Ctrl+C to stop.");
+    }
+
+    private static string FormatGear(int? gear)
+    {
+        return gear switch
+        {
+            -1 => "R",
+            0 => "N",
+            int value => value.ToString(),
+            null => "N/A"
+        };
+    }
+
+    private static void WriteDashboardLine(string text = "")
+    {
+        if (text.Length > DashboardWidth)
+        {
+            text = text[..DashboardWidth];
         }
 
-        Console.WriteLine();
-        Console.WriteLine("Telemetry monitoring stopped.");
+        Console.WriteLine(text.PadRight(DashboardWidth));
     }
 }
