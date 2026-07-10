@@ -11,4 +11,5 @@ internal sealed class TelemetrySnapshot
     public float? Rpm { get; set; }
 
     public float? SpeedMetersPerSecond { get; set; }
+    public float? BrakeBiasPercent { get; set; }
 }

@@ -10,7 +10,8 @@ namespace LogiDynamicDash;
     TelemetryVar.IsOnTrackCar,
     TelemetryVar.Gear,
     TelemetryVar.RPM,
-    TelemetryVar.Speed
+    TelemetryVar.Speed,
+    TelemetryVar.dcBrakeBias
 ])]
 internal class Program
 {

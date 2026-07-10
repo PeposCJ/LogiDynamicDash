@@ -28,6 +28,10 @@ internal sealed class ConsoleDashboard
             ? (speedMetersPerSecond.Value * 2.23694f).ToString("F0")
             : "N/A";
 
+        string brakeBias = snapshot.BrakeBiasPercent is float bias
+            ? $"{bias:F1} %"
+            : "N/A";
+
         string onTrack = snapshot.IsOnTrack switch
         {
             true => "YES",
@@ -56,6 +60,7 @@ internal sealed class ConsoleDashboard
         WriteDashboardLine($"RPM:       {rpm}");
         WriteDashboardLine($"SPEED:     {speedKph} km/h");
         WriteDashboardLine($"SPEED:     {speedMph} mph");
+        WriteDashboardLine($"BRAKE BIAS: {brakeBias}");
         WriteDashboardLine();
         WriteDashboardLine("Press Ctrl+C to stop.");
     }

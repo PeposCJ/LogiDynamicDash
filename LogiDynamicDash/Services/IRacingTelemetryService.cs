@@ -45,6 +45,9 @@ internal sealed class IRacingTelemetryService
                     snapshot.SpeedMetersPerSecond =
                         data.Speed;
 
+                    snapshot.BrakeBiasPercent =
+                        data.dcBrakeBias;
+
                     onTelemetryUpdated(snapshot);
 
                     return Task.CompletedTask;
