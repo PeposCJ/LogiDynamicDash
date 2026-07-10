@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using LogiDynamicDash.Models;
 using Microsoft.Extensions.Logging.Abstractions;
 using SVappsLAB.iRacingTelemetrySDK;
 
@@ -16,11 +17,7 @@ internal class Program
 
     private static readonly Stopwatch RefreshTimer = Stopwatch.StartNew();
 
-    private static string _connectionState = "WAITING";
-    private static bool? _isOnTrack;
-    private static int? _gear;
-    private static float? _rpm;
-    private static float? _speedMetersPerSecond;
+    private static readonly TelemetrySnapshot Snapshot = new();
 
     private static async Task Main()
     {
@@ -42,7 +39,9 @@ internal class Program
         {
             OnConnectStateChanged = state =>
             {
-                _connectionState = state.ToString().ToUpperInvariant();
+                Snapshot.ConnectionState =
+                    state.ToString().ToUpperInvariant();
+
                 RenderDashboard();
 
                 return Task.CompletedTask;
@@ -50,10 +49,10 @@ internal class Program
 
             OnTelemetryUpdate = data =>
             {
-                _isOnTrack = data.IsOnTrackCar;
-                _gear = data.Gear;
-                _rpm = data.RPM;
-                _speedMetersPerSecond = data.Speed;
+                Snapshot.IsOnTrack = data.IsOnTrackCar;
+                Snapshot.Gear = data.Gear;
+                Snapshot.Rpm = data.RPM;
+                Snapshot.SpeedMetersPerSecond = data.Speed;
 
                 if (RefreshTimer.ElapsedMilliseconds >= 100)
                 {
@@ -66,7 +65,7 @@ internal class Program
 
             OnError = error =>
             {
-                _connectionState = "ERROR";
+                Snapshot.ConnectionState = "ERROR";
                 RenderDashboard();
 
                 return Task.CompletedTask;
@@ -77,7 +76,9 @@ internal class Program
 
         try
         {
-            await client.Monitor(handlers, cancellationSource.Token);
+            await client.Monitor(
+                handlers,
+                cancellationSource.Token);
         }
         catch (OperationCanceledException)
         {
@@ -93,18 +94,20 @@ internal class Program
 
     private static void RenderDashboard()
     {
-        string gear = FormatGear(_gear);
-        string rpm = _rpm?.ToString("F0") ?? "N/A";
+        string gear = FormatGear(Snapshot.Gear);
+        string rpm = Snapshot.Rpm?.ToString("F0") ?? "N/A";
 
-        string speedKph = _speedMetersPerSecond is float speed
-            ? (speed * 3.6f).ToString("F0")
-            : "N/A";
+        string speedKph =
+            Snapshot.SpeedMetersPerSecond is float speedForKph
+                ? (speedForKph * 3.6f).ToString("F0")
+                : "N/A";
 
-        string speedMph = _speedMetersPerSecond is float speedInMeters
-            ? (speedInMeters * 2.23694f).ToString("F0")
-            : "N/A";
+        string speedMph =
+            Snapshot.SpeedMetersPerSecond is float speedForMph
+                ? (speedForMph * 2.23694f).ToString("F0")
+                : "N/A";
 
-        string onTrack = _isOnTrack switch
+        string onTrack = Snapshot.IsOnTrack switch
         {
             true => "YES",
             false => "NO",
@@ -113,11 +116,19 @@ internal class Program
 
         Console.SetCursorPosition(0, 0);
 
-        WriteDashboardLine("============================================");
-        WriteDashboardLine("              LOGIDYNAMICDASH");
-        WriteDashboardLine("============================================");
+        WriteDashboardLine(
+            "============================================");
+
+        WriteDashboardLine(
+            "              LOGIDYNAMICDASH");
+
+        WriteDashboardLine(
+            "============================================");
+
         WriteDashboardLine();
-        WriteDashboardLine($"IRACING:   {_connectionState}");
+        WriteDashboardLine(
+            $"IRACING:   {Snapshot.ConnectionState}");
+
         WriteDashboardLine($"ON TRACK:  {onTrack}");
         WriteDashboardLine();
         WriteDashboardLine($"GEAR:      {gear}");
