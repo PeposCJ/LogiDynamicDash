@@ -13,36 +13,43 @@ internal sealed class DisplayController
     private float? _previousBrakeBiasPercent;
     private float? _previousLastLapTimeSeconds;
 
-    private DisplayMode _temporaryMode =
-        DisplayMode.Normal;
+    private bool _lastLapInitialized;
 
-    private DateTime _temporaryModeExpiresAt =
+    private DateTime _brakeBiasExpiresAt =
+        DateTime.MinValue;
+
+    private DateTime _lastLapExpiresAt =
         DateTime.MinValue;
 
     public DisplayMode SelectMode(
         TelemetrySnapshot snapshot)
     {
-        DetectCompletedLap(snapshot);
-        DetectBrakeBiasChange(snapshot);
+        DateTime now = DateTime.UtcNow;
+
+        DetectCompletedLap(snapshot, now);
+        DetectBrakeBiasChange(snapshot, now);
 
         if (!IsConnected(snapshot))
         {
-            ClearTemporaryMode();
             return DisplayMode.ConnectionProblem;
         }
 
-        if (DateTime.UtcNow < _temporaryModeExpiresAt)
+        if (now < _brakeBiasExpiresAt)
         {
-            return _temporaryMode;
+            return DisplayMode.BrakeBias;
         }
 
-        ClearTemporaryMode();
+        if (now < _lastLapExpiresAt)
+        {
+            return DisplayMode.LastLap;
+        }
 
         return DisplayMode.Normal;
     }
 
     private void DetectBrakeBiasChange(
-        TelemetrySnapshot snapshot)
+        TelemetrySnapshot snapshot,
+        DateTime now)
     {
         if (snapshot.BrakeBiasPercent is not float currentBrakeBias)
         {
@@ -68,46 +75,48 @@ internal sealed class DisplayController
             return;
         }
 
-        ShowTemporaryMode(
-            DisplayMode.BrakeBias,
-            BrakeBiasDuration);
+        _brakeBiasExpiresAt =
+            now.Add(BrakeBiasDuration);
     }
 
     private void DetectCompletedLap(
-        TelemetrySnapshot snapshot)
+        TelemetrySnapshot snapshot,
+        DateTime now)
     {
-        if (snapshot.LastLapTimeSeconds is not float currentLastLap)
+        if (!_lastLapInitialized)
+        {
+            _lastLapInitialized = true;
+
+            _previousLastLapTimeSeconds =
+                snapshot.LastLapTimeSeconds;
+
+            return;
+        }
+
+        if (snapshot.LastLapTimeSeconds is not float currentLastLap ||
+            currentLastLap <= 0)
         {
             return;
         }
 
-        if (currentLastLap <= 0)
+        if (_previousLastLapTimeSeconds is float previousLastLap)
         {
-            return;
-        }
+            float difference =
+                MathF.Abs(
+                    currentLastLap -
+                    previousLastLap);
 
-        if (_previousLastLapTimeSeconds is null)
-        {
-            _previousLastLapTimeSeconds = currentLastLap;
-            return;
+            if (difference < 0.001f)
+            {
+                return;
+            }
         }
-
-        float difference =
-            MathF.Abs(
-                currentLastLap -
-                _previousLastLapTimeSeconds.Value);
 
         _previousLastLapTimeSeconds =
             currentLastLap;
 
-        if (difference < 0.001f)
-        {
-            return;
-        }
-
-        ShowTemporaryMode(
-            DisplayMode.LastLap,
-            LastLapDuration);
+        _lastLapExpiresAt =
+            now.Add(LastLapDuration);
     }
 
     private static bool IsConnected(
@@ -117,24 +126,5 @@ internal sealed class DisplayController
             snapshot.ConnectionState,
             "CONNECTED",
             StringComparison.OrdinalIgnoreCase);
-    }
-
-    private void ShowTemporaryMode(
-        DisplayMode mode,
-        TimeSpan duration)
-    {
-        _temporaryMode = mode;
-
-        _temporaryModeExpiresAt =
-            DateTime.UtcNow.Add(duration);
-    }
-
-    private void ClearTemporaryMode()
-    {
-        _temporaryMode =
-            DisplayMode.Normal;
-
-        _temporaryModeExpiresAt =
-            DateTime.MinValue;
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using LogiDynamicDash.Controllers;
 using LogiDynamicDash.Displays;
 using LogiDynamicDash.Models;
 using LogiDynamicDash.Services;
@@ -13,7 +14,6 @@ namespace LogiDynamicDash;
     TelemetryVar.Speed,
     TelemetryVar.dcBrakeBias,
     TelemetryVar.LapLastLapTime
-
 ])]
 internal class Program
 {
@@ -26,13 +26,16 @@ internal class Program
     private static readonly ConsoleDashboard Dashboard =
         new();
 
+    private static readonly DisplayController Controller =
+        new();
+
     private static readonly IRacingTelemetryService
         TelemetryService = new();
 
     private static async Task Main()
     {
         Dashboard.Initialize();
-        Dashboard.Render(Snapshot);
+        RenderCurrentDisplay(Snapshot);
 
         using var cancellationSource =
             new CancellationTokenSource();
@@ -69,13 +72,24 @@ internal class Program
             return;
         }
 
-        Dashboard.Render(snapshot);
+        RenderCurrentDisplay(snapshot);
         RefreshTimer.Restart();
     }
 
     private static void HandleStatusChanged(
         TelemetrySnapshot snapshot)
     {
-        Dashboard.Render(snapshot);
+        RenderCurrentDisplay(snapshot);
+    }
+
+    private static void RenderCurrentDisplay(
+        TelemetrySnapshot snapshot)
+    {
+        DisplayMode mode =
+            Controller.SelectMode(snapshot);
+
+        Dashboard.Render(
+            snapshot,
+            mode);
     }
 }

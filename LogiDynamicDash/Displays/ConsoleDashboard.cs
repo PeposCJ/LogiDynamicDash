@@ -10,80 +10,139 @@ internal sealed class ConsoleDashboard
     {
         Console.Title = "LogiDynamicDash";
         Console.CursorVisible = false;
+        Console.Clear();
     }
 
-    public void Render(TelemetrySnapshot snapshot)
+    public void Render(
+        TelemetrySnapshot snapshot,
+        DisplayMode mode)
     {
-        string gear = FormatGear(snapshot.Gear);
-        string rpm = snapshot.Rpm?.ToString("F0") ?? "N/A";
-
-        float? speedMetersPerSecond =
-            snapshot.SpeedMetersPerSecond;
-
-        string speedKph = speedMetersPerSecond.HasValue
-            ? (speedMetersPerSecond.Value * 3.6f).ToString("F0")
-            : "N/A";
-
-        string speedMph = speedMetersPerSecond.HasValue
-            ? (speedMetersPerSecond.Value * 2.23694f).ToString("F0")
-            : "N/A";
-
-        string brakeBias = snapshot.BrakeBiasPercent is float bias
-            ? $"{bias:F1} %"
-            : "N/A";
-
-        string lastLap = FormatLapTime(snapshot.LastLapTimeSeconds);
-
-        string onTrack = snapshot.IsOnTrack switch
-        {
-            true => "YES",
-            false => "NO",
-            null => "N/A"
-        };
-
         Console.SetCursorPosition(0, 0);
 
         WriteDashboardLine(
-            "============================================");
+            new string('=', DashboardWidth));
+
+        WriteCentered(
+            "LOGIDYNAMICDASH OLED PREVIEW");
 
         WriteDashboardLine(
-            "              LOGIDYNAMICDASH");
+            new string('=', DashboardWidth));
+
+        WriteDashboardLine();
+
+        switch (mode)
+        {
+            case DisplayMode.BrakeBias:
+                RenderBrakeBias(snapshot);
+                break;
+
+            case DisplayMode.LastLap:
+                RenderLastLap(snapshot);
+                break;
+
+            case DisplayMode.ConnectionProblem:
+                RenderConnectionProblem(snapshot);
+                break;
+
+            default:
+                RenderNormal(snapshot);
+                break;
+        }
 
         WriteDashboardLine(
-            "============================================");
+            new string('-', DashboardWidth));
 
-        WriteDashboardLine();
         WriteDashboardLine(
-            $"IRACING:   {snapshot.ConnectionState}");
-
-        WriteDashboardLine($"ON TRACK:  {onTrack}");
-        WriteDashboardLine();
-        WriteDashboardLine($"GEAR:      {gear}");
-        WriteDashboardLine($"RPM:       {rpm}");
-        WriteDashboardLine($"SPEED:     {speedKph} km/h");
-        WriteDashboardLine($"SPEED:     {speedMph} mph");
-        WriteDashboardLine($"BRAKE BIAS: {brakeBias}");
-        WriteDashboardLine($"LAST LAP:   {lastLap}");
-        WriteDashboardLine();
-        WriteDashboardLine("Press Ctrl+C to stop.");
+            "Press Ctrl+C to stop.");
     }
 
     public void Stop()
     {
         Console.CursorVisible = true;
         Console.Clear();
-        Console.WriteLine("Telemetry monitoring stopped.");
+
+        Console.WriteLine(
+            "Telemetry monitoring stopped.");
     }
 
-    private static string FormatLapTime(float? totalSeconds)
+    private static void RenderNormal(
+        TelemetrySnapshot snapshot)
     {
-        if (totalSeconds is null || totalSeconds <= 0)
+        string gear =
+            FormatGear(snapshot.Gear);
+
+        string speed =
+            snapshot.SpeedMetersPerSecond is float metersPerSecond
+                ? $"{metersPerSecond * 3.6f:F0} km/h"
+                : "N/A";
+
+        WriteCentered($"GEAR {gear}");
+        WriteCentered(speed);
+        WriteDashboardLine();
+        WriteDashboardLine();
+    }
+
+    private static void RenderBrakeBias(
+        TelemetrySnapshot snapshot)
+    {
+        string brakeBias =
+            snapshot.BrakeBiasPercent is float bias
+                ? $"{bias:F1}%"
+                : "N/A";
+
+        WriteDashboardLine();
+        WriteCentered("BRAKE BIAS");
+        WriteCentered(brakeBias);
+        WriteDashboardLine();
+    }
+
+    private static void RenderLastLap(
+        TelemetrySnapshot snapshot)
+    {
+        string lastLap =
+            FormatLapTime(
+                snapshot.LastLapTimeSeconds);
+
+        WriteDashboardLine();
+        WriteCentered("LAST LAP");
+        WriteCentered(lastLap);
+        WriteDashboardLine();
+    }
+
+    private static void RenderConnectionProblem(
+        TelemetrySnapshot snapshot)
+    {
+        string message =
+            snapshot.ConnectionState switch
+            {
+                "WAITING" =>
+                    "WAITING FOR IRACING",
+
+                "ERROR" =>
+                    "TELEMETRY ERROR",
+
+                _ =>
+                    snapshot.ConnectionState
+            };
+
+        WriteDashboardLine();
+        WriteCentered("IRACING");
+        WriteCentered(message);
+        WriteDashboardLine();
+    }
+
+    private static string FormatLapTime(
+        float? totalSeconds)
+    {
+        if (totalSeconds is null ||
+            totalSeconds <= 0)
         {
             return "N/A";
         }
 
         TimeSpan time =
-            TimeSpan.FromSeconds(totalSeconds.Value);
+            TimeSpan.FromSeconds(
+                totalSeconds.Value);
 
         int minutes =
             (int)time.TotalMinutes;
@@ -91,7 +150,9 @@ internal sealed class ConsoleDashboard
         return
             $"{minutes}:{time.Seconds:00}.{time.Milliseconds:000}";
     }
-    private static string FormatGear(int? gear)
+
+    private static string FormatGear(
+        int? gear)
     {
         return gear switch
         {
@@ -102,11 +163,31 @@ internal sealed class ConsoleDashboard
         };
     }
 
-    private static void WriteDashboardLine(string text = "")
+    private static void WriteCentered(
+        string text)
     {
         if (text.Length > DashboardWidth)
         {
-            text = text[..DashboardWidth];
+            text =
+                text[..DashboardWidth];
+        }
+
+        int leftPadding =
+            Math.Max(
+                0,
+                (DashboardWidth - text.Length) / 2);
+
+        WriteDashboardLine(
+            new string(' ', leftPadding) + text);
+    }
+
+    private static void WriteDashboardLine(
+        string text = "")
+    {
+        if (text.Length > DashboardWidth)
+        {
+            text =
+                text[..DashboardWidth];
         }
 
         Console.WriteLine(
