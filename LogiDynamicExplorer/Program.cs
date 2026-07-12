@@ -1,4 +1,5 @@
 ﻿using HidSharp;
+using LogiDynamicExplorer.Decoders;
 
 const int LogitechVendorId = 0x046D;
 const int Rs50ProductId = 0xC276;
@@ -172,8 +173,11 @@ using (stream)
                     currentReport.Select(
                         value => value.ToString("X2")));
 
+            string decoded =
+    Rs50ReportDecoder.Decode(currentReport);
+
             string line =
-                $"{timestamp} | {bytesRead,2} bytes | {hexadecimal}";
+                $"{timestamp} | {decoded} | RAW {hexadecimal}";
 
             Console.WriteLine(line);
             logWriter.WriteLine(line);
