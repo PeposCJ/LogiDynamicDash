@@ -67,7 +67,7 @@ internal static class Rs50ReportDecoder
         // These mappings were observed during controlled testing.
         string modeName = mode switch
         {
-            0x0001 => "Inside Out",
+            0x0001 => "Inside Out (likely)",
             0x0002 => "Outside In",
             _ => $"Unknown value {mode}"
         };
