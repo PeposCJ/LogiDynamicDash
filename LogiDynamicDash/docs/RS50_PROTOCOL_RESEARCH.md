@@ -19,14 +19,22 @@
 | Feature index | Meaning | Encoding |
 |---|---|---|
 | `0x0A` | RPM Brightness | Unsigned integer, 0–100 |
-| `0x0B` | RPM Mode | Enumerated value |
+| `0x0B` | RPM Mode | Little-endian enumerated value; `0x0002` is confirmed as Outside In, while `0x0001` is likely Inside Out |
 | `0x14` | Dampener | Normalized unsigned 16-bit |
 | `0x15` | Brake Pressure | Normalized unsigned 16-bit |
 | `0x16` | Strength | Normalized unsigned 16-bit, 100% = 8.0 Nm |
-| `0x17` | Profile / mode state | Partially understood |
 | `0x18` | Wheel Angle | Unsigned 16-bit degrees |
 | `0x19` | TRUEFORCE Audio | Normalized unsigned 16-bit |
 | `0x1A` | FFB Filter | Mode and filter value |
+
+## Unknown or Partially Understood Parameters
+
+The following parameter identifiers have been observed, but there is not enough
+evidence to assign them names or complete semantics:
+
+- `0x09`
+- `0x0E`
+- `0x17`
 
 ## Dynamic OLED Status
 
