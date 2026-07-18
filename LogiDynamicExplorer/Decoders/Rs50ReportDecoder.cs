@@ -13,6 +13,12 @@ internal static class Rs50ReportDecoder
     public static string Decode(ReadOnlySpan<byte> report)
     {
         if (report.Length > 0 &&
+            report[0] == Rs50HidppShortReportDecoder.ReportId)
+        {
+            return Rs50HidppShortReportDecoder.Decode(report);
+        }
+
+        if (report.Length > 0 &&
             report[0] == Rs50HidppLongReportDecoder.ReportId)
         {
             return Rs50HidppLongReportDecoder.Decode(report);

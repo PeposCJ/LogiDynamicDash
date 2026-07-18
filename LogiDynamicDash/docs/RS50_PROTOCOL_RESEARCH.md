@@ -220,6 +220,11 @@ software ID, FeatureSet feature ID, flags, and version. It does not infer OLED
 control from a public feature flag, and the explorer continues to print the
 complete raw report alongside the decoded description.
 
+Short (`0x10`) and generic long (`0x11`) HID++ reports are also decoded into
+their device index, runtime feature index, function, software ID, and complete
+parameter bytes. Unknown parameters remain raw hexadecimal evidence; the tool
+does not assign OLED semantics without a controlled correlation.
+
 Safe validation steps include:
 
 1. Confirm whether the settings UI continues to operate with G HUB closed.

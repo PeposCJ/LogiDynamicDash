@@ -34,7 +34,8 @@ internal static class Rs50HidppLongReportDecoder
         return
             $"HID++ long: device 0x{deviceIndex:X2}, " +
             $"feature index 0x{featureIndex:X2}, " +
-            $"function 0x{functionId:X2}, SW-ID 0x{softwareId:X2}";
+            $"function 0x{functionId:X2}, SW-ID 0x{softwareId:X2}, " +
+            $"parameters {FormatParameters(report[4..])}";
     }
 
     private static string DecodeFeatureSetResponse(
@@ -71,6 +72,15 @@ internal static class Rs50HidppLongReportDecoder
             0x8091 => " (per-key/LED matrix)",
             _ => string.Empty
         };
+    }
+
+    private static string FormatParameters(ReadOnlySpan<byte> parameters)
+    {
+        return parameters.IsEmpty
+            ? "(none)"
+            : string.Join(
+                " ",
+                parameters.ToArray().Select(value => value.ToString("X2")));
     }
 
     private static string FormatFlags(byte flags)

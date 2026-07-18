@@ -49,7 +49,26 @@ public sealed class Rs50HidppLongReportDecoderTests
 
         Assert.Equal(
             "HID++ long: device 0x02, feature index 0x07, " +
-            "function 0x03, SW-ID 0x0A",
+            "function 0x03, SW-ID 0x0A, parameters (none)",
+            result);
+    }
+
+    [Fact]
+    public void Decode_SanitizedStartupRequest_PreservesAllParameters()
+    {
+        byte[] report =
+        [
+            0x11, 0xFF, 0x0F, 0x2B,
+            0x0A, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+            0x08, 0x09, 0x0A, 0x00, 0x00, 0x00, 0x00, 0x00
+        ];
+
+        string result = Rs50ReportDecoder.Decode(report);
+
+        Assert.Equal(
+            "HID++ long: device 0xFF, feature index 0x0F, " +
+            "function 0x02, SW-ID 0x0B, parameters " +
+            "0A 01 02 03 04 05 06 07 08 09 0A 00 00 00 00 00",
             result);
     }
 
