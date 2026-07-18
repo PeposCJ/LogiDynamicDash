@@ -164,6 +164,30 @@ The complete sanitized FeatureSet evidence and raw reports are preserved in
 Device identity responses and the complete local capture are intentionally not
 included.
 
+### Controlled G HUB Startup USB Capture
+
+A full USB capture was then limited to the physical RS50 address while G HUB
+started from a closed state. Unlike the passive HID reader, this observation
+included host-to-device transfers across every RS50 interface.
+
+G HUB enumerated `0x18A2`, `0x8091`, and `0x8093` on device index `0x01`,
+assigning runtime indices `0x09`, `0x0E`, and `0x0F`. It did not send any
+operational request to those runtime indices after enumeration. Subsequent
+device `0x01` requests used only runtime indices `0x02`, `0x03`, and `0x05`.
+
+The startup traffic contained 378 short 7-byte host HID++ requests and three
+isolated 20-byte host HID++ requests. It contained no 64-byte host output and
+no sustained large-payload stream consistent with a framebuffer update.
+
+This distinguishes feature discovery from feature use: the candidates are
+present, but normal G HUB startup does not exercise them or send an observed
+Dynamic display frame. A game integration or separate telemetry producer may
+still be required to activate another path.
+
+The sanitized evidence is preserved in
+[`evidence/RS50_GHUB_STARTUP_USB_2026-07-18.md`](evidence/RS50_GHUB_STARTUP_USB_2026-07-18.md).
+The complete PCAP remains local and must not be committed.
+
 LogiDynamicExplorer can decode a sanitized saved report without enumerating or
 opening HID hardware:
 

@@ -156,6 +156,7 @@ Use one row per controlled observation:
 | 4B-COL03 | Closed | Settings/HomeScreen | MI_01 COL03 | Three Settings-button presses | Exactly `0x0100`, `0x0101`, `0x0100`; no configuration snapshot followed the close | Confirmed |
 | 4B-COL02 | Closed | Settings/HomeScreen | MI_01 COL02 | Three Settings-button presses | Zero reports; unlike G HUB-open captures, Settings closes caused no `0`, `2`, `1` groups | Confirmed |
 | 5A | Starting | Settings | MI_01 COL02 | Start G HUB normally | 167 reports; dev `0x01` FeatureSet catalog observed on `0x11` | Confirmed |
+| 6A | Starting | HomeScreen | All RS50 interfaces | Start G HUB normally under device-scoped USB capture | G HUB enumerated `0x18A2`, `0x8091`, and `0x8093` but did not invoke their runtime indices; no 64-byte host output or sustained display stream appeared | Confirmed |
 
 ## Evidence Levels
 

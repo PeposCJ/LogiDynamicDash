@@ -1,0 +1,72 @@
+# RS50 G HUB Startup USB Evidence
+
+## Session
+
+- Date: 2026-07-18
+- Device: Logitech RS50, VID `0x046D`, PID `0xC276`
+- Initial state: G HUB closed; no wheel controls changed
+- Action: start G HUB normally and wait for RS50 detection
+- Capture scope: the physical RS50 USB address only, across all interfaces
+- Capture result: 1,800 packets over 51.09 seconds
+
+The complete PCAP remains local and must not be committed. Device paths,
+serial numbers, user names, and unrelated USB traffic are not included here.
+
+## Host Output Summary
+
+After G HUB started, the host sent these HID++ payload sizes to the RS50:
+
+| Report ID | Payload length | Count | Classification |
+|---|---:|---:|---|
+| `0x10` | 7 bytes | 378 | Short HID++ requests |
+| `0x11` | 20 bytes | 3 | Long HID++ requests |
+
+No 64-byte host output report and no sustained large-payload stream appeared.
+The three long requests were isolated configuration transactions rather than a
+display-rate stream:
+
+```text
+11 FF 0F 2B 0A 01 02 03 04 05 06 07 08 09 0A 00 00 00 00 00
+11 FF 11 2B 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+11 FF 11 2B 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+```
+
+Each received an immediate response. Their semantics remain unknown; the
+observation does not justify replaying them.
+
+## Device 0x01 Feature Enumeration
+
+G HUB enumerated the public candidate features through FeatureSet:
+
+| Runtime index | Feature ID | Flags | Version |
+|---|---|---:|---:|
+| `0x09` | `0x18A2` | `0x00` | 0 |
+| `0x0E` | `0x8091` | `0x00` | 0 |
+| `0x0F` | `0x8093` | `0x00` | 0 |
+
+The corresponding sanitized responses were:
+
+```text
+11 01 01 1B 18 A2 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+11 01 01 1B 80 91 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+11 01 01 1B 80 93 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+```
+
+After enumeration, G HUB sent no request to device `0x01` runtime index
+`0x09`, `0x0E`, or `0x0F`. Its subsequent device `0x01` requests used only
+runtime indices `0x02`, `0x03`, and `0x05`.
+
+## Interpretation
+
+This capture distinguishes feature discovery from feature use. G HUB learned
+that `0x18A2`, `0x8091`, and `0x8093` exist, but did not invoke any of them
+during normal startup and RS50 detection.
+
+The absence of candidate-feature calls, 64-byte host output, or a sustained
+large-payload stream is evidence against G HUB sending a Dynamic OLED frame at
+startup. It does not prove that these features can never carry display data:
+an external telemetry producer or an active game integration may be required
+before a Dynamic transport is exercised.
+
+No request from this capture may be replayed without separate documentation,
+safety review, and explicit approval.
