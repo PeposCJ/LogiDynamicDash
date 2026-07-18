@@ -98,6 +98,21 @@ The first, third, and fifth presses opened Settings and produced no COL02
 input. This confirms that the COL02 group is a Settings-close notification,
 not a direct button event or selected-screen identifier.
 
+With G HUB closed, a three-press COL03 control emitted exactly `0x0100`,
+`0x0101`, and `0x0100`, matching the visible open, closed, and open Settings
+states. No configuration snapshot followed the close. This confirms that the
+`0x17` state reports originate from the wheel independently of G HUB, while the
+additional snapshots observed with G HUB open were likely responses to host
+queries triggered by G HUB after Settings closed.
+
+The equivalent three-press control on MI_01 COL02 received zero reports with
+G HUB closed. With G HUB open, Settings closes had produced the repeated
+`0`, `2`, `1` response groups on that collection. The A/B comparison confirms
+that those COL02 groups are not spontaneous firmware notifications: they are
+responses caused by G HUB activity after the Settings-close event. This also
+strengthens the classification of COL02 and the extra COL03 snapshot as
+configuration-query traffic rather than Dynamic OLED content.
+
 On 2026-07-17, the complete USB HID descriptor inventory was compared with
 G HUB open and closed on physical RS50 hardware. The same five collections,
 usages, report IDs, and report lengths were present in both states. This

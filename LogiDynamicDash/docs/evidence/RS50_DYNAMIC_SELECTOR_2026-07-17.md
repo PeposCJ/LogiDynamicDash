@@ -205,3 +205,54 @@ The group is therefore classified as a Settings-close/HomeScreen-restore
 notification. Its internal `0`, `2`, and `1` values remain unnamed because
 their individual meanings are not established. The raw log remains local and
 is intentionally not committed.
+
+## Session 7: Three Settings-Button Presses With G HUB Closed
+
+- Date: 2026-07-18
+- Host state: G HUB closed normally; Logitech services were not stopped
+- Collection: MI_01 COL03
+- Explorer behavior: 60-second input read only; no output or feature reports
+  sent
+- Starting visual state: configured HomeScreen visible
+- Physical sequence: press and release the Settings button exactly three
+  times, with controlled pauses
+- Final visual state: Settings visible
+- Result: exactly three changed reports
+
+```text
+12 FF 17 00 01 00  # Settings opened
+12 FF 17 00 01 01  # Settings closed; HomeScreen restored
+12 FF 17 00 01 00  # Settings opened; final visible state
+```
+
+All bytes after the shown six-byte prefixes were zero. Unlike the equivalent
+G HUB-open observations, no settings snapshot followed `0x0101`. This confirms
+that the wheel emits the `0x17` Settings state independently of G HUB and
+supports the inference that G HUB actively queries the configuration after a
+close notification. The passive explorer did not observe those host-to-device
+queries directly. The raw log remains local and is intentionally not
+committed.
+
+## Session 8: COL02 Control With G HUB Closed
+
+- Date: 2026-07-18
+- Host state: G HUB closed normally; Logitech services were not stopped
+- Collection: MI_01 COL02
+- Explorer behavior: 60-second input read only; no output or feature reports
+  sent
+- Starting visual state: configured HomeScreen visible
+- Physical sequence: press and release the Settings button exactly three
+  times, with controlled pauses
+- Final visual state: Settings visible
+- Result: zero input reports
+
+The same three physical transitions produced `0x0100`, `0x0101`, and `0x0100`
+on COL03 in Session 7. COL02 remained completely silent. In the G HUB-open
+controls, every Settings close produced a six-report `0`, `2`, `1` group on
+COL02.
+
+This A/B result confirms that the COL02 groups are responses caused by G HUB
+activity rather than unsolicited firmware notifications. It also distinguishes
+the firmware-originated Settings state on COL03 from the host-triggered
+configuration-query traffic observed when G HUB is open. The zero-report raw
+log remains local and is intentionally not committed.

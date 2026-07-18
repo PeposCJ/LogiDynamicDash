@@ -153,7 +153,8 @@ Use one row per controlled observation:
 | 4A-COL02 | Open | HomeScreen | MI_01 COL02 | Select Profile, Torque, Test, and Dynamic | Four choices produced four identical dev `0x02` groups with payload sequence `0`, `2`, `1`; no screen ID appeared | Confirmed |
 | 4A-COL03 | Open | Settings/HomeScreen | MI_01 COL03 | Five Settings-button presses, then controlled screen choices | `0x17` `01 00` means Settings open; `01 01` means Settings closed/HomeScreen restored; no selected-screen ID appeared | Confirmed |
 | 4A-BUTTON-COL02 | Open | Settings/HomeScreen | MI_01 COL02 | Five Settings-button presses without navigation | Exactly two `0`, `2`, `1` groups aligned with the two Settings closes; openings were silent | Confirmed |
-| 4B | Closed | Dynamic | One at a time | No change | Pending | Unknown |
+| 4B-COL03 | Closed | Settings/HomeScreen | MI_01 COL03 | Three Settings-button presses | Exactly `0x0100`, `0x0101`, `0x0100`; no configuration snapshot followed the close | Confirmed |
+| 4B-COL02 | Closed | Settings/HomeScreen | MI_01 COL02 | Three Settings-button presses | Zero reports; unlike G HUB-open captures, Settings closes caused no `0`, `2`, `1` groups | Confirmed |
 | 5A | Starting | Settings | MI_01 COL02 | Start G HUB normally | 167 reports; dev `0x01` FeatureSet catalog observed on `0x11` | Confirmed |
 
 ## Evidence Levels
