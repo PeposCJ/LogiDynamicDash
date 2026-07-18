@@ -80,6 +80,22 @@ public sealed class Rs50ReportDecoderTests
     }
 
     [Theory]
+    [InlineData(0x01, 0x00, "Settings: opened (observed)")]
+    [InlineData(0x01, 0x01, "Settings: closed; HomeScreen restored (observed)")]
+    [InlineData(0x12, 0x34, "Settings: unknown state 0x1234")]
+    public void Decode_SettingsState_PreservesObservedMappings(
+        byte highByte,
+        byte lowByte,
+        string expected)
+    {
+        byte[] report = CreateReport(0x17, highByte, lowByte);
+
+        string result = Rs50ReportDecoder.Decode(report);
+
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
     [InlineData(0x01, 0x00, 0x0A, 0x00, "FFB Filter: 10")]
     [InlineData(0x05, 0x00, 0x0B, 0x00, "FFB Filter: Auto (internal value 11)")]
     public void Decode_FfbFilter_ReadsLittleEndianFields(

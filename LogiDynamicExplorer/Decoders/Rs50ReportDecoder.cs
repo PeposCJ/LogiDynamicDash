@@ -43,6 +43,7 @@ internal static class Rs50ReportDecoder
                 "Brake Pressure",
                 report),
             0x16 => DecodeStrength(report),
+            0x17 => DecodeSettingsState(report),
             0x18 => DecodeWheelAngle(report),
             0x19 => DecodeNormalizedPercentage(
                 "TF Audio",
@@ -109,6 +110,23 @@ internal static class Rs50ReportDecoder
 
         return
             $"Strength: {torqueNm:0.0} Nm ({percentage:0.#}%)";
+    }
+
+    private static string DecodeSettingsState(
+        ReadOnlySpan<byte> report)
+    {
+        ushort mode =
+            ReadUInt16BigEndian(report, 4);
+
+        // These mappings were correlated with five controlled presses
+        // of the physical Settings button. They describe input
+        // notifications and do not authorize transmitting them.
+        return mode switch
+        {
+            0x0100 => "Settings: opened (observed)",
+            0x0101 => "Settings: closed; HomeScreen restored (observed)",
+            _ => $"Settings: unknown state 0x{mode:X4}"
+        };
     }
 
     private static string DecodeWheelAngle(
