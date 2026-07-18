@@ -60,6 +60,44 @@ text stream, or sustained display update stream during passive monitoring.
 The Dynamic display mode may use a separate producer or protocol. No game or
 public application is currently known to supply live Dynamic OLED data.
 
+In a controlled G HUB-open observation, the wheel began in Dynamic mode, was
+changed to Test, and was then returned to Dynamic. The OLED immediately showed
+the Test fallback after returning to Dynamic. A simultaneous passive read of
+MI_01 COL02 received 12 report-ID `0x11` inputs from device index `0x02` and no
+inputs from device index `0x01`. Two identical six-report groups coincided with
+the two selector transitions. This confirms the fallback behavior and a
+correlated input notification, but it does not reveal the host-to-display
+transport or assign semantics to the observed `0`, `2`, and `1` payload values.
+The sanitized evidence is preserved in
+[`evidence/RS50_DYNAMIC_SELECTOR_2026-07-17.md`](evidence/RS50_DYNAMIC_SELECTOR_2026-07-17.md).
+
+A controlled five-press observation on MI_01 COL03 isolated the physical
+Settings button beside the OLED. With no selector navigation, successive
+presses emitted parameter `0x17` values `01 00`, `01 01`, `01 00`, `01 01`,
+and `01 00`. The final `01 00` state visibly left Settings open. This confirms
+`0x0100` as Settings open and `0x0101` as Settings closed with the configured
+HomeScreen restored. Each close was followed by a settings snapshot.
+
+The HomeScreen choice is reached through Settings, then HomeScreen. Controlled
+Profile, Torque, Test, and Dynamic selections produced
+the same open/close values on COL03, so parameter `0x17` describes Settings
+visibility rather than the selected HomeScreen. No distinct screen identifier
+appeared on COL03, and none of this traffic was OLED pixel transport.
+
+The same four-option sequence was then monitored on MI_01 COL02. Each option
+produced the same six-report group from device index `0x02`, feature index
+`0x0E`, containing the response payload sequence `0`, `2`, `1`. Four choices
+produced four identical groups, so these values are also Settings interaction
+traffic rather than screen identifiers. Neither COL02 nor COL03 exposed which
+of the four screens was selected.
+
+A button-only control then pressed the Settings button five times without
+navigating. COL02 emitted exactly two `0`, `2`, `1` groups, aligned with the
+second and fourth presses that closed Settings and restored the HomeScreen.
+The first, third, and fifth presses opened Settings and produced no COL02
+input. This confirms that the COL02 group is a Settings-close notification,
+not a direct button event or selected-screen identifier.
+
 On 2026-07-17, the complete USB HID descriptor inventory was compared with
 G HUB open and closed on physical RS50 hardware. The same five collections,
 usages, report IDs, and report lengths were present in both states. This
