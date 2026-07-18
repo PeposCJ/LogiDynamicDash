@@ -188,6 +188,26 @@ The sanitized evidence is preserved in
 [`evidence/RS50_GHUB_STARTUP_USB_2026-07-18.md`](evidence/RS50_GHUB_STARTUP_USB_2026-07-18.md).
 The complete PCAP remains local and must not be committed.
 
+### Installed Wheel SDK Boundary
+
+An offline inspection of the G HUB depot found a separately installed
+`wheel_sdk` package at version `9.1.1.0`. Its manager installs the legacy
+32-bit and 64-bit steering-wheel SDK DLLs. The available exports cover wheel
+state, force-feedback effects, operating range, preferred controller
+properties, and direct RPM LED control. No OLED, screen, text, image, gear, or
+speed display entry point was present.
+
+The installed TRUEFORCE manager uses a local named-pipe protocol and includes
+packets for playing LEDs, querying RPM LED capabilities, and setting RPM LEDs.
+Its static packet names likewise did not expose a Dynamic OLED or general
+display operation.
+
+This is static implementation evidence, not a runtime protocol capture. It
+shows that the locally installed public wheel and TRUEFORCE SDK surfaces can
+drive force and RPM LEDs, but they do not expose an identifiable RS50 Dynamic
+OLED API. The Dynamic producer boundary therefore remains outside the known
+legacy wheel SDK surface.
+
 LogiDynamicExplorer can decode a sanitized saved report without enumerating or
 opening HID hardware:
 
