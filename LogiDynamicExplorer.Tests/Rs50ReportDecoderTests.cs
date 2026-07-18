@@ -17,11 +17,11 @@ public sealed class Rs50ReportDecoderTests
     [Fact]
     public void Decode_WhenHeaderIsUnrecognized_ReturnsDiagnosticMessage()
     {
-        byte[] report = [0x11, 0xFF, 0x0A, 0x00, 0x00, 0x64];
+        byte[] report = [0x10, 0xFF, 0x0A, 0x00, 0x00, 0x64];
 
         string result = Rs50ReportDecoder.Decode(report);
 
-        Assert.Equal("Unrecognized report format (ID 0x11)", result);
+        Assert.Equal("Unrecognized report format (ID 0x10)", result);
     }
 
     [Fact]

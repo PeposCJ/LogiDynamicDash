@@ -5,6 +5,31 @@ namespace LogiDynamicExplorer.Tests;
 public sealed class ExplorerOptionsTests
 {
     [Fact]
+    public void Parse_OfflineDecode_ReturnsReportWithoutHardwareMode()
+    {
+        ExplorerOptions result = ExplorerOptions.Parse(
+            ["--decode-report", "11 01 01 1D 80 93 00 00"]);
+
+        Assert.Null(result.Error);
+        Assert.Equal(
+            "11 01 01 1D 80 93 00 00",
+            result.DecodeReport);
+        Assert.False(result.InventoryOnly);
+        Assert.Null(result.MonitorCollection);
+    }
+
+    [Fact]
+    public void Parse_OfflineDecodeWithHardwareMode_ReturnsError()
+    {
+        ExplorerOptions result = ExplorerOptions.Parse(
+            ["--decode-report", "11", "--inventory"]);
+
+        Assert.Equal(
+            "--decode-report cannot be combined with hardware modes.",
+            result.Error);
+    }
+
+    [Fact]
     public void Parse_TimeLimitedMonitor_ReturnsNormalizedOptions()
     {
         ExplorerOptions result = ExplorerOptions.Parse(

@@ -111,6 +111,18 @@ The complete sanitized FeatureSet evidence and raw reports are preserved in
 Device identity responses and the complete local capture are intentionally not
 included.
 
+LogiDynamicExplorer can decode a sanitized saved report without enumerating or
+opening HID hardware:
+
+```text
+LogiDynamicExplorer --decode-report "11 01 01 1D 80 93 00 00"
+```
+
+The offline decoder separates the device index, feature index, function,
+software ID, FeatureSet feature ID, flags, and version. It does not infer OLED
+control from a public feature flag, and the explorer continues to print the
+complete raw report alongside the decoded description.
+
 Safe validation steps include:
 
 1. Confirm whether the settings UI continues to operate with G HUB closed.

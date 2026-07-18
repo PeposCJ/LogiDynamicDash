@@ -24,6 +24,11 @@ if (options.ShowHelp)
     Console.WriteLine("      Lists RS50 HID descriptors without opening device streams.");
     Console.WriteLine();
     Console.WriteLine(
+        "  LogiDynamicExplorer --decode-report \"HEX BYTES\"");
+    Console.WriteLine(
+        "      Decodes one saved report without accessing HID hardware.");
+    Console.WriteLine();
+    Console.WriteLine(
         "  LogiDynamicExplorer --monitor COLLECTION --duration SECONDS");
     Console.WriteLine(
         "      Passively reads one collection for 1 to 300 seconds.");
@@ -32,6 +37,28 @@ if (options.ShowHelp)
     Console.WriteLine("      Lists descriptors, then offers passive input monitoring.");
     Console.WriteLine();
     Console.WriteLine("The explorer never writes output or feature reports.");
+    return;
+}
+
+if (options.DecodeReport is not null)
+{
+    if (!HexReportParser.TryParse(
+            options.DecodeReport,
+            out byte[] savedReport,
+            out string? parseError))
+    {
+        Console.WriteLine($"Error: {parseError}");
+        return;
+    }
+
+    string normalizedHex =
+        string.Join(
+            ' ',
+            savedReport.Select(value => value.ToString("X2")));
+
+    Console.WriteLine("Offline report decode (no HID access):");
+    Console.WriteLine(Rs50ReportDecoder.Decode(savedReport));
+    Console.WriteLine($"RAW {normalizedHex}");
     return;
 }
 

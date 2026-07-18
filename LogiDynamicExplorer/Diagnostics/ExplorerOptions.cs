@@ -3,6 +3,7 @@ namespace LogiDynamicExplorer.Diagnostics;
 internal sealed record ExplorerOptions(
     bool InventoryOnly,
     bool ShowHelp,
+    string? DecodeReport,
     string? MonitorCollection,
     TimeSpan? MonitorDuration,
     string? Error)
@@ -14,6 +15,7 @@ internal sealed record ExplorerOptions(
     {
         bool inventoryOnly = false;
         bool showHelp = false;
+        string? decodeReport = null;
         string? monitorCollection = null;
         TimeSpan? monitorDuration = null;
 
@@ -30,6 +32,18 @@ internal sealed record ExplorerOptions(
                 case "--help":
                 case "-h":
                     showHelp = true;
+                    break;
+
+                case "--decode-report":
+                    if (!TryReadValue(
+                            arguments,
+                            ref index,
+                            out decodeReport))
+                    {
+                        return Invalid(
+                            "--decode-report requires hexadecimal bytes.");
+                    }
+
                     break;
 
                 case "--monitor":
@@ -75,6 +89,15 @@ internal sealed record ExplorerOptions(
                 "--inventory and --monitor cannot be used together.");
         }
 
+        if (decodeReport is not null &&
+            (inventoryOnly ||
+             monitorCollection is not null ||
+             monitorDuration is not null))
+        {
+            return Invalid(
+                "--decode-report cannot be combined with hardware modes.");
+        }
+
         if (monitorCollection is not null && monitorDuration is null)
         {
             return Invalid(
@@ -90,6 +113,7 @@ internal sealed record ExplorerOptions(
         return new ExplorerOptions(
             inventoryOnly,
             showHelp,
+            decodeReport,
             monitorCollection,
             monitorDuration,
             Error: null);
@@ -120,6 +144,7 @@ internal sealed record ExplorerOptions(
         return new ExplorerOptions(
             InventoryOnly: false,
             ShowHelp: false,
+            DecodeReport: null,
             MonitorCollection: null,
             MonitorDuration: null,
             Error: error);

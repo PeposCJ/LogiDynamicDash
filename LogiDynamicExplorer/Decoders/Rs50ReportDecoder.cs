@@ -4,7 +4,7 @@ namespace LogiDynamicExplorer.Decoders;
 
 internal static class Rs50ReportDecoder
 {
-    private const byte Rs50ReportId = 0x12;
+    private const byte ConfigurationReportId = 0x12;
     private const byte ProtocolMarker = 0xFF;
 
     // The RS50 maximum strength observed in the OLED menu is 8.0 Nm.
@@ -12,12 +12,18 @@ internal static class Rs50ReportDecoder
 
     public static string Decode(ReadOnlySpan<byte> report)
     {
+        if (report.Length > 0 &&
+            report[0] == Rs50HidppLongReportDecoder.ReportId)
+        {
+            return Rs50HidppLongReportDecoder.Decode(report);
+        }
+
         if (report.Length < 6)
         {
             return $"Report too short ({report.Length} bytes)";
         }
 
-        if (report[0] != Rs50ReportId ||
+        if (report[0] != ConfigurationReportId ||
             report[1] != ProtocolMarker)
         {
             return $"Unrecognized report format (ID 0x{report[0]:X2})";
