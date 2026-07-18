@@ -30,6 +30,29 @@ public sealed class ExplorerOptionsTests
     }
 
     [Fact]
+    public void Parse_OfflineBatchAnalysis_ReturnsFileWithoutHardwareMode()
+    {
+        ExplorerOptions result = ExplorerOptions.Parse(
+            ["--analyze-reports", "reports.tsv"]);
+
+        Assert.Null(result.Error);
+        Assert.Equal("reports.tsv", result.AnalyzeReportFile);
+        Assert.False(result.InventoryOnly);
+        Assert.Null(result.MonitorCollection);
+    }
+
+    [Fact]
+    public void Parse_BatchAnalysisWithHardwareMode_ReturnsError()
+    {
+        ExplorerOptions result = ExplorerOptions.Parse(
+            ["--analyze-reports", "reports.tsv", "--inventory"]);
+
+        Assert.Equal(
+            "--analyze-reports cannot be combined with hardware modes.",
+            result.Error);
+    }
+
+    [Fact]
     public void Parse_TimeLimitedMonitor_ReturnsNormalizedOptions()
     {
         ExplorerOptions result = ExplorerOptions.Parse(

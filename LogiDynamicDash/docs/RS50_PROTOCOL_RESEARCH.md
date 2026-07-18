@@ -225,6 +225,18 @@ their device index, runtime feature index, function, software ID, and complete
 parameter bytes. Unknown parameters remain raw hexadecimal evidence; the tool
 does not assign OLED semantics without a controlled correlation.
 
+Saved reports can be summarized in batches without HID access:
+
+```text
+LogiDynamicExplorer --analyze-reports reports.tsv
+```
+
+Each non-comment line may contain only hexadecimal bytes, or tab-separated
+`HOST`/`DEVICE`, optional metadata columns, and hexadecimal bytes in the final
+column. The summary groups HID++ reports by header and counts distinct parameter
+signatures. Request/response matches require the same device, runtime feature,
+function, and software ID; they are structural correlations only.
+
 Safe validation steps include:
 
 1. Confirm whether the settings UI continues to operate with G HUB closed.

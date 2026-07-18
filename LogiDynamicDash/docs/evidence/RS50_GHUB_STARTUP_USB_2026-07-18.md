@@ -70,3 +70,27 @@ before a Dynamic transport is exercised.
 
 No request from this capture may be replayed without separate documentation,
 safety review, and explicit approval.
+
+## Offline Batch Analyzer Corroboration
+
+The capture was later passed in memory through the explorer's offline batch
+analyzer. No complete report export was written to the repository. It parsed
+788 reports without invalid lines:
+
+| Direction | Report ID | Count |
+|---|---:|---:|
+| Host to device | `0x10` | 378 |
+| Host to device | `0x11` | 3 |
+| Device to host | `0x11` | 171 |
+| Device to host | `0x12` | 236 |
+
+The grouped host headers independently reproduced the earlier device `0x01`
+result: runtime feature indices `0x00`, `0x01`, `0x02`, `0x03`, and `0x05`
+were present, while `0x09`, `0x0E`, and `0x0F` were absent. This confirms that
+the enumerated display candidates were not invoked during the startup session.
+
+The analyzer found 171 device reports with an exact preceding host header
+match. Another 210 host HID++ requests had no exact match under the conservative
+rule requiring the same device, feature, function, and software ID. Some use
+the broadcast device index `0xFF`, so this number must not be interpreted as
+210 missing physical responses.

@@ -4,6 +4,7 @@ internal sealed record ExplorerOptions(
     bool InventoryOnly,
     bool ShowHelp,
     string? DecodeReport,
+    string? AnalyzeReportFile,
     string? MonitorCollection,
     TimeSpan? MonitorDuration,
     string? Error)
@@ -16,6 +17,7 @@ internal sealed record ExplorerOptions(
         bool inventoryOnly = false;
         bool showHelp = false;
         string? decodeReport = null;
+        string? analyzeReportFile = null;
         string? monitorCollection = null;
         TimeSpan? monitorDuration = null;
 
@@ -42,6 +44,18 @@ internal sealed record ExplorerOptions(
                     {
                         return Invalid(
                             "--decode-report requires hexadecimal bytes.");
+                    }
+
+                    break;
+
+                case "--analyze-reports":
+                    if (!TryReadValue(
+                            arguments,
+                            ref index,
+                            out analyzeReportFile))
+                    {
+                        return Invalid(
+                            "--analyze-reports requires a file path or '-' for standard input.");
                     }
 
                     break;
@@ -98,6 +112,19 @@ internal sealed record ExplorerOptions(
                 "--decode-report cannot be combined with hardware modes.");
         }
 
+        if (decodeReport is not null && analyzeReportFile is not null)
+        {
+            return Invalid(
+                "--decode-report and --analyze-reports cannot be combined.");
+        }
+
+        if (analyzeReportFile is not null &&
+            (inventoryOnly || monitorCollection is not null || monitorDuration is not null))
+        {
+            return Invalid(
+                "--analyze-reports cannot be combined with hardware modes.");
+        }
+
         if (monitorCollection is not null && monitorDuration is null)
         {
             return Invalid(
@@ -114,6 +141,7 @@ internal sealed record ExplorerOptions(
             inventoryOnly,
             showHelp,
             decodeReport,
+            analyzeReportFile,
             monitorCollection,
             monitorDuration,
             Error: null);
@@ -145,6 +173,7 @@ internal sealed record ExplorerOptions(
             InventoryOnly: false,
             ShowHelp: false,
             DecodeReport: null,
+            AnalyzeReportFile: null,
             MonitorCollection: null,
             MonitorDuration: null,
             Error: error);

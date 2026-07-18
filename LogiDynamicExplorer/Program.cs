@@ -29,6 +29,11 @@ if (options.ShowHelp)
         "      Decodes one saved report without accessing HID hardware.");
     Console.WriteLine();
     Console.WriteLine(
+        "  LogiDynamicExplorer --analyze-reports FILE");
+    Console.WriteLine(
+        "      Summarizes saved HOST/DEVICE report lines without HID access.");
+    Console.WriteLine();
+    Console.WriteLine(
         "  LogiDynamicExplorer --monitor COLLECTION --duration SECONDS");
     Console.WriteLine(
         "      Passively reads one collection for 1 to 300 seconds.");
@@ -59,6 +64,28 @@ if (options.DecodeReport is not null)
     Console.WriteLine("Offline report decode (no HID access):");
     Console.WriteLine(Rs50ReportDecoder.Decode(savedReport));
     Console.WriteLine($"RAW {normalizedHex}");
+    return;
+}
+
+if (options.AnalyzeReportFile is not null)
+{
+    try
+    {
+        IEnumerable<string> lines = options.AnalyzeReportFile == "-"
+            ? ReadStandardInputLines()
+            : File.ReadLines(options.AnalyzeReportFile);
+
+        foreach (string line in HidReportBatchAnalyzer.Analyze(lines))
+        {
+            Console.WriteLine(line);
+        }
+    }
+    catch (Exception exception) when (
+        exception is IOException or UnauthorizedAccessException)
+    {
+        Console.WriteLine($"Error: {exception.Message}");
+    }
+
     return;
 }
 
@@ -423,4 +450,14 @@ static string GetCollectionName(string devicePath)
     }
 
     return "UNKNOWN";
+}
+
+static IEnumerable<string> ReadStandardInputLines()
+{
+    string? line;
+
+    while ((line = Console.ReadLine()) is not null)
+    {
+        yield return line;
+    }
 }
