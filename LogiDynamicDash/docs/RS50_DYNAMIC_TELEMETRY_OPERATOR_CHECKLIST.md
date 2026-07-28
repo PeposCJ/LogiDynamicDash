@@ -1,9 +1,12 @@
 # RS50 Bounded Dynamic Telemetry Checklist
 
-This checklist governs the first Build D physical trial. It sends formatted
+This checklist governed the first Build D physical trial. It sends formatted
 iRacing telemetry for at most ten seconds and then releases DirectInput
 acquisition automatically. It is not an endurance test or authorization for
 an unlimited session.
+
+The first trial completed successfully on 2026-07-27. See
+[`evidence/RS50_DYNAMIC_TELEMETRY_SUCCESS_2026-07-27.md`](evidence/RS50_DYNAMIC_TELEMETRY_SUCCESS_2026-07-27.md).
 
 ## 1. Preconditions
 
@@ -78,3 +81,7 @@ Do not authorize another run until offline analysis confirms:
 Any failed Escape, unmatched request, physical side effect, excessive update
 rate, or malformed display is a stop condition. Only after this bounded trial
 passes may an unlimited user-facing session be designed.
+
+The first trial passed these acceptance checks. A stationary input-continuity
+test is still required before any on-track endurance trial because the driver
+requires exclusive foreground acquisition.

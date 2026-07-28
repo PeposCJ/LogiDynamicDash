@@ -5,18 +5,27 @@ namespace LogiDynamicDash.Displays;
 internal sealed class ConsoleDashboard : IDisplaySink
 {
     private const int DashboardWidth = 44;
+    private readonly bool _isInteractive =
+        !Console.IsOutputRedirected;
 
     public void Initialize()
     {
         Console.Title = "LogiDynamicDash";
-        Console.CursorVisible = false;
-        Console.Clear();
+
+        if (_isInteractive)
+        {
+            Console.CursorVisible = false;
+            Console.Clear();
+        }
     }
 
     public void Render(LayoutJFrame frame)
     {
         ArgumentNullException.ThrowIfNull(frame);
-        Console.SetCursorPosition(0, 0);
+        if (_isInteractive)
+        {
+            Console.SetCursorPosition(0, 0);
+        }
 
         WriteDashboardLine(
             new string('=', DashboardWidth));
@@ -43,8 +52,11 @@ internal sealed class ConsoleDashboard : IDisplaySink
 
     public void Stop()
     {
-        Console.CursorVisible = true;
-        Console.Clear();
+        if (_isInteractive)
+        {
+            Console.CursorVisible = true;
+            Console.Clear();
+        }
 
         Console.WriteLine(
             "Telemetry monitoring stopped.");

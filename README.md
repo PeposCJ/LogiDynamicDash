@@ -70,7 +70,12 @@ screen on Logitech PRO Racing Wheel and RS50.
   rate-limits changed frames to 5 Hz, and stops a session after any Escape
   failure. The managed iRacing sink requires four exact arming arguments and
   automatically ends after ten seconds.
-- Live telemetry output has not yet been physically executed or validated.
+- Build D completed its first guarded end-to-end physical trial. iRacing
+  telemetry rendered `SPEED / 0 KMH / GEAR / N` on the Dynamic OLED for ten
+  seconds, with exact matched USB responses and no observed LED, torque, FFB,
+  or wheel-movement side effect. On-track testing remains gated on steering
+  and pedal input-continuity validation under the driver's required exclusive
+  acquisition.
 
 Build the guarded native bridge and its non-hardware tests with:
 

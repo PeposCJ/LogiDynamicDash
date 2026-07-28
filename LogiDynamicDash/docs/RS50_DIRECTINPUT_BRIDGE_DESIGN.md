@@ -396,9 +396,12 @@ ordered arguments and automatically cancels after ten seconds. Its concrete
 native transport is behind an injected interface, so unit tests never load
 the DLL or create a window.
 
-No Build D physical execution has occurred. Follow
-[`RS50_DYNAMIC_TELEMETRY_OPERATOR_CHECKLIST.md`](RS50_DYNAMIC_TELEMETRY_OPERATOR_CHECKLIST.md)
-only after separate authorization.
+Build D completed its first separately authorized ten-second physical trial on
+2026-07-27. It displayed live iRacing speed and gear, stopped automatically,
+and passed offline USB acceptance. See
+[`evidence/RS50_DYNAMIC_TELEMETRY_SUCCESS_2026-07-27.md`](evidence/RS50_DYNAMIC_TELEMETRY_SUCCESS_2026-07-27.md).
+An on-track trial remains gated on stationary input-continuity validation
+because the installed driver requires exclusive foreground acquisition.
 
 ## Explicit Non-Goals
 
