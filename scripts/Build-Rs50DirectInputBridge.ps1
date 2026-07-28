@@ -185,6 +185,6 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Output ""
-Write-Output "Native guarded Build C verified without transmitting."
+Write-Output "Native guarded Build D verified without transmitting."
 Write-Output "No valid owner window was passed to the bridge."
 Write-Output "No DirectInput object or HID device was opened."

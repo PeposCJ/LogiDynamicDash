@@ -66,6 +66,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\rs50_display_bridge.h" />
+    <ClInclude Include="include\rs50_layout_j_frame.h" />
     <ClCompile Include="src\rs50_display_bridge.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

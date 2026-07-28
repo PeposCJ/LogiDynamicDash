@@ -372,6 +372,34 @@ After a visible static setter is confirmed:
 4. Stop updates on device loss or any failed Escape call.
 5. Observe the nominal four-minute firmware fallback after stopping.
 
+The Build D implementation now provides an ABI-6 session surface:
+
+- `rs50_display_begin_layout_j_stream`
+- `rs50_display_set_layout_j_frame`
+- `rs50_display_end_layout_j_stream`
+
+The public frame is 68 bytes and contains explicit lengths plus fixed visual
+row capacities `19/10/19/10`. Every unused byte and both reserved bytes must
+be zero. Only printable ASCII `0x20..0x7F` is accepted. The native bridge
+constructs the live x64 MSVC strings in the physically proven order
+`row2/row1/row4/row3`.
+
+The first successful frame starts a monotonic 200 ms gate. Identical frames
+are suppressed before that gate; changed frames arriving sooner are reported
+as rate-limited without calling Escape. Any Escape failure marks the session
+failed and prevents further writes. Explicit end and handle close both release
+exclusive acquisition.
+
+The managed application duplicates the safety boundary: its normal
+no-argument mode remains console-only, while RS50 output requires four exact
+ordered arguments and automatically cancels after ten seconds. Its concrete
+native transport is behind an injected interface, so unit tests never load
+the DLL or create a window.
+
+No Build D physical execution has occurred. Follow
+[`RS50_DYNAMIC_TELEMETRY_OPERATOR_CHECKLIST.md`](RS50_DYNAMIC_TELEMETRY_OPERATOR_CHECKLIST.md)
+only after separate authorization.
+
 ## Explicit Non-Goals
 
 - no raw HID++ sender

@@ -105,7 +105,7 @@ $ready = $is64Bit -and $vcToolsPath -and
 Write-Output ""
 
 if ($ready) {
-    Write-Output "READY: query-only native bridge can be compiled."
+    Write-Output "READY: guarded native bridge can be compiled."
     exit 0
 }
 

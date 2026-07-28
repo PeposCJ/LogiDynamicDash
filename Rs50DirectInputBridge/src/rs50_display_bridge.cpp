@@ -1,6 +1,7 @@
 #define DIRECTINPUT_VERSION 0x0800
 
 #include "rs50_display_bridge.h"
+#include "rs50_layout_j_frame.h"
 
 #include <Windows.h>
 #include <bcrypt.h>
@@ -25,7 +26,7 @@
 
 namespace
 {
-constexpr std::uint32_t AbiVersion = 5;
+constexpr std::uint32_t AbiVersion = 6;
 constexpr std::uint16_t LogitechVendorId = 0x046D;
 constexpr std::uint16_t Rs50ProductId = 0xC276;
 constexpr DWORD DisplayEscapeCommand = 4;
@@ -85,6 +86,13 @@ static_assert(offsetof(rs50_display_query_result, product_name) == 56);
 static_assert(sizeof(rs50_display_static_layout_j_result) == 556);
 static_assert(
     offsetof(rs50_display_static_layout_j_result, product_name) == 36);
+static_assert(sizeof(rs50_display_layout_j_frame) == 68);
+static_assert(offsetof(rs50_display_layout_j_frame, row1) == 8);
+static_assert(offsetof(rs50_display_layout_j_frame, row2) == 27);
+static_assert(offsetof(rs50_display_layout_j_frame, row3) == 37);
+static_assert(offsetof(rs50_display_layout_j_frame, row4) == 56);
+static_assert(sizeof(rs50_display_stream_result) == 560);
+static_assert(offsetof(rs50_display_stream_result, product_name) == 40);
 
 template <typename T> class ComPointer final
 {
@@ -458,6 +466,11 @@ struct rs50_display_handle
     SRWLOCK queryLock = SRWLOCK_INIT;
     bool operationAttempted = false;
     bool acquired = false;
+    bool streamStarted = false;
+    bool streamFailed = false;
+    bool hasLastFrame = false;
+    rs50_display_layout_j_frame lastFrame{};
+    std::uint64_t lastTransmissionMilliseconds = 0;
 };
 
 namespace
@@ -472,29 +485,9 @@ struct EscapeLifecycleResult
     bool acquired = false;
 };
 
-rs50_display_status ExecuteEscape(rs50_display_handle *handle,
-                                  void *inputBuffer, DWORD inputCapacity,
-                                  void *outputBuffer, DWORD outputCapacity,
+rs50_display_status AcquireDevice(rs50_display_handle *handle,
                                   EscapeLifecycleResult &result) noexcept
 {
-    ExclusiveSrwLock lock(handle->queryLock);
-
-    if (handle->operationAttempted)
-    {
-        return RS50_DISPLAY_OPERATION_ALREADY_ATTEMPTED;
-    }
-
-    handle->operationAttempted = true;
-
-    DIEFFESCAPE escape{};
-    escape.dwSize = sizeof(escape);
-    escape.dwCommand = DisplayEscapeCommand;
-    escape.lpvInBuffer = inputBuffer;
-    escape.cbInBuffer = inputCapacity;
-    escape.lpvOutBuffer = outputBuffer;
-    escape.cbOutBuffer = outputCapacity;
-    result.outputCapacity = outputCapacity;
-
     result.dataFormat = handle->device.Get()->SetDataFormat(&c_dfDIJoystick2);
     if (FAILED(result.dataFormat))
     {
@@ -509,25 +502,74 @@ rs50_display_status ExecuteEscape(rs50_display_handle *handle,
 
     handle->acquired = true;
     result.acquired = true;
-    result.escape = handle->device.Get()->Escape(&escape);
-    result.outputCapacity = escape.cbOutBuffer;
-    result.unacquire = handle->device.Get()->Unacquire();
+    return RS50_DISPLAY_OK;
+}
 
-    if (SUCCEEDED(result.unacquire))
+rs50_display_status ReleaseDevice(rs50_display_handle *handle,
+                                  HRESULT &unacquireResult) noexcept
+{
+    unacquireResult = handle->device.Get()->Unacquire();
+
+    if (SUCCEEDED(unacquireResult))
     {
         handle->acquired = false;
-    }
-    else
-    {
-        return RS50_DISPLAY_UNACQUIRE_FAILED;
+        return RS50_DISPLAY_OK;
     }
 
-    if (FAILED(result.escape))
+    return RS50_DISPLAY_UNACQUIRE_FAILED;
+}
+
+HRESULT PerformEscape(rs50_display_handle *handle, void *inputBuffer,
+                      DWORD inputCapacity, void *outputBuffer,
+                      DWORD &outputCapacity) noexcept
+{
+    DIEFFESCAPE escape{};
+    escape.dwSize = sizeof(escape);
+    escape.dwCommand = DisplayEscapeCommand;
+    escape.lpvInBuffer = inputBuffer;
+    escape.cbInBuffer = inputCapacity;
+    escape.lpvOutBuffer = outputBuffer;
+    escape.cbOutBuffer = outputCapacity;
+
+    HRESULT result = handle->device.Get()->Escape(&escape);
+    outputCapacity = escape.cbOutBuffer;
+    return result;
+}
+
+rs50_display_status ExecuteEscape(rs50_display_handle *handle,
+                                  void *inputBuffer, DWORD inputCapacity,
+                                  void *outputBuffer, DWORD outputCapacity,
+                                  EscapeLifecycleResult &result) noexcept
+{
+    ExclusiveSrwLock lock(handle->queryLock);
+
+    if (handle->operationAttempted)
     {
-        return RS50_DISPLAY_ESCAPE_FAILED;
+        return RS50_DISPLAY_OPERATION_ALREADY_ATTEMPTED;
     }
 
-    return RS50_DISPLAY_OK;
+    handle->operationAttempted = true;
+    result.outputCapacity = outputCapacity;
+
+    rs50_display_status status = AcquireDevice(handle, result);
+    if (status != RS50_DISPLAY_OK)
+    {
+        return status;
+    }
+
+    result.escape =
+        PerformEscape(handle, inputBuffer, inputCapacity, outputBuffer,
+                      result.outputCapacity);
+    rs50_display_status releaseStatus =
+        ReleaseDevice(handle, result.unacquire);
+
+    if (releaseStatus != RS50_DISPLAY_OK)
+    {
+        return releaseStatus;
+    }
+
+    return FAILED(result.escape) ? RS50_DISPLAY_ESCAPE_FAILED
+                                 : RS50_DISPLAY_OK;
 }
 
 rs50_display_status ExecuteQuery(rs50_display_handle *handle,
@@ -661,6 +703,194 @@ rs50_display_status ExecuteStaticLayoutJ(
         return RS50_DISPLAY_INTERNAL_ERROR;
     }
 }
+
+rs50_display_stream_result
+CreateStreamResult(const rs50_display_handle *handle) noexcept
+{
+    rs50_display_stream_result result{};
+    result.struct_size = sizeof(result);
+    result.vendor_id = LogitechVendorId;
+    result.product_id = Rs50ProductId;
+    result.cooperative_level_hresult = handle->cooperativeLevelResult;
+    result.data_format_hresult = E_UNEXPECTED;
+    result.acquire_hresult = E_UNEXPECTED;
+    result.escape_hresult = E_UNEXPECTED;
+    result.unacquire_hresult = E_UNEXPECTED;
+    result.inner_command = StaticLayoutJCommand;
+    CopySanitizedProductName(result.product_name,
+                             handle->instance.tszProductName);
+    return result;
+}
+
+rs50_display_status BeginLayoutJStream(
+    rs50_display_handle *handle,
+    rs50_display_stream_result *result) noexcept
+{
+    if (handle == nullptr || result == nullptr ||
+        result->struct_size != sizeof(rs50_display_stream_result))
+    {
+        return RS50_DISPLAY_INVALID_ARGUMENT;
+    }
+
+    rs50_display_stream_result local = CreateStreamResult(handle);
+    ExclusiveSrwLock lock(handle->queryLock);
+
+    if (handle->streamStarted)
+    {
+        *result = local;
+        return RS50_DISPLAY_SESSION_ALREADY_STARTED;
+    }
+
+    if (handle->operationAttempted)
+    {
+        *result = local;
+        return RS50_DISPLAY_OPERATION_ALREADY_ATTEMPTED;
+    }
+
+    handle->operationAttempted = true;
+    EscapeLifecycleResult lifecycle;
+    rs50_display_status status = AcquireDevice(handle, lifecycle);
+    local.data_format_hresult = lifecycle.dataFormat;
+    local.acquire_hresult = lifecycle.acquire;
+    local.acquired = lifecycle.acquired ? 1 : 0;
+
+    if (status == RS50_DISPLAY_OK)
+    {
+        handle->streamStarted = true;
+        handle->streamFailed = false;
+        handle->hasLastFrame = false;
+    }
+
+    *result = local;
+    return status;
+}
+
+rs50_display_status SetLayoutJFrame(
+    rs50_display_handle *handle,
+    const rs50_display_layout_j_frame *frame,
+    rs50_display_stream_result *result) noexcept
+{
+    if (handle == nullptr || frame == nullptr || result == nullptr ||
+        result->struct_size != sizeof(rs50_display_stream_result))
+    {
+        return RS50_DISPLAY_INVALID_ARGUMENT;
+    }
+
+    rs50_display_stream_result local = CreateStreamResult(handle);
+    if (!rs50::layout_j::IsValidFrame(*frame))
+    {
+        *result = local;
+        return RS50_DISPLAY_FRAME_INVALID;
+    }
+
+    ExclusiveSrwLock lock(handle->queryLock);
+    local.acquired = handle->acquired ? 1 : 0;
+
+    if (!handle->streamStarted || !handle->acquired)
+    {
+        *result = local;
+        return RS50_DISPLAY_SESSION_NOT_STARTED;
+    }
+
+    if (handle->streamFailed)
+    {
+        *result = local;
+        return RS50_DISPLAY_SESSION_FAILED;
+    }
+
+    std::uint64_t nowMilliseconds = GetTickCount64();
+    const rs50_display_layout_j_frame *lastFrame =
+        handle->hasLastFrame ? &handle->lastFrame : nullptr;
+    rs50::layout_j::GateDecision decision = rs50::layout_j::DecideFrame(
+        lastFrame, handle->lastTransmissionMilliseconds, *frame,
+        nowMilliseconds);
+
+    if (decision == rs50::layout_j::GateDecision::Unchanged)
+    {
+        local.unchanged = 1;
+        *result = local;
+        return RS50_DISPLAY_OK;
+    }
+
+    if (decision == rs50::layout_j::GateDecision::RateLimited)
+    {
+        local.rate_limited = 1;
+        *result = local;
+        return RS50_DISPLAY_OK;
+    }
+
+    try
+    {
+        std::array<std::string, 4> arguments =
+            rs50::layout_j::MakeDriverArguments(*frame);
+        StaticLayoutJRequest request{
+            {sizeof(StaticLayoutJRequest), DisplayRequestVersion,
+             StaticLayoutJCommand, {}},
+            std::move(arguments[0]),
+            std::move(arguments[1]),
+            std::move(arguments[2]),
+            std::move(arguments[3])};
+
+        DWORD outputCapacity = 0;
+        local.escape_hresult =
+            PerformEscape(handle, &request, sizeof(request), nullptr,
+                          outputCapacity);
+
+        if (FAILED(local.escape_hresult))
+        {
+            handle->streamFailed = true;
+            *result = local;
+            return RS50_DISPLAY_ESCAPE_FAILED;
+        }
+
+        handle->lastFrame = *frame;
+        handle->lastTransmissionMilliseconds = nowMilliseconds;
+        handle->hasLastFrame = true;
+        local.transmitted = 1;
+        *result = local;
+        return RS50_DISPLAY_OK;
+    }
+    catch (...)
+    {
+        handle->streamFailed = true;
+        *result = local;
+        return RS50_DISPLAY_INTERNAL_ERROR;
+    }
+}
+
+rs50_display_status EndLayoutJStream(
+    rs50_display_handle *handle,
+    rs50_display_stream_result *result) noexcept
+{
+    if (handle == nullptr || result == nullptr ||
+        result->struct_size != sizeof(rs50_display_stream_result))
+    {
+        return RS50_DISPLAY_INVALID_ARGUMENT;
+    }
+
+    rs50_display_stream_result local = CreateStreamResult(handle);
+    ExclusiveSrwLock lock(handle->queryLock);
+    local.acquired = handle->acquired ? 1 : 0;
+
+    if (!handle->streamStarted || !handle->acquired)
+    {
+        *result = local;
+        return RS50_DISPLAY_SESSION_NOT_STARTED;
+    }
+
+    HRESULT unacquireResult = E_UNEXPECTED;
+    rs50_display_status status =
+        ReleaseDevice(handle, unacquireResult);
+    local.unacquire_hresult = unacquireResult;
+    if (status == RS50_DISPLAY_OK)
+    {
+        handle->streamStarted = false;
+        local.acquired = 0;
+    }
+
+    *result = local;
+    return status;
+}
 } // namespace
 
 std::uint32_t rs50_display_abi_version() noexcept
@@ -775,6 +1005,28 @@ rs50_display_status rs50_display_set_static_layout_j(
     return ExecuteStaticLayoutJ(handle, result);
 }
 
+rs50_display_status rs50_display_begin_layout_j_stream(
+    rs50_display_handle *handle,
+    rs50_display_stream_result *result) noexcept
+{
+    return BeginLayoutJStream(handle, result);
+}
+
+rs50_display_status rs50_display_set_layout_j_frame(
+    rs50_display_handle *handle,
+    const rs50_display_layout_j_frame *frame,
+    rs50_display_stream_result *result) noexcept
+{
+    return SetLayoutJFrame(handle, frame, result);
+}
+
+rs50_display_status rs50_display_end_layout_j_stream(
+    rs50_display_handle *handle,
+    rs50_display_stream_result *result) noexcept
+{
+    return EndLayoutJStream(handle, result);
+}
+
 const wchar_t *rs50_display_status_message(rs50_display_status status) noexcept
 {
     switch (status)
@@ -815,6 +1067,14 @@ const wchar_t *rs50_display_status_message(rs50_display_status status) noexcept
         return L"Documented display operation failed";
     case RS50_DISPLAY_QUERY_OUTPUT_INVALID:
         return L"Support query returned an unexpected output shape or value";
+    case RS50_DISPLAY_SESSION_NOT_STARTED:
+        return L"Layout J stream session is not active";
+    case RS50_DISPLAY_SESSION_ALREADY_STARTED:
+        return L"Layout J stream session is already active";
+    case RS50_DISPLAY_FRAME_INVALID:
+        return L"Layout J frame is not canonical printable ASCII";
+    case RS50_DISPLAY_SESSION_FAILED:
+        return L"Layout J stream stopped after an earlier failure";
     default:
         return L"Internal bridge error";
     }
@@ -825,8 +1085,8 @@ void rs50_display_close(rs50_display_handle *handle) noexcept
     if (handle != nullptr && handle->acquired &&
         handle->device.Get() != nullptr)
     {
-        handle->device.Get()->Unacquire();
-        handle->acquired = false;
+        HRESULT ignored = E_UNEXPECTED;
+        ReleaseDevice(handle, ignored);
     }
 
     delete handle;

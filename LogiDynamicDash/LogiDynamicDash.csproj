@@ -15,4 +15,12 @@
     <InternalsVisibleTo Include="LogiDynamicDash.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None
+      Include="..\artifacts\native\$(Configuration)\Rs50DirectInputBridge.dll"
+      Link="Rs50DirectInputBridge.dll"
+      CopyToOutputDirectory="PreserveNewest"
+      Condition="Exists('..\artifacts\native\$(Configuration)\Rs50DirectInputBridge.dll')" />
+  </ItemGroup>
+
 </Project>

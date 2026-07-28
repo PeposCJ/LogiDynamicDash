@@ -1,15 +1,19 @@
 # RS50 Guarded DirectInput Bridge
 
-This x64 native bridge is the executable query validation stage for the
+This x64 native bridge is the guarded transport boundary for the
 recovered Logitech `DisplayGameData` interface. It contains exactly one
 Escape call site and three explicitly bounded command choices: general
 display-support query `2`, Layout J capability query `12`, and one fixed
-Layout J setter `22`, all inside DirectInput Escape command `4`.
+or validated dynamic Layout J setter `22`, all inside DirectInput Escape
+command `4`.
 
-There is no caller-controlled text, generic command surface, idle command,
-raw HID write, repeat loop, or force-feedback effect. The sole setter always
-uses `LOGIDYNAMICDASH / RS50 / OLED LINK / TEST 1`. Build A proved exclusive
-acquisition is required, and
+There is no generic command surface, idle command, raw HID write, unknown
+layout setter, or force-feedback effect. The fixed setter always uses
+`LOGIDYNAMICDASH / RS50 / OLED LINK / TEST 1`. Build D additionally accepts a
+68-byte canonical visual-row structure, validates printable ASCII and zeroed
+tails, maps rows to the proven DirectInput order, suppresses duplicate frames,
+and caps changed output at 5 Hz. Build A proved exclusive acquisition is
+required, and
 Build A2 proved DirectInput requires a data format before acquisition. Build
 A3 sets the standard `c_dfDIJoystick2` format, then performs the bounded
 lifecycle: Acquire, one support query, Unacquire.
@@ -31,8 +35,8 @@ The script:
 1. verifies x64 MSVC, Windows SDK, driver registration, audited SHA-256, and
    Authenticode;
 2. builds the DLL, guarded query executable, and native safety tests;
-3. audits the DLL export/import surface for exactly the fixed setter and no
-   raw HID APIs;
+3. audits the DLL export/import surface for exactly the fixed and validated
+   Layout J setters and no raw HID APIs;
 4. runs only invalid-argument tests, unarmed refusal checks, and `--describe`.
 
 Those tests do not create DirectInput, enumerate a controller, or open HID
@@ -54,12 +58,12 @@ requires:
 - successful standard `c_dfDIJoystick2` data format;
 - an unused bridge handle.
 
-The bridge sets the standard joystick format, acquires immediately before
-`Escape`, and unacquires immediately afterward. The handle close path performs
-a defensive release if the first release failed. Cooperative, data-format,
-Acquire, Escape, and Unacquire HRESULTs are reported. The output starts with
-sentinel `0xA5`; a successful call is rejected as an ABI mismatch unless it
-leaves an exact one-byte buffer containing boolean `0` or `1`.
+One-shot operations set the standard joystick format, acquire immediately
+before `Escape`, and unacquire immediately afterward. A Build D stream sets
+the format and acquires once, performs only validated Layout J updates, and
+unacquires on explicit end or close. Any Escape failure permanently blocks
+further frames on that handle. Cooperative, data-format, Acquire, Escape, and
+Unacquire HRESULTs are reported.
 
 Layout J uses an exact ten-byte output capacity. Only byte zero is defined;
 bytes 1-9 must remain at sentinel `0xA5` or the bridge rejects the result.
@@ -87,6 +91,10 @@ The separately authorized Layout J capability mode is documented in
 
 The fixed static setter requires a new, separate authorization and follows
 [`RS50_STATIC_LAYOUT_J_OPERATOR_CHECKLIST.md`](../LogiDynamicDash/docs/RS50_STATIC_LAYOUT_J_OPERATOR_CHECKLIST.md).
+
+The bounded dynamic telemetry trial requires another separate authorization
+and follows
+[`RS50_DYNAMIC_TELEMETRY_OPERATOR_CHECKLIST.md`](../LogiDynamicDash/docs/RS50_DYNAMIC_TELEMETRY_OPERATOR_CHECKLIST.md).
 
 Follow the complete
 [`RS50_QUERY_ONLY_OPERATOR_CHECKLIST.md`](../LogiDynamicDash/docs/RS50_QUERY_ONLY_OPERATOR_CHECKLIST.md)

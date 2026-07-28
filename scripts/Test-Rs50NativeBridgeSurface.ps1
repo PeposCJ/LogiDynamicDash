@@ -46,7 +46,7 @@ $unacquireCallCount = [regex]::Matches($source, '->Unacquire\s*\(').Count
 if ($escapeCallCount -ne 1 -or
     $dataFormatCallCount -ne 1 -or
     $acquireCallCount -ne 1 -or
-    $unacquireCallCount -ne 2) {
+    $unacquireCallCount -ne 1) {
     throw (
         "Unexpected native call counts: " +
         "Escape=$escapeCallCount, SetDataFormat=$dataFormatCallCount, " +
@@ -91,17 +91,20 @@ $dumpbinPath = Join-Path `
 $exports = & $dumpbinPath /exports $bridgeBinary | Out-String
 $expectedExports = @(
     "rs50_display_abi_version",
+    "rs50_display_begin_layout_j_stream",
     "rs50_display_close",
+    "rs50_display_end_layout_j_stream",
     "rs50_display_open",
     "rs50_display_query_layout_j_support",
     "rs50_display_query_support",
+    "rs50_display_set_layout_j_frame",
     "rs50_display_set_static_layout_j",
     "rs50_display_status_message"
 )
 
 foreach ($name in $expectedExports) {
     if ($exports -notmatch "\b$([regex]::Escape($name))\b") {
-        throw "Expected query-only export is missing: $name"
+        throw "Expected guarded bridge export is missing: $name"
     }
 }
 
@@ -110,8 +113,9 @@ $setterExports = @(
         Value |
     Sort-Object -Unique
 )
-if ($setterExports.Count -ne 1 -or
-    $setterExports[0] -ne "rs50_display_set_static_layout_j") {
+if ($setterExports.Count -ne 2 -or
+    $setterExports[0] -ne "rs50_display_set_layout_j_frame" -or
+    $setterExports[1] -ne "rs50_display_set_static_layout_j") {
     throw "The bridge exports an unexpected display setter surface."
 }
 
@@ -136,8 +140,13 @@ if ($header -notmatch
     throw "The fixed setter unexpectedly accepts caller-controlled text."
 }
 
+if ($header -notmatch
+    'rs50_display_set_layout_j_frame\s*\(\s*rs50_display_handle\s*\*\s*\w+\s*,\s*const\s+rs50_display_layout_j_frame\s*\*\s*\w+\s*,\s*rs50_display_stream_result\s*\*\s*\w+\s*\)\s*noexcept') {
+    throw "The dynamic setter does not expose the audited fixed-frame ABI."
+}
+
 Write-Output "Native guarded bridge surface audit passed."
 Write-Output "Exports: $($expectedExports -join ', ')"
 Write-Output (
-    "Only the fixed Layout J setter is exported; " +
+    "Only the fixed and validated Layout J setters are exported; " +
     "no raw HID surface was found.")

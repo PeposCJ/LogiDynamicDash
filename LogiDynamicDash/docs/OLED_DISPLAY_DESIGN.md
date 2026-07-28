@@ -298,9 +298,10 @@ The first OLED implementation should aim for:
 
 The following still require controlled validation:
 
-- Whether DirectInput outer command `4` activates the physical RS50 OLED
-- Safe update frequency; the first live stage will begin at 5 Hz
-- Whether G HUB must be running after its DirectInput driver is installed
+- Whether the physically confirmed DirectInput command remains stable during
+  a bounded 5 Hz telemetry stream
+- Whether ten seconds of updates receive clean matched responses without
+  display artifacts or acquisition loss
 - The Logitech PRO Wheel VID/PID, capability response, and compatibility
 - Behavior when another game or application owns the display
 - Visible font sizing and readability for all four Layout J rows

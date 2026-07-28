@@ -64,9 +64,15 @@ screen on Logitech PRO Racing Wheel and RS50.
   `RS50 / LOGIDYNAMI / TEST 1 / OLED LINK`. This confirms static OLED output
   and reveals the driver argument-to-row permutation `2/1/4/3`. The operator
   observed no torque, LED, or wheel-movement change.
-- Live telemetry output is not yet implemented or validated.
+- Build D now has an offline-validated dynamic session API. It accepts only
+  canonical visual rows with limits `19/10/19/10`, performs the proven
+  `row2/row1/row4/row3` DirectInput permutation, suppresses identical frames,
+  rate-limits changed frames to 5 Hz, and stops a session after any Escape
+  failure. The managed iRacing sink requires four exact arming arguments and
+  automatically ends after ten seconds.
+- Live telemetry output has not yet been physically executed or validated.
 
-Build the guarded query-only stage and its non-hardware tests with:
+Build the guarded native bridge and its non-hardware tests with:
 
 ```powershell
 .\scripts\Build-Rs50DirectInputBridge.ps1 -Configuration Release
