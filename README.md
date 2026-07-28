@@ -96,10 +96,11 @@ screen on Logitech PRO Racing Wheel and RS50.
 - Build G compiles a separate one-shot executable with six exact ordered
   confirmations. It performs one feature discovery and one fixed Layout J
   setter, then closes both streams. It has no loop, telemetry, caller text, or
-  application route. Its first physical preflight failed closed before stream
-  open because Windows uses distinct paths for each top-level collection;
-  USBPcap confirmed zero host output and the operator observed no physical
-  change.
+  application route. After a safe failed preflight exposed Windows's distinct
+  collection paths, the corrected physical attempt succeeded: the OLED showed
+  all four fixed lines exactly, USBPcap captured only the expected endpoint-0
+  discovery and Layout J `SET_REPORT` operations with exact acknowledgements,
+  and the operator observed no LED, FFB, torque, or wheel-position change.
 
 Build the guarded native bridge and its non-hardware tests with:
 

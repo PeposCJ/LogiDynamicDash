@@ -4,8 +4,12 @@
 
 Build F compiles a physical HID++ exchange adapter but does not connect it to
 LogiDynamicDash. The application has no project reference, CLI argument,
-factory, reflection path, or copied transport DLL. No Build F stream has been
-opened and no report has been transmitted.
+factory, reflection path, or copied transport DLL.
+
+Build G exercised the adapter once on 2026-07-28. USBPcap confirmed exactly one
+Root discovery and one Layout J setter over endpoint-0 HID `SET_REPORT`, with
+exact responses and no FFB, LED, or MI_02 output. The operator confirmed the
+fixed OLED text and observed no physical side effect.
 
 Build F exists in a separate `Rs50SharedHidppTransport` library. Both it and
 the dashboard depend on the neutral `Rs50SharedHidppProtocol` library, so
