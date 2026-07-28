@@ -2,9 +2,10 @@
 
 ## Status
 
-Build I compiles a separate stationary-coexistence executable but has not been
-run against the physical RS50. No Build I device enumeration, stream open,
-request, or report transmission has occurred.
+Build I compiles a separate stationary-coexistence executable. Its corrected,
+high-buffer I1 capture succeeded on 2026-07-28: all five frames rendered,
+iRacing centering and shift LEDs worked before and after, and the operator
+observed no movement, torque impulse, input loss, or other side effect.
 
 Build I does not reference the iRacing SDK and reads no telemetry. It only
 changes the test precondition from H1: iRacing is running with the car stopped
@@ -78,11 +79,9 @@ dotnet run --project `
   -c Release --no-restore
 ```
 
-## Future Physical I1 Trial
+## Physical I1 Trial — Passed
 
-Compiling Build I does not authorize running it.
-
-Before starting USBPcap:
+The validated procedure was:
 
 1. close G HUB;
 2. open iRacing and enter the car;
@@ -101,7 +100,7 @@ After Build I closes:
 4. capture at least 10 more seconds;
 5. stop and save the capture without driving.
 
-Physical and offline acceptance requires:
+Every physical and offline acceptance condition passed:
 
 - all five counters visibly render in order;
 - centering and LED response remain equivalent before and after;
@@ -112,4 +111,30 @@ Physical and offline acceptance requires:
   simulator FFB/LED traffic;
 - no wheel movement, torque impulse, input loss, or simulator disconnect.
 
-Moving-car use, live telemetry, and a full lap remain prohibited.
+Capture:
+
+```text
+2026-07-28_rs50_build_i_iracing_stationary_coexistence_attempt2.pcapng
+```
+
+The first Wireshark-managed capture visibly passed but dropped three of the
+five setters amid dense TRUEFORCE traffic. It was not accepted as protocol
+evidence. Attempt 2 used USBPcapCMD filtered to RS50 address 3 with a 128 MB
+buffer and captured the complete sequence.
+
+Attempt 2 contains exactly one discovery and five setters, with six exact
+responses. Setter intervals were 1.013111, 1.010585, 1.004519, and 1.007545
+seconds. Acknowledgements arrived within 2.358–12.096 ms.
+
+The entire capture contains zero endpoint-0 control reports to runtime index
+`0x10`, previously mapped to feature `0x8123` Force Feedback. During a
+25-second window around Build I, host endpoint-`0x03` TRUEFORCE submissions
+continued every second at 990–1000 transfers/s.
+
+Runtime-`0x0B` rev-light operations appear during both the pre-check and
+post-check, but not during the five idle OLED frames. There is no
+`RESET_ALL → SET_GLOBAL_GAINS → RESET_ALL` lifecycle or simulator traffic
+discontinuity attributable to Build I.
+
+Moving-car use, live telemetry, and a full lap remain prohibited until a
+separate bounded telemetry stage is implemented and validated offline.

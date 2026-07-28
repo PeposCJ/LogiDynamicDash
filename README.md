@@ -108,9 +108,10 @@ screen on Logitech PRO Racing Wheel and RS50.
   plus five endpoint-0 setters and their exact acknowledgements, and the
   operator observed no LED, FFB, torque, or wheel-position change.
 - Build I compiles a separate, unexecuted coexistence trial for iRacing with
-  the car stationary in the pits. It still sends only five fixed 1 Hz frames
-  and imports no telemetry SDK. A fake-only direct verifier passes under the
-  local Code Integrity policy; the dashboard remains disconnected.
+  the car stationary in the pits. It sends only five fixed 1 Hz frames and
+  imports no telemetry SDK. Its high-buffer physical capture passed: OLED
+  frames, centering, and rev LEDs all remained correct; TRUEFORCE endpoint
+  traffic stayed continuous; and no `0x8123` reset lifecycle occurred.
 
 Build the guarded native bridge and its non-hardware tests with:
 
