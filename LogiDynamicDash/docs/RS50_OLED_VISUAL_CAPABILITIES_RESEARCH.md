@@ -71,13 +71,13 @@ field that lets the host select those descriptors.
 
 The descriptors expose five exact raster heights:
 
-| Firmware descriptor | Raster height | Confirmed layout use |
-|---|---:|---|
-| `0x08044631` | 9 px | H/I/J first and third text regions |
-| `0x08044636` | 16 px | D/E text regions |
-| `0x08043032` | 18 px | H/I/J second and fourth text regions |
-| `0x08043037` | 27 px | F second text; G first text |
-| `0x0804303C` | 37 px | F first text; G second text |
+| Firmware descriptor | Raster height | Glyph widths | Confirmed layout use |
+|---|---:|---:|---|
+| `0x08044631` | 9 px | 3-9 px | H/I/J first and third text regions |
+| `0x08044636` | 16 px | 5-17 px | D/E text regions |
+| `0x08043032` | 18 px | 4-18 px | H/I/J second and fourth text regions |
+| `0x08043037` | 27 px | 6-27 px | F second text; G first text |
+| `0x0804303C` | 37 px | 8-37 px | F first text; G second text |
 
 This establishes that font size really can change, but only by choosing a
 layout whose renderer references the desired built-in descriptor. The wire
@@ -99,6 +99,23 @@ Together with the renderers' 0-127 horizontal and 0-63 vertical bounds, this
 identifies an internal 128 x 64 one-bit framebuffer (`128 * 64 / 8 = 1024`
 bytes). That framebuffer exists inside firmware, but no recovered host command
 accepts or exposes its bytes.
+
+## Reproducible Offline Font Inspection
+
+[`scripts/Inspect-Rs50OledFirmwareVisuals.py`](../../scripts/Inspect-Rs50OledFirmwareVisuals.py)
+verifies the official DFU SHA-256 before reading anything, validates all 96
+glyph records in each of the five fonts, reports their dimensions as JSON,
+and can render a local representative BMP. It imports no HID/device library
+and never opens the RS50.
+
+```powershell
+python .\scripts\Inspect-Rs50OledFirmwareVisuals.py `
+  --firmware "C:\ProgramData\LGHUB\depots\794591\rs50_racing_wheel_dfu\rs50_main_v165_4_39.dfu" `
+  --bmp-output ".tmp\rs50_oled_font_samples.bmp"
+```
+
+The generated BMP is intentionally local and uncommitted because its pixels
+are extracted from Logitech firmware.
 
 ## Negative Evidence for a Framebuffer
 

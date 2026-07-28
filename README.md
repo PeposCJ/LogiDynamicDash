@@ -170,3 +170,12 @@ Audit the unexecuted Build K A-J layout-gallery surface with:
 ```powershell
 .\scripts\Test-Rs50SharedHidppLayoutGallerySurface.ps1
 ```
+
+Inspect the five embedded OLED bitmap fonts from an explicitly supplied,
+hash-validated RS50 DFU without opening the wheel:
+
+```powershell
+python .\scripts\Inspect-Rs50OledFirmwareVisuals.py `
+  --firmware "<path-to-rs50_main_v165_4_39.dfu>" `
+  --bmp-output ".tmp\rs50_oled_font_samples.bmp"
+```
