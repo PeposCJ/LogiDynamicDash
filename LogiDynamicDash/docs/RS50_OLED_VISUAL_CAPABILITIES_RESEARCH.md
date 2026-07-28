@@ -52,10 +52,53 @@ wire byte = round(clamp(game value, 0.0, 1.0) * 255)
 drawn extent = wire byte * 118 / 255 pixels
 ```
 
+The recovered placement confirms the intended visual roles:
+
+- C draws one 118 x 10 horizontal gauge at `(5, 27)`;
+- D/E draw the same 118 x 10 gauge at `(5, 38)` plus a second 118 x 2
+  indicator at `(5, 50)`;
+- F/G place a one-character and three-character value on opposite sides of a
+  fixed 1 x 28 separator, swapping which side receives the 37 px font;
+- H combines two text regions with a fixed 23 x 18 left-side field;
+- I repeats that decorated left-field/text composition twice;
+- J contains only four centered text rows, at vertical positions 2, 12, 35,
+  and 45.
+
 Firmware text rendering measures strings using fixed font descriptors and then
 places them at hard-coded coordinates. Different renderers reference different
 font descriptors, confirming multiple firmware font sizes/styles. There is no
 field that lets the host select those descriptors.
+
+The descriptors expose five exact raster heights:
+
+| Firmware descriptor | Raster height | Confirmed layout use |
+|---|---:|---|
+| `0x08044631` | 9 px | H/I/J first and third text regions |
+| `0x08044636` | 16 px | D/E text regions |
+| `0x08043032` | 18 px | H/I/J second and fourth text regions |
+| `0x08043037` | 27 px | F second text; G first text |
+| `0x0804303C` | 37 px | F first text; G second text |
+
+This establishes that font size really can change, but only by choosing a
+layout whose renderer references the desired built-in descriptor. The wire
+request still has no font-selector field. Layouts F and G deliberately swap
+the 27 px and 37 px fonts between their one-character and three-character
+fields.
+
+Each font is a proportional one-bit bitmap font. A glyph record contains its
+pixel width, bitmap byte count, and a pointer to row-major raster data; it
+contains no family/style name. Inspection of representative glyphs shows the
+same squared, sans-serif racing-display design at five raster sizes rather
+than five host-selectable TrueType/OpenType faces. Lowercase input is converted
+to uppercase by the protocol handler, non-printable/non-ASCII input becomes
+`?`, and the usable host repertoire is therefore the firmware's printable
+single-byte uppercase-oriented glyph set rather than Unicode.
+
+The clear phase passes exactly `0x400` bytes to the display buffer routine.
+Together with the renderers' 0-127 horizontal and 0-63 vertical bounds, this
+identifies an internal 128 x 64 one-bit framebuffer (`128 * 64 / 8 = 1024`
+bytes). That framebuffer exists inside firmware, but no recovered host command
+accepts or exposes its bytes.
 
 ## Negative Evidence for a Framebuffer
 
@@ -69,6 +112,9 @@ field that lets the host select those descriptors.
 - The base firmware registry gives `0x8130` exactly four handlers; none is a
   bitmap upload or arbitrary draw command.
 - The protocol descriptors report only fixed byte/text capacities.
+- The installed G HUB depot contains one RS50 main firmware and one drive
+  firmware. Its DFU manifests expose no separate rim/display firmware image
+  or OLED update endpoint.
 
 ## Unknown Rim-Module Features
 
