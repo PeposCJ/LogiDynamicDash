@@ -16,6 +16,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LogiDynamicDash\LogiDynamicDash.csproj" />
+    <ProjectReference
+      Include="..\Rs50SharedHidppTransport\Rs50SharedHidppTransport.csproj" />
   </ItemGroup>
 
   <ItemGroup>

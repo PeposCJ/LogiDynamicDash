@@ -51,10 +51,11 @@ Callers cannot choose another:
 Every Layout J row first passes the existing canonical printable-ASCII and
 `19/10/19/10` validation.
 
-The exchange boundary accepts only the closed transaction object. Build E
-deliberately provides no class that implements this boundary against hardware.
-The dashboard project references no HID library, and `Program` has no Build E
-arming arguments or construction path.
+The exchange boundary accepts only the closed transaction object. The Build E
+protocol and dashboard session provide no class that implements this boundary
+against hardware. Build F now compiles such an adapter in a separate library
+that the application does not reference. `Program` still has no shared-HID++
+arming argument or construction path.
 
 ## Response Validation
 
@@ -107,22 +108,24 @@ Acquire/Unacquire, native imports, Force Feedback `0x8123`, RPM/LIGHTSYNC
 features, other `0x813x` features, a production exchange implementation, a
 public protocol type, or a CLI route.
 
-## Gate Before Any Physical Adapter
+## Gate Before Any Physical Use
 
-A later build may add one physical exchange implementation only after:
+Build F added one disconnected physical exchange implementation after:
 
-1. read-only descriptor evidence identifies the exact RS50 HID++ collection;
-2. the Windows control-transfer behavior is verified without guessing an
-   output endpoint;
-3. VID `0x046D`, PID `0xC276`, interface, usage, report lengths, and exactly
-   one matching collection are fail-closed gates;
-4. G HUB remains closed to avoid two HID++ producers;
-5. a new surface audit proves the adapter cannot target any feature except
-   `0x8130`;
-6. the user separately authorizes a captured, stationary, one-frame test.
+1. read-only descriptor evidence identified COL01 and COL03;
+2. VID `0x046D`, PID `0xC276`, interface, usage, report lengths, and exactly
+   one matching collection became fail-closed gates;
+3. a new surface audit proved the adapter cannot target any feature except
+   Build E's closed `0x8130` transactions.
+
+Windows control-transfer behavior remains unverified. G HUB must remain closed
+to avoid two HID++ producers, and the user must separately authorize a
+captured, stationary, one-frame test through a future one-shot route.
 
 Acceptance for that future test requires USBPcap to show only feature
 discovery and one matched Layout J setter, with zero `0x8123`, `0x807A`,
 `0x807B`, interface-2, or endpoint-`0x03` host output. LEDs and FFB must remain
 normal both during and after the test. A full lap remains prohibited until a
 subsequent bounded stream and stationary input-continuity test also pass.
+
+See [`RS50_SHARED_HIDPP_BUILD_F_DESIGN.md`](RS50_SHARED_HIDPP_BUILD_F_DESIGN.md).

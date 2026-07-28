@@ -1,5 +1,4 @@
 using System.Text;
-using LogiDynamicDash.Models;
 
 namespace LogiDynamicDash.Hidpp;
 
@@ -79,10 +78,16 @@ internal static class Rs50HidppDisplayProtocol
 
     internal static Rs50HidppDisplayTransaction CreateLayoutJ(
         byte runtimeIndex,
-        LayoutJFrame frame)
+        string line1,
+        string line2,
+        string line3,
+        string line4)
     {
-        ArgumentNullException.ThrowIfNull(frame);
         ValidateRuntimeIndex(runtimeIndex);
+        ValidateText(line1, 19, nameof(line1));
+        ValidateText(line2, 10, nameof(line2));
+        ValidateText(line3, 19, nameof(line3));
+        ValidateText(line4, 10, nameof(line4));
 
         byte[] request = new byte[VeryLongReportLength];
         request[0] = VeryLongReportId;
@@ -90,10 +95,10 @@ internal static class Rs50HidppDisplayProtocol
         request[2] = runtimeIndex;
         request[3] = EncodeFunction(SetLayoutFunction);
         request[4] = LayoutJIndex;
-        WriteAscii(request.AsSpan(5, 19), frame.Line1);
-        WriteAscii(request.AsSpan(24, 10), frame.Line2);
-        WriteAscii(request.AsSpan(34, 19), frame.Line3);
-        WriteAscii(request.AsSpan(53, 10), frame.Line4);
+        WriteAscii(request.AsSpan(5, 19), line1);
+        WriteAscii(request.AsSpan(24, 10), line2);
+        WriteAscii(request.AsSpan(34, 19), line3);
+        WriteAscii(request.AsSpan(53, 10), line4);
 
         return Rs50HidppDisplayTransaction.CreateLayoutJ(request);
     }
@@ -184,6 +189,31 @@ internal static class Rs50HidppDisplayProtocol
         {
             throw new InvalidOperationException(
                 "Layout J text did not encode to one byte per character.");
+        }
+    }
+
+    private static void ValidateText(
+        string value,
+        int maximumLength,
+        string parameterName)
+    {
+        ArgumentNullException.ThrowIfNull(value, parameterName);
+
+        if (value.Length > maximumLength)
+        {
+            throw new ArgumentException(
+                $"Text exceeds the Layout J limit of {maximumLength} " +
+                "characters.",
+                parameterName);
+        }
+
+        if (value.Any(character =>
+                character is < (char)0x20 or > (char)0x7F))
+        {
+            throw new ArgumentException(
+                "Text contains a character outside the firmware's " +
+                "recovered display range.",
+                parameterName);
         }
     }
 }

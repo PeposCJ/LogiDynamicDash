@@ -3,4 +3,6 @@
   <Project Path="LogiDynamicDash.Tests/LogiDynamicDash.Tests.csproj" />
   <Project Path="LogiDynamicExplorer/LogiDynamicExplorer.csproj" Id="51784d52-7917-48eb-93f4-86c98ce3c112" />
   <Project Path="LogiDynamicExplorer.Tests/LogiDynamicExplorer.Tests.csproj" />
+  <Project Path="Rs50SharedHidppProtocol/Rs50SharedHidppProtocol.csproj" />
+  <Project Path="Rs50SharedHidppTransport/Rs50SharedHidppTransport.csproj" />
 </Solution>

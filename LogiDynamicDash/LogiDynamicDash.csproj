@@ -16,6 +16,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference
+      Include="..\Rs50SharedHidppProtocol\Rs50SharedHidppProtocol.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None
       Include="..\artifacts\native\$(Configuration)\Rs50DirectInputBridge.dll"
       Link="Rs50DirectInputBridge.dll"

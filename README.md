@@ -86,7 +86,13 @@ screen on Logitech PRO Racing Wheel and RS50.
 - Build E implements the shared `0x8130` codec and fail-closed 5 Hz session
   offline. It can only construct Root discovery and Layout J function-`3`
   transactions, validates exact 64-byte responses, and has no physical HID
-  implementation or CLI route. It is not authorized for hardware use.
+  implementation in its protocol/session assemblies or CLI route.
+- Build F compiles a separate, unreferenced HidSharp adapter gated to the
+  RS50's exact MI_01 COL01 (`FF43:0701`, 7-byte `0x10`) and COL03
+  (`FF43:0704`, 64-byte `0x12`) sibling collections. Its fake-only tests cover
+  routing, matching, disposal, uniqueness, identity, usage, length, and path
+  failures. The dashboard does not reference or copy the transport assembly,
+  and no Build F stream has been opened.
 
 Build the guarded native bridge and its non-hardware tests with:
 
@@ -98,4 +104,10 @@ Audit the offline Build E shared-HID++ surface with:
 
 ```powershell
 .\scripts\Test-Rs50SharedHidppSurface.ps1
+```
+
+Audit the disconnected Build F physical-adapter surface with:
+
+```powershell
+.\scripts\Test-Rs50SharedHidppTransportSurface.ps1
 ```

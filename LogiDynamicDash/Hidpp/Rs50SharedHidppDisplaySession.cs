@@ -93,7 +93,10 @@ internal sealed class Rs50SharedHidppDisplaySession(
                 exchange.Exchange(
                     Rs50HidppDisplayProtocol.CreateLayoutJ(
                         featureIndex,
-                        frame));
+                        frame.Line1,
+                        frame.Line2,
+                        frame.Line3,
+                        frame.Line4));
 
             Rs50HidppDisplayProtocol.ParseLayoutJAcknowledgement(
                 featureIndex,

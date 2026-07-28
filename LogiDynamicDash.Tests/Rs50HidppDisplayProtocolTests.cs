@@ -82,7 +82,12 @@ public sealed class Rs50HidppDisplayProtocolTests
             new("SPEED", "0 KMH", "GEAR", "N");
 
         Rs50HidppDisplayTransaction transaction =
-            Rs50HidppDisplayProtocol.CreateLayoutJ(0x12, frame);
+            Rs50HidppDisplayProtocol.CreateLayoutJ(
+                0x12,
+                frame.Line1,
+                frame.Line2,
+                frame.Line3,
+                frame.Line4);
         byte[] request = transaction.Request.ToArray();
 
         Assert.Equal(
@@ -106,7 +111,50 @@ public sealed class Rs50HidppDisplayProtocolTests
         Assert.Throws<ArgumentOutOfRangeException>(
             () => Rs50HidppDisplayProtocol.CreateLayoutJ(
                 runtime,
-                new("", "", "", "")));
+                "",
+                "",
+                "",
+                ""));
+    }
+
+    [Fact]
+    public void CreateLayoutJ_RevalidatesEveryTextField()
+    {
+        Assert.Throws<ArgumentException>(
+            () => Rs50HidppDisplayProtocol.CreateLayoutJ(
+                0x12,
+                new string('A', 20),
+                "",
+                "",
+                ""));
+        Assert.Throws<ArgumentException>(
+            () => Rs50HidppDisplayProtocol.CreateLayoutJ(
+                0x12,
+                "",
+                new string('A', 11),
+                "",
+                ""));
+        Assert.Throws<ArgumentException>(
+            () => Rs50HidppDisplayProtocol.CreateLayoutJ(
+                0x12,
+                "",
+                "",
+                new string('A', 20),
+                ""));
+        Assert.Throws<ArgumentException>(
+            () => Rs50HidppDisplayProtocol.CreateLayoutJ(
+                0x12,
+                "",
+                "",
+                "",
+                new string('A', 11)));
+        Assert.Throws<ArgumentException>(
+            () => Rs50HidppDisplayProtocol.CreateLayoutJ(
+                0x12,
+                "SPEED",
+                "0 KMH",
+                "GEAR",
+                "\u0080"));
     }
 
     [Fact]

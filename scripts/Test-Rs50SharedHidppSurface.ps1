@@ -4,16 +4,20 @@ param()
 $ErrorActionPreference = "Stop"
 
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
-$sourceDirectory = Join-Path $repositoryRoot "LogiDynamicDash\Hidpp"
+$sessionDirectory = Join-Path $repositoryRoot "LogiDynamicDash\Hidpp"
+$protocolDirectory =
+    Join-Path $repositoryRoot "Rs50SharedHidppProtocol"
 $programPath = Join-Path $repositoryRoot "LogiDynamicDash\Program.cs"
 $projectPath = Join-Path $repositoryRoot "LogiDynamicDash\LogiDynamicDash.csproj"
 
-if (-not (Test-Path -LiteralPath $sourceDirectory -PathType Container)) {
-    throw "The Build E HID++ source directory was not found."
+if (-not (Test-Path -LiteralPath $sessionDirectory -PathType Container) -or
+    -not (Test-Path -LiteralPath $protocolDirectory -PathType Container)) {
+    throw "The Build E HID++ source directories were not found."
 }
 
 $sourceFiles = @(
-    Get-ChildItem -LiteralPath $sourceDirectory -Filter "*.cs" -File
+    Get-ChildItem -LiteralPath $sessionDirectory -Filter "*.cs" -File
+    Get-ChildItem -LiteralPath $protocolDirectory -Filter "*.cs" -File
 )
 $source = ($sourceFiles | Get-Content -Raw) -join "`n"
 $program = Get-Content -LiteralPath $programPath -Raw
