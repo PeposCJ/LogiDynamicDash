@@ -398,10 +398,12 @@ the DLL or create a window.
 
 Build D completed its first separately authorized ten-second physical trial on
 2026-07-27. It displayed live iRacing speed and gear, stopped automatically,
-and passed offline USB acceptance. See
+and passed offline USB request/response checks, but subsequently proved to
+disrupt iRacing's LED updates and normal FFB centering. See
 [`evidence/RS50_DYNAMIC_TELEMETRY_SUCCESS_2026-07-27.md`](evidence/RS50_DYNAMIC_TELEMETRY_SUCCESS_2026-07-27.md).
-An on-track trial remains gated on stationary input-continuity validation
-because the installed driver requires exclusive foreground acquisition.
+An on-track trial is prohibited until the installed driver's exclusive
+foreground requirement is removed, safely coordinated, or replaced by a
+transport that coexists with the simulator.
 
 ## Explicit Non-Goals
 

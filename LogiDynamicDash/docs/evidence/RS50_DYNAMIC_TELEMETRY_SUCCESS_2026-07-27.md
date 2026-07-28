@@ -16,7 +16,11 @@ GEAR
 N
 ```
 
-No LED, torque, force-feedback, or wheel-movement change was observed.
+No immediate LED, torque, force-feedback, or wheel-movement change was
+reported during the stationary ten-second observation. Subsequent stationary
+checking found that the shift LEDs no longer updated and the normal
+force-feedback centering did not return the wheel to center. The wheel instead
+moved slightly counterclockwise.
 
 ## Guarded Execution
 
@@ -61,14 +65,32 @@ rate was below the five-updates-per-second limit, and no HID++ error response
 was present. The same capture reconstructed the ten-layout catalog and Layout
 J capacities `19/10/19/10`.
 
+The capture also contains three matched operations on runtime `0x10`, public
+feature `0x8123` Force Feedback, surrounding the exclusive lifecycle:
+
+```text
+start +0.000 s  function 1  parameters 00 00 00
+start +0.010 s  function 8  parameters FF FF 00 ...
+end   +9.070 s  function 1  parameters 00 00 00
+```
+
+Their timing and feature identity correlate with the observed loss of normal
+iRacing LED/FFB behavior. The exact semantics of those operations have not
+yet been established.
+
+Leaving and re-entering the car did not recover the shift LEDs. Returning to
+the iRacing main menu and loading the circuit again did recover them, which is
+consistent with the simulator process rebuilding its Logitech output state.
+
 ## Interpretation
 
-This is the first end-to-end confirmation that iRacing telemetry can travel
+This remains the first end-to-end confirmation that iRacing telemetry can travel
 through LogiDynamicDash, the guarded DirectInput bridge, Logitech's
 Display Game Data feature `0x8130`, and the RS50 firmware-rendered Dynamic
 OLED.
 
-Exclusive foreground acquisition remains required by the installed driver.
-Before driving a full lap, a separate stationary input-continuity trial must
-confirm that iRacing continues receiving steering and pedal inputs while the
-OLED stream owns the DirectInput device.
+It is not an acceptance of the streaming design. Exclusive foreground
+acquisition is required by the installed driver and disrupted the simulator's
+LED and FFB state beyond the ten-second session. A full-lap or moving-car test
+is prohibited until a transport or lifecycle design demonstrates safe
+coexistence without taking persistent exclusive ownership from iRacing.

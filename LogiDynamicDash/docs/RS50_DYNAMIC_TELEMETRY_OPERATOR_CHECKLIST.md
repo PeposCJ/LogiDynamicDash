@@ -82,6 +82,9 @@ Any failed Escape, unmatched request, physical side effect, excessive update
 rate, or malformed display is a stop condition. Only after this bounded trial
 passes may an unlimited user-facing session be designed.
 
-The first trial passed these acceptance checks. A stationary input-continuity
-test is still required before any on-track endurance trial because the driver
-requires exclusive foreground acquisition.
+The first trial passed the USB protocol checks but failed physical coexistence
+acceptance: afterward, iRacing's shift LEDs stopped updating and normal FFB
+centering was absent until the simulator returned to its main menu and loaded
+the circuit again. No moving-car, input-continuity, endurance, or full-lap
+trial is authorized. The required exclusive lifecycle must be redesigned or
+replaced before further physical streaming.

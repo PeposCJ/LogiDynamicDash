@@ -72,10 +72,12 @@ screen on Logitech PRO Racing Wheel and RS50.
   automatically ends after ten seconds.
 - Build D completed its first guarded end-to-end physical trial. iRacing
   telemetry rendered `SPEED / 0 KMH / GEAR / N` on the Dynamic OLED for ten
-  seconds, with exact matched USB responses and no observed LED, torque, FFB,
-  or wheel-movement side effect. On-track testing remains gated on steering
-  and pedal input-continuity validation under the driver's required exclusive
-  acquisition.
+  seconds with exact matched USB responses. The trial also exposed a blocking
+  coexistence failure: iRacing's shift LEDs stopped updating and normal FFB
+  centering was absent afterward. Returning to the iRacing main menu and
+  reloading the circuit restored the LEDs. No moving-car or full-lap test is
+  authorized until the exclusive DirectInput lifecycle is redesigned or
+  replaced.
 
 Build the guarded native bridge and its non-hardware tests with:
 
