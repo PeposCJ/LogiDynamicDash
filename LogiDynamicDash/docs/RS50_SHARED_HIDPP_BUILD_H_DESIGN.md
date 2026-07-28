@@ -2,9 +2,10 @@
 
 ## Status
 
-Build H compiles a separate bounded-stream executable but has not been run
-against the physical RS50. No Build H device enumeration, stream open, request,
-or report transmission has occurred.
+Build H compiles a separate bounded-stream executable. Its H1 physical
+repetition baseline succeeded on 2026-07-28: all five counters rendered in
+order, every request was acknowledged, and the operator observed no LED, FFB,
+torque, or wheel-position change.
 
 `LogiDynamicDash` does not reference Build H, the physical transport, or
 HidSharp. Building or running the dashboard cannot activate this route.
@@ -53,15 +54,12 @@ Run the source audit with:
 .\scripts\Test-Rs50SharedHidppBoundedStreamSurface.ps1
 ```
 
-## Future Physical Stages
+## Physical Stages
 
-Compiling Build H does not authorize running it.
+### H1: Repetition Baseline — Passed
 
-### H1: Repetition Baseline
-
-The first physical execution requires G HUB and iRacing closed, RS50 awake,
-Dynamic showing its fallback, and USBPcap already recording. Acceptance
-requires:
+H1 ran with G HUB and iRacing closed, RS50 awake, Dynamic selected, and
+USBPcap recording. It met every acceptance condition:
 
 - one discovery request/response;
 - exactly five setters and five exact acknowledgements;
@@ -71,9 +69,24 @@ requires:
 - all five counters visibly rendered in order;
 - no LED, FFB, torque, input, or wheel-position side effect.
 
+Capture:
+
+```text
+2026-07-28_rs50_build_h_1hz_five_frames.pcapng
+```
+
+The four setter intervals were 1.004841, 1.003597, 1.002992, and 1.003694
+seconds. USBPcap found exactly six host reports carrying HID data: one
+discovery and five setters. Each used interface 1, endpoint 0,
+`URB_FUNCTION_CLASS_INTERFACE`, `URB_CONTROL`, and HID `SET_REPORT`.
+
+COL03 returned one exact discovery response and five exact zero-body
+acknowledgements. There were no other host reports, proving zero `0x8123`,
+`0x807A`, `0x807B`, or MI_02 host operations.
+
 ### Later Simulator Coexistence
 
 Build H explicitly confirms iRacing is closed and must not be reused for a
-simulator test. Only after H1 passes should a separate, newly audited stage be
-designed for a stationary car in the pits. Live telemetry, moving-car use, and
-a full lap remain prohibited.
+simulator test. H1 now permits designing a separate, newly audited Build I for
+a stationary car in the pits. Live telemetry, moving-car use, and a full lap
+remain prohibited until that new stage is implemented and validated.

@@ -103,8 +103,10 @@ screen on Logitech PRO Racing Wheel and RS50.
   and the operator observed no LED, FFB, torque, or wheel-position change.
 - Build H compiles a separate bounded-stream executable for the next baseline.
   It spells out exactly five fixed frames at 1 Hz with no loop, retry,
-  telemetry, or caller-controlled values. It is disconnected from the
-  dashboard and has not been executed against the physical RS50.
+  telemetry, or caller-controlled values. Its H1 physical baseline passed:
+  all five counters rendered in order, USBPcap contained exactly one discovery
+  plus five endpoint-0 setters and their exact acknowledgements, and the
+  operator observed no LED, FFB, torque, or wheel-position change.
 
 Build the guarded native bridge and its non-hardware tests with:
 
