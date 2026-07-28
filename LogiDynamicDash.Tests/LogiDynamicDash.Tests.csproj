@@ -24,6 +24,8 @@
       Include="..\Rs50SharedHidppBoundedStream\Rs50SharedHidppBoundedStream.csproj" />
     <ProjectReference
       Include="..\Rs50SharedHidppCoexistence\Rs50SharedHidppCoexistence.csproj" />
+    <ProjectReference
+      Include="..\Rs50SharedHidppTelemetryTrial\Rs50SharedHidppTelemetryTrial.csproj" />
   </ItemGroup>
 
   <ItemGroup>

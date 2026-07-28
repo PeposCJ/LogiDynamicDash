@@ -9,4 +9,6 @@
   <Project Path="Rs50SharedHidppBoundedStream/Rs50SharedHidppBoundedStream.csproj" />
   <Project Path="Rs50SharedHidppCoexistence/Rs50SharedHidppCoexistence.csproj" />
   <Project Path="Rs50SharedHidppCoexistence.Verification/Rs50SharedHidppCoexistence.Verification.csproj" />
+  <Project Path="Rs50SharedHidppTelemetryTrial/Rs50SharedHidppTelemetryTrial.csproj" />
+  <Project Path="Rs50SharedHidppTelemetryTrial.Verification/Rs50SharedHidppTelemetryTrial.Verification.csproj" />
 </Solution>

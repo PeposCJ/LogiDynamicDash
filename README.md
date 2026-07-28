@@ -107,11 +107,16 @@ screen on Logitech PRO Racing Wheel and RS50.
   all five counters rendered in order, USBPcap contained exactly one discovery
   plus five endpoint-0 setters and their exact acknowledgements, and the
   operator observed no LED, FFB, torque, or wheel-position change.
-- Build I compiles a separate, unexecuted coexistence trial for iRacing with
+- Build I compiles a separate coexistence trial for iRacing with
   the car stationary in the pits. It sends only five fixed 1 Hz frames and
   imports no telemetry SDK. Its high-buffer physical capture passed: OLED
   frames, centering, and rev LEDs all remained correct; TRUEFORCE endpoint
   traffic stayed continuous; and no `0x8123` reset lifecycle occurred.
+- Build J compiles a separate, not-yet-executed stationary telemetry trial.
+  It subscribes only to `IsOnTrackCar`, `Gear`, and `Speed`, displays live
+  speed/gear for ten seconds, suppresses duplicates, caps changes at 5 Hz,
+  and fails closed above 0.5 m/s or on missing/invalid telemetry. Its
+  fake-only verifier passes and the dashboard does not reference this route.
 
 Build the guarded native bridge and its non-hardware tests with:
 
@@ -147,4 +152,10 @@ Audit the unexecuted Build I stationary-coexistence surface with:
 
 ```powershell
 .\scripts\Test-Rs50SharedHidppCoexistenceSurface.ps1
+```
+
+Audit the unexecuted Build J stationary-telemetry surface with:
+
+```powershell
+.\scripts\Test-Rs50SharedHidppTelemetryTrialSurface.ps1
 ```
