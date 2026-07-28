@@ -93,6 +93,10 @@ screen on Logitech PRO Racing Wheel and RS50.
   routing, matching, disposal, uniqueness, identity, usage, length, and path
   failures. The dashboard does not reference or copy the transport assembly,
   and no Build F stream has been opened.
+- Build G compiles a separate one-shot executable with six exact ordered
+  confirmations. It performs one feature discovery and one fixed Layout J
+  setter, then closes both streams. It has no loop, telemetry, caller text, or
+  application route and has not been executed against the physical RS50.
 
 Build the guarded native bridge and its non-hardware tests with:
 
@@ -110,4 +114,10 @@ Audit the disconnected Build F physical-adapter surface with:
 
 ```powershell
 .\scripts\Test-Rs50SharedHidppTransportSurface.ps1
+```
+
+Audit the unexecuted Build G one-shot surface with:
+
+```powershell
+.\scripts\Test-Rs50SharedHidppOneShotSurface.ps1
 ```
