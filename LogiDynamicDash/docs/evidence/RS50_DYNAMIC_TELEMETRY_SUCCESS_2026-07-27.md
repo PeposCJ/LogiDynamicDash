@@ -75,12 +75,23 @@ end   +9.070 s  function 1  parameters 00 00 00
 ```
 
 Their timing and feature identity correlate with the observed loss of normal
-iRacing LED/FFB behavior. The exact semantics of those operations have not
-yet been established.
+iRacing LED/FFB behavior. The HID++ `0x8123` command table in the upstream
+Linux Logitech driver identifies function `1` as `RESET_ALL` and function `8`
+as `SET_GLOBAL_GAINS`. The captured `FF FF` value sets maximum global gain.
+The DirectInput lifecycle therefore emitted:
+
+```text
+RESET_ALL -> SET_GLOBAL_GAINS(0xFFFF) -> RESET_ALL
+```
+
+This explains why iRacing's existing force effects were no longer present
+after LogiDynamicDash released the device.
 
 Leaving and re-entering the car did not recover the shift LEDs. Returning to
 the iRacing main menu and loading the circuit again did recover them, which is
 consistent with the simulator process rebuilding its Logitech output state.
+The operator subsequently reported that normal centering/FFB also appeared to
+be restored.
 
 ## Interpretation
 
@@ -94,3 +105,17 @@ acquisition is required by the installed driver and disrupted the simulator's
 LED and FFB state beyond the ten-second session. A full-lap or moving-car test
 is prohibited until a transport or lifecycle design demonstrates safe
 coexistence without taking persistent exclusive ownership from iRacing.
+
+The RS50 protocol specification maintained by the open Linux driver documents
+three separate interfaces: joystick input on interface `0`, HID++ configuration
+on interface `1`, and real-time direct-drive FFB on interface `2` / endpoint
+`0x03`. A narrowly scoped, shared HID++ transport targeting only discovered
+feature `0x8130` is therefore the next offline design candidate. It has not
+been implemented or authorized for physical execution.
+
+## Primary References
+
+- Linux `hid-logitech-hidpp` command definitions:
+  <https://codebrowser.dev/linux/linux/drivers/hid/hid-logitech-hidpp.c.html#2354>
+- RS50/G PRO protocol specification:
+  <https://github.com/mescon/logitech-trueforce-linux-driver/blob/master/docs/PROTOCOL_SPECIFICATION.md>

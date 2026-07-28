@@ -405,6 +405,20 @@ An on-track trial is prohibited until the installed driver's exclusive
 foreground requirement is removed, safely coordinated, or replaced by a
 transport that coexists with the simulator.
 
+Post-trial decoding established that the three runtime-`0x10` operations were
+HID++ `0x8123` `RESET_ALL`, `SET_GLOBAL_GAINS(0xFFFF)`, and `RESET_ALL`.
+These are emitted by the DirectInput driver's exclusive lifecycle, not by the
+OLED request, and destroy the simulator's active force-effect state.
+
+The open RS50 Linux-driver protocol reference independently separates joystick
+input (interface `0`), HID++ configuration (interface `1`), and real-time FFB
+(interface `2`, endpoint `0x03`). Future research may therefore replace this
+bridge with a narrowly typed feature-`0x8130` HID++ transport on interface `1`.
+Such a transport must discover the runtime index, require the exact RS50
+identity, serialize one matched request at a time, reject every feature and
+function except the proven display query/set surface, and never expose generic
+raw reports. No physical test is authorized by this design note.
+
 ## Explicit Non-Goals
 
 - no raw HID++ sender

@@ -78,6 +78,12 @@ screen on Logitech PRO Racing Wheel and RS50.
   reloading the circuit restored the LEDs. No moving-car or full-lap test is
   authorized until the exclusive DirectInput lifecycle is redesigned or
   replaced.
+- Offline decoding identified the lifecycle traffic as HID++ `0x8123`
+  `RESET_ALL`, `SET_GLOBAL_GAINS(0xFFFF)`, then `RESET_ALL`. The next research
+  candidate is a strictly typed shared transport for display feature `0x8130`
+  on the RS50's separate HID++ interface, avoiding DirectInput acquisition and
+  the dedicated real-time FFB interface. It is not yet implemented or
+  authorized for hardware use.
 
 Build the guarded native bridge and its non-hardware tests with:
 
