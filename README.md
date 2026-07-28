@@ -82,11 +82,20 @@ screen on Logitech PRO Racing Wheel and RS50.
   `RESET_ALL`, `SET_GLOBAL_GAINS(0xFFFF)`, then `RESET_ALL`. The next research
   candidate is a strictly typed shared transport for display feature `0x8130`
   on the RS50's separate HID++ interface, avoiding DirectInput acquisition and
-  the dedicated real-time FFB interface. It is not yet implemented or
-  authorized for hardware use.
+  the dedicated real-time FFB interface.
+- Build E implements the shared `0x8130` codec and fail-closed 5 Hz session
+  offline. It can only construct Root discovery and Layout J function-`3`
+  transactions, validates exact 64-byte responses, and has no physical HID
+  implementation or CLI route. It is not authorized for hardware use.
 
 Build the guarded native bridge and its non-hardware tests with:
 
 ```powershell
 .\scripts\Build-Rs50DirectInputBridge.ps1 -Configuration Release
+```
+
+Audit the offline Build E shared-HID++ surface with:
+
+```powershell
+.\scripts\Test-Rs50SharedHidppSurface.ps1
 ```

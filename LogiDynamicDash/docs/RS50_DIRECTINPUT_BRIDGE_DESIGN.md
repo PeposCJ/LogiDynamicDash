@@ -419,6 +419,12 @@ identity, serialize one matched request at a time, reject every feature and
 function except the proven display query/set surface, and never expose generic
 raw reports. No physical test is authorized by this design note.
 
+Build E now implements that closed protocol surface and session state machine
+offline, with no physical exchange implementation and no CLI route. See
+[`RS50_SHARED_HIDPP_BUILD_E_DESIGN.md`](RS50_SHARED_HIDPP_BUILD_E_DESIGN.md).
+The DirectInput bridge remains retained as research evidence but must not be
+used for moving-car or endurance telemetry.
+
 ## Explicit Non-Goals
 
 - no raw HID++ sender
