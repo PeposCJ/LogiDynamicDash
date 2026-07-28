@@ -7,4 +7,6 @@
   <Project Path="Rs50SharedHidppTransport/Rs50SharedHidppTransport.csproj" />
   <Project Path="Rs50SharedHidppOneShot/Rs50SharedHidppOneShot.csproj" />
   <Project Path="Rs50SharedHidppBoundedStream/Rs50SharedHidppBoundedStream.csproj" />
+  <Project Path="Rs50SharedHidppCoexistence/Rs50SharedHidppCoexistence.csproj" />
+  <Project Path="Rs50SharedHidppCoexistence.Verification/Rs50SharedHidppCoexistence.Verification.csproj" />
 </Solution>

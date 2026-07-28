@@ -107,6 +107,10 @@ screen on Logitech PRO Racing Wheel and RS50.
   all five counters rendered in order, USBPcap contained exactly one discovery
   plus five endpoint-0 setters and their exact acknowledgements, and the
   operator observed no LED, FFB, torque, or wheel-position change.
+- Build I compiles a separate, unexecuted coexistence trial for iRacing with
+  the car stationary in the pits. It still sends only five fixed 1 Hz frames
+  and imports no telemetry SDK. A fake-only direct verifier passes under the
+  local Code Integrity policy; the dashboard remains disconnected.
 
 Build the guarded native bridge and its non-hardware tests with:
 
@@ -136,4 +140,10 @@ Audit the unexecuted Build H bounded-stream surface with:
 
 ```powershell
 .\scripts\Test-Rs50SharedHidppBoundedStreamSurface.ps1
+```
+
+Audit the unexecuted Build I stationary-coexistence surface with:
+
+```powershell
+.\scripts\Test-Rs50SharedHidppCoexistenceSurface.ps1
 ```
