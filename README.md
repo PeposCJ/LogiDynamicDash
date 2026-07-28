@@ -117,6 +117,11 @@ screen on Logitech PRO Racing Wheel and RS50.
   speed/gear for ten seconds, suppresses duplicates, caps changes at 5 Hz,
   and fails closed above 0.5 m/s or on missing/invalid telemetry. Its
   fake-only verifier passes and the dashboard does not reference this route.
+- Build K compiles a separate, not-yet-executed visual-capability gallery. It
+  shows the firmware's fixed Layouts A-J for three seconds each using only
+  source-fixed values and text. Its purpose is to photograph and classify
+  built-in bars, graphics, decoration, and layout-selected typography; it
+  does not probe unknown rim features or claim a framebuffer.
 
 Build the guarded native bridge and its non-hardware tests with:
 
@@ -158,4 +163,10 @@ Audit the unexecuted Build J stationary-telemetry surface with:
 
 ```powershell
 .\scripts\Test-Rs50SharedHidppTelemetryTrialSurface.ps1
+```
+
+Audit the unexecuted Build K A-J layout-gallery surface with:
+
+```powershell
+.\scripts\Test-Rs50SharedHidppLayoutGallerySurface.ps1
 ```

@@ -195,18 +195,21 @@ internal sealed class Rs50HidppDeviceExchange
             return;
         }
 
-        if (kind != Rs50HidppDisplayTransactionKind.SetLayoutJ ||
+        if (kind is < Rs50HidppDisplayTransactionKind.SetLayoutA or
+                > Rs50HidppDisplayTransactionKind.SetLayoutJ ||
             request.Length !=
                 Rs50HidppDisplayProtocol.VeryLongReportLength ||
             request[0] != 0x12 ||
             request[1] != Rs50HidppDisplayProtocol.BaseDeviceIndex ||
             request[2] is < 0x02 or >= 0xFF ||
             request[3] != 0x3A ||
-            request[4] != 0x09 ||
+            request[4] !=
+                (byte)(kind -
+                    Rs50HidppDisplayTransactionKind.SetLayoutA) ||
             request[63] != 0)
         {
             throw new InvalidOperationException(
-                "The Layout J transaction is not canonical.");
+                "The display-layout transaction is not canonical.");
         }
     }
 

@@ -77,6 +77,6 @@ if ($publicTypeCount -ne 0) {
 
 Write-Output "RS50 shared HID++ Build E surface audit passed."
 Write-Output "  Feature: 0x8130 only"
-Write-Output "  Operations: Root discovery and Layout J setter only"
+Write-Output "  Operations: Root discovery and typed A-J setters only"
 Write-Output "  Physical HID implementation: absent"
 Write-Output "  DirectInput, FFB, RPM, LIGHTSYNC, and CLI routes: absent"

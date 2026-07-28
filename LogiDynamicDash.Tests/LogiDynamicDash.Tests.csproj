@@ -26,6 +26,8 @@
       Include="..\Rs50SharedHidppCoexistence\Rs50SharedHidppCoexistence.csproj" />
     <ProjectReference
       Include="..\Rs50SharedHidppTelemetryTrial\Rs50SharedHidppTelemetryTrial.csproj" />
+    <ProjectReference
+      Include="..\Rs50SharedHidppLayoutGallery\Rs50SharedHidppLayoutGallery.csproj" />
   </ItemGroup>
 
   <ItemGroup>

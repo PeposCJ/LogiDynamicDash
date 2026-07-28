@@ -3,6 +3,15 @@ namespace LogiDynamicDash.Hidpp;
 internal enum Rs50HidppDisplayTransactionKind
 {
     DiscoverDisplayFeature,
+    SetLayoutA,
+    SetLayoutB,
+    SetLayoutC,
+    SetLayoutD,
+    SetLayoutE,
+    SetLayoutF,
+    SetLayoutG,
+    SetLayoutH,
+    SetLayoutI,
     SetLayoutJ
 }
 
@@ -33,9 +42,19 @@ internal sealed class Rs50HidppDisplayTransaction
             Rs50HidppDisplayTransactionKind.DiscoverDisplayFeature,
             (byte[])request.Clone());
 
-    internal static Rs50HidppDisplayTransaction CreateLayoutJ(
-        byte[] request) =>
+    internal static Rs50HidppDisplayTransaction CreateLayout(
+        Rs50HidppDisplayTransactionKind kind,
+        byte[] request)
+    {
+        if (kind is < Rs50HidppDisplayTransactionKind.SetLayoutA or
+            > Rs50HidppDisplayTransactionKind.SetLayoutJ)
+        {
+            throw new ArgumentOutOfRangeException(nameof(kind));
+        }
+
+        return
         new(
-            Rs50HidppDisplayTransactionKind.SetLayoutJ,
+            kind,
             (byte[])request.Clone());
+    }
 }

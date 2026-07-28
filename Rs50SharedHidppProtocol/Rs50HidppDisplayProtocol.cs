@@ -3,7 +3,7 @@ using System.Text;
 namespace LogiDynamicDash.Hidpp;
 
 /// <summary>
-/// Exact offline codec for the two authorized feature-0x8130 transactions.
+/// Exact offline codec for the recovered feature-0x8130 transactions.
 /// It contains no device enumeration, stream, handle, read, or write API.
 /// </summary>
 internal static class Rs50HidppDisplayProtocol
@@ -19,7 +19,7 @@ internal static class Rs50HidppDisplayProtocol
     private const byte RootFeatureIndex = 0x00;
     private const byte RootGetFeatureFunction = 0x00;
     private const byte SetLayoutFunction = 0x03;
-    private const byte LayoutJIndex = 0x09;
+    internal const byte LayoutJIndex = 0x09;
 
     internal static Rs50HidppDisplayTransaction CreateDiscovery()
     {
@@ -76,6 +76,126 @@ internal static class Rs50HidppDisplayProtocol
         return runtimeIndex;
     }
 
+    internal static Rs50HidppDisplayTransaction CreateLayoutA(
+        byte runtimeIndex) =>
+        CreateLayoutRequest(
+            runtimeIndex,
+            layoutIndex: 0,
+            Rs50HidppDisplayTransactionKind.SetLayoutA);
+
+    internal static Rs50HidppDisplayTransaction CreateLayoutB(
+        byte runtimeIndex) =>
+        CreateLayoutRequest(
+            runtimeIndex,
+            layoutIndex: 1,
+            Rs50HidppDisplayTransactionKind.SetLayoutB);
+
+    internal static Rs50HidppDisplayTransaction CreateLayoutC(
+        byte runtimeIndex,
+        byte value)
+    {
+        byte[] request = CreateLayoutRequestBytes(
+            runtimeIndex,
+            layoutIndex: 2);
+        request[5] = value;
+        return Rs50HidppDisplayTransaction.CreateLayout(
+            Rs50HidppDisplayTransactionKind.SetLayoutC,
+            request);
+    }
+
+    internal static Rs50HidppDisplayTransaction CreateLayoutD(
+        byte runtimeIndex,
+        byte firstValue,
+        byte secondValue,
+        string text)
+    {
+        ValidateText(text, 11, nameof(text));
+        byte[] request = CreateLayoutRequestBytes(
+            runtimeIndex,
+            layoutIndex: 3);
+        request[5] = firstValue;
+        request[6] = secondValue;
+        WriteAscii(request.AsSpan(7, 11), text);
+        return Rs50HidppDisplayTransaction.CreateLayout(
+            Rs50HidppDisplayTransactionKind.SetLayoutD,
+            request);
+    }
+
+    internal static Rs50HidppDisplayTransaction CreateLayoutE(
+        byte runtimeIndex,
+        byte firstValue,
+        byte secondValue,
+        string firstText,
+        string secondText)
+    {
+        ValidateText(firstText, 3, nameof(firstText));
+        ValidateText(secondText, 7, nameof(secondText));
+        byte[] request = CreateLayoutRequestBytes(
+            runtimeIndex,
+            layoutIndex: 4);
+        request[5] = firstValue;
+        request[6] = secondValue;
+        WriteAscii(request.AsSpan(7, 3), firstText);
+        WriteAscii(request.AsSpan(10, 7), secondText);
+        return Rs50HidppDisplayTransaction.CreateLayout(
+            Rs50HidppDisplayTransactionKind.SetLayoutE,
+            request);
+    }
+
+    internal static Rs50HidppDisplayTransaction CreateLayoutF(
+        byte runtimeIndex,
+        string firstText,
+        string secondText) =>
+        CreateTwoTextLayout(
+            runtimeIndex,
+            layoutIndex: 5,
+            Rs50HidppDisplayTransactionKind.SetLayoutF,
+            firstText,
+            firstMaximumLength: 1,
+            secondText,
+            secondMaximumLength: 3);
+
+    internal static Rs50HidppDisplayTransaction CreateLayoutG(
+        byte runtimeIndex,
+        string firstText,
+        string secondText) =>
+        CreateTwoTextLayout(
+            runtimeIndex,
+            layoutIndex: 6,
+            Rs50HidppDisplayTransactionKind.SetLayoutG,
+            firstText,
+            firstMaximumLength: 1,
+            secondText,
+            secondMaximumLength: 3);
+
+    internal static Rs50HidppDisplayTransaction CreateLayoutH(
+        byte runtimeIndex,
+        string firstText,
+        string secondText) =>
+        CreateTwoTextLayout(
+            runtimeIndex,
+            layoutIndex: 7,
+            Rs50HidppDisplayTransactionKind.SetLayoutH,
+            firstText,
+            firstMaximumLength: 21,
+            secondText,
+            secondMaximumLength: 10);
+
+    internal static Rs50HidppDisplayTransaction CreateLayoutI(
+        byte runtimeIndex,
+        string line1,
+        string line2,
+        string line3,
+        string line4) =>
+        CreateFourTextLayout(
+            runtimeIndex,
+            layoutIndex: 8,
+            Rs50HidppDisplayTransactionKind.SetLayoutI,
+            line1,
+            line2,
+            line3,
+            line4);
+
     internal static Rs50HidppDisplayTransaction CreateLayoutJ(
         byte runtimeIndex,
         string line1,
@@ -83,27 +203,17 @@ internal static class Rs50HidppDisplayProtocol
         string line3,
         string line4)
     {
-        ValidateRuntimeIndex(runtimeIndex);
-        ValidateText(line1, 19, nameof(line1));
-        ValidateText(line2, 10, nameof(line2));
-        ValidateText(line3, 19, nameof(line3));
-        ValidateText(line4, 10, nameof(line4));
-
-        byte[] request = new byte[VeryLongReportLength];
-        request[0] = VeryLongReportId;
-        request[1] = BaseDeviceIndex;
-        request[2] = runtimeIndex;
-        request[3] = EncodeFunction(SetLayoutFunction);
-        request[4] = LayoutJIndex;
-        WriteAscii(request.AsSpan(5, 19), line1);
-        WriteAscii(request.AsSpan(24, 10), line2);
-        WriteAscii(request.AsSpan(34, 19), line3);
-        WriteAscii(request.AsSpan(53, 10), line4);
-
-        return Rs50HidppDisplayTransaction.CreateLayoutJ(request);
+        return CreateFourTextLayout(
+            runtimeIndex,
+            LayoutJIndex,
+            Rs50HidppDisplayTransactionKind.SetLayoutJ,
+            line1,
+            line2,
+            line3,
+            line4);
     }
 
-    internal static void ParseLayoutJAcknowledgement(
+    internal static void ParseLayoutAcknowledgement(
         byte runtimeIndex,
         ReadOnlySpan<byte> response)
     {
@@ -112,7 +222,95 @@ internal static class Rs50HidppDisplayProtocol
         byte function = EncodeFunction(SetLayoutFunction);
         ThrowIfError(response, runtimeIndex, function);
         ValidateHeader(response, runtimeIndex, function);
-        RequireZero(response[4..], "Layout J acknowledgement body");
+        RequireZero(response[4..], "layout acknowledgement body");
+    }
+
+    internal static void ParseLayoutJAcknowledgement(
+        byte runtimeIndex,
+        ReadOnlySpan<byte> response) =>
+        ParseLayoutAcknowledgement(runtimeIndex, response);
+
+    private static Rs50HidppDisplayTransaction CreateLayoutRequest(
+        byte runtimeIndex,
+        byte layoutIndex,
+        Rs50HidppDisplayTransactionKind kind) =>
+        Rs50HidppDisplayTransaction.CreateLayout(
+            kind,
+            CreateLayoutRequestBytes(runtimeIndex, layoutIndex));
+
+    private static byte[] CreateLayoutRequestBytes(
+        byte runtimeIndex,
+        byte layoutIndex)
+    {
+        ValidateRuntimeIndex(runtimeIndex);
+        if (layoutIndex > LayoutJIndex)
+        {
+            throw new ArgumentOutOfRangeException(nameof(layoutIndex));
+        }
+
+        byte[] request = new byte[VeryLongReportLength];
+        request[0] = VeryLongReportId;
+        request[1] = BaseDeviceIndex;
+        request[2] = runtimeIndex;
+        request[3] = EncodeFunction(SetLayoutFunction);
+        request[4] = layoutIndex;
+        return request;
+    }
+
+    private static Rs50HidppDisplayTransaction CreateTwoTextLayout(
+        byte runtimeIndex,
+        byte layoutIndex,
+        Rs50HidppDisplayTransactionKind kind,
+        string firstText,
+        int firstMaximumLength,
+        string secondText,
+        int secondMaximumLength)
+    {
+        ValidateText(
+            firstText,
+            firstMaximumLength,
+            nameof(firstText));
+        ValidateText(
+            secondText,
+            secondMaximumLength,
+            nameof(secondText));
+
+        byte[] request = CreateLayoutRequestBytes(
+            runtimeIndex,
+            layoutIndex);
+        WriteAscii(
+            request.AsSpan(5, firstMaximumLength),
+            firstText);
+        WriteAscii(
+            request.AsSpan(
+                5 + firstMaximumLength,
+                secondMaximumLength),
+            secondText);
+        return Rs50HidppDisplayTransaction.CreateLayout(kind, request);
+    }
+
+    private static Rs50HidppDisplayTransaction CreateFourTextLayout(
+        byte runtimeIndex,
+        byte layoutIndex,
+        Rs50HidppDisplayTransactionKind kind,
+        string line1,
+        string line2,
+        string line3,
+        string line4)
+    {
+        ValidateText(line1, 19, nameof(line1));
+        ValidateText(line2, 10, nameof(line2));
+        ValidateText(line3, 19, nameof(line3));
+        ValidateText(line4, 10, nameof(line4));
+
+        byte[] request = CreateLayoutRequestBytes(
+            runtimeIndex,
+            layoutIndex);
+        WriteAscii(request.AsSpan(5, 19), line1);
+        WriteAscii(request.AsSpan(24, 10), line2);
+        WriteAscii(request.AsSpan(34, 19), line3);
+        WriteAscii(request.AsSpan(53, 10), line4);
+        return Rs50HidppDisplayTransaction.CreateLayout(kind, request);
     }
 
     private static byte EncodeFunction(byte functionId) =>
@@ -188,7 +386,7 @@ internal static class Rs50HidppDisplayProtocol
         if (bytesWritten != value.Length)
         {
             throw new InvalidOperationException(
-                "Layout J text did not encode to one byte per character.");
+                "Display text did not encode to one byte per character.");
         }
     }
 
@@ -202,7 +400,7 @@ internal static class Rs50HidppDisplayProtocol
         if (value.Length > maximumLength)
         {
             throw new ArgumentException(
-                $"Text exceeds the Layout J limit of {maximumLength} " +
+                $"Text exceeds the layout limit of {maximumLength} " +
                 "characters.",
                 parameterName);
         }
