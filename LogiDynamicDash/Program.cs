@@ -17,14 +17,16 @@ namespace LogiDynamicDash;
 ])]
 internal class Program
 {
+    private const int DisplayRefreshIntervalMilliseconds = 200;
+
     private static readonly Stopwatch RefreshTimer =
         Stopwatch.StartNew();
 
     private static readonly TelemetrySnapshot Snapshot =
         new();
 
-    private static readonly ConsoleDashboard Dashboard =
-        new();
+    private static readonly IDisplaySink Dashboard =
+        new DistinctDisplaySink(new ConsoleDashboard());
 
     private static readonly DisplayController Controller =
         new();
@@ -67,7 +69,8 @@ internal class Program
     private static void HandleTelemetryUpdated(
         TelemetrySnapshot snapshot)
     {
-        if (RefreshTimer.ElapsedMilliseconds < 100)
+        if (RefreshTimer.ElapsedMilliseconds <
+            DisplayRefreshIntervalMilliseconds)
         {
             return;
         }
@@ -88,8 +91,7 @@ internal class Program
         DisplayMode mode =
             Controller.SelectMode(snapshot);
 
-        Dashboard.Render(
-            snapshot,
-            mode);
+        LayoutJFrame frame = LayoutJTelemetryFormatter.Format(snapshot, mode);
+        Dashboard.Render(frame);
     }
 }

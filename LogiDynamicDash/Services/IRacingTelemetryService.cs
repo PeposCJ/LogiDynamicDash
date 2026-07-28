@@ -12,6 +12,9 @@ internal sealed class IRacingTelemetryService
         Action<TelemetrySnapshot> onStatusChanged,
         CancellationToken cancellationToken)
     {
+        object snapshotGate = new();
+        TelemetrySnapshot currentSnapshot = snapshot;
+
         await using var client =
             TelemetryClient<TelemetryData>.Create(
                 NullLogger.Instance);
@@ -21,47 +24,52 @@ internal sealed class IRacingTelemetryService
             {
                 OnConnectStateChanged = state =>
                 {
-                    snapshot.ConnectionState =
-                        state
-                            .ToString()
-                            .ToUpperInvariant();
+                    lock (snapshotGate)
+                    {
+                        currentSnapshot = currentSnapshot with
+                        {
+                            ConnectionState = state
+                                .ToString()
+                                .ToUpperInvariant()
+                        };
 
-                    onStatusChanged(snapshot);
+                        onStatusChanged(currentSnapshot);
+                    }
 
                     return Task.CompletedTask;
                 },
 
                 OnTelemetryUpdate = data =>
                 {
-                    snapshot.IsOnTrack =
-                        data.IsOnTrackCar;
+                    lock (snapshotGate)
+                    {
+                        currentSnapshot = currentSnapshot with
+                        {
+                            IsOnTrack = data.IsOnTrackCar,
+                            Gear = data.Gear,
+                            Rpm = data.RPM,
+                            SpeedMetersPerSecond = data.Speed,
+                            BrakeBiasPercent = data.dcBrakeBias,
+                            LastLapTimeSeconds = data.LapLastLapTime
+                        };
 
-                    snapshot.Gear =
-                        data.Gear;
-
-                    snapshot.Rpm =
-                        data.RPM;
-
-                    snapshot.SpeedMetersPerSecond =
-                        data.Speed;
-
-                    snapshot.BrakeBiasPercent =
-                        data.dcBrakeBias;
-
-                    snapshot.LastLapTimeSeconds =
-                        data.LapLastLapTime;
-
-                    onTelemetryUpdated(snapshot);
+                        onTelemetryUpdated(currentSnapshot);
+                    }
 
                     return Task.CompletedTask;
                 },
 
                 OnError = _ =>
                 {
-                    snapshot.ConnectionState =
-                        "ERROR";
+                    lock (snapshotGate)
+                    {
+                        currentSnapshot = currentSnapshot with
+                        {
+                            ConnectionState = "ERROR"
+                        };
 
-                    onStatusChanged(snapshot);
+                        onStatusChanged(currentSnapshot);
+                    }
 
                     return Task.CompletedTask;
                 }

@@ -1,17 +1,17 @@
 ﻿namespace LogiDynamicDash.Models;
 
-internal sealed class TelemetrySnapshot
+internal sealed record TelemetrySnapshot
 {
-    public string ConnectionState { get; set; } = "WAITING";
+    public string ConnectionState { get; init; } = "WAITING";
 
-    public bool? IsOnTrack { get; set; }
+    public bool? IsOnTrack { get; init; }
 
-    public int? Gear { get; set; }
+    public int? Gear { get; init; }
 
-    public float? Rpm { get; set; }
+    public float? Rpm { get; init; }
 
-    public float? SpeedMetersPerSecond { get; set; }
-    public float? BrakeBiasPercent { get; set; }
+    public float? SpeedMetersPerSecond { get; init; }
+    public float? BrakeBiasPercent { get; init; }
 
-    public float? LastLapTimeSeconds { get; set; }
+    public float? LastLapTimeSeconds { get; init; }
 }

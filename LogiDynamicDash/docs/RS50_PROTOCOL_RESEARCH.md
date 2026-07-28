@@ -103,6 +103,32 @@ physical transmission. Full sanitized evidence, exact layout bounds, firmware
 hash, and inference boundaries are recorded in
 [`evidence/RS50_FEATURE_8130_DISPLAY_GAME_DATA_2026-07-22.md`](evidence/RS50_FEATURE_8130_DISPLAY_GAME_DATA_2026-07-22.md).
 
+A guarded DirectInput general-support query later reproduced that discovery
+with G HUB closed. The RS50 returned support byte `1`, USBPcap assigned
+`0x8130` to runtime `0x12`, and the OLED did not change. The capture contained
+no operational request to runtime `0x12`, confirming that support discovery is
+not itself a layout update. See
+[`evidence/RS50_DIRECTINPUT_QUERY_BUILD_A3_SUCCESS_2026-07-27.md`](evidence/RS50_DIRECTINPUT_QUERY_BUILD_A3_SUCCESS_2026-07-27.md).
+
+The subsequent single Layout J capability query also matched the recovered
+model. DirectInput returned support byte `1` with an intact ten-byte sentinel
+contract, while USBPcap captured one layout-count request plus ten descriptor
+requests to runtime `0x12`. The physical RS50 reported Layout J ID `10` and
+four string capacities `19/10/19/10`. Explicit operator confirmation of the
+physical observation recorded no OLED, LED, torque, or wheel-position change.
+This closes the query gate but does not itself demonstrate display output. See
+[`evidence/RS50_LAYOUT_J_QUERY_SUCCESS_2026-07-27.md`](evidence/RS50_LAYOUT_J_QUERY_SUCCESS_2026-07-27.md).
+
+Build C then confirmed display output. One DirectInput Layout J setter yielded
+one matched feature-`0x8130` function-`3` request/response and visibly replaced
+the Test fallback. The captured wire strings and photographed rows were
+`RS50 / LOGIDYNAMI / TEST 1 / OLED LINK`. Comparing them with the four
+game-facing inputs proves the driver's pairwise permutation `2/1/4/3`; the
+ten-character second row also physically confirms the recovered capacity. No
+torque, LED, or wheel-movement change was observed.
+See
+[`evidence/RS50_STATIC_LAYOUT_J_SUCCESS_2026-07-27.md`](evidence/RS50_STATIC_LAYOUT_J_SUCCESS_2026-07-27.md).
+
 The feature name occurs in the installed G HUB depot only inside the agent and
 DirectInput/FFB manager binaries, not the Electron front-end archive. The
 manager does contain internal `Display::Message::SetLayout` commands, so the

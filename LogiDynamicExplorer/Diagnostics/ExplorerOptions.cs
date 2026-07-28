@@ -5,6 +5,8 @@ internal sealed record ExplorerOptions(
     bool ShowHelp,
     string? DecodeReport,
     string? AnalyzeReportFile,
+    string? CompareBaselineFile,
+    string? CompareCandidateFile,
     string? MonitorCollection,
     TimeSpan? MonitorDuration,
     string? Error)
@@ -18,6 +20,8 @@ internal sealed record ExplorerOptions(
         bool showHelp = false;
         string? decodeReport = null;
         string? analyzeReportFile = null;
+        string? compareBaselineFile = null;
+        string? compareCandidateFile = null;
         string? monitorCollection = null;
         TimeSpan? monitorDuration = null;
 
@@ -56,6 +60,22 @@ internal sealed record ExplorerOptions(
                     {
                         return Invalid(
                             "--analyze-reports requires a file path or '-' for standard input.");
+                    }
+
+                    break;
+
+                case "--compare-reports":
+                    if (!TryReadValue(
+                            arguments,
+                            ref index,
+                            out compareBaselineFile) ||
+                        !TryReadValue(
+                            arguments,
+                            ref index,
+                            out compareCandidateFile))
+                    {
+                        return Invalid(
+                            "--compare-reports requires baseline and candidate file paths.");
                     }
 
                     break;
@@ -118,11 +138,31 @@ internal sealed record ExplorerOptions(
                 "--decode-report and --analyze-reports cannot be combined.");
         }
 
+        int offlineModeCount =
+            (decodeReport is null ? 0 : 1) +
+            (analyzeReportFile is null ? 0 : 1) +
+            (compareBaselineFile is null ? 0 : 1);
+
+        if (offlineModeCount > 1)
+        {
+            return Invalid(
+                "Offline decode, analysis, and comparison modes cannot be combined.");
+        }
+
         if (analyzeReportFile is not null &&
             (inventoryOnly || monitorCollection is not null || monitorDuration is not null))
         {
             return Invalid(
                 "--analyze-reports cannot be combined with hardware modes.");
+        }
+
+        if (compareBaselineFile is not null &&
+            (inventoryOnly ||
+             monitorCollection is not null ||
+             monitorDuration is not null))
+        {
+            return Invalid(
+                "--compare-reports cannot be combined with hardware modes.");
         }
 
         if (monitorCollection is not null && monitorDuration is null)
@@ -142,6 +182,8 @@ internal sealed record ExplorerOptions(
             showHelp,
             decodeReport,
             analyzeReportFile,
+            compareBaselineFile,
+            compareCandidateFile,
             monitorCollection,
             monitorDuration,
             Error: null);
@@ -174,6 +216,8 @@ internal sealed record ExplorerOptions(
             ShowHelp: false,
             DecodeReport: null,
             AnalyzeReportFile: null,
+            CompareBaselineFile: null,
+            CompareCandidateFile: null,
             MonitorCollection: null,
             MonitorDuration: null,
             Error: error);

@@ -41,6 +41,44 @@ public sealed class Rs50HidppLongReportDecoderTests
     }
 
     [Fact]
+    public void Decode_FeatureSetResponse_NamesDisplayGameDataEvidence()
+    {
+        byte[] report =
+        [
+            0x11, 0xFF, 0x01, 0x1B,
+            0x81, 0x30, 0x00, 0x00
+        ];
+
+        string result = Rs50ReportDecoder.Decode(report);
+
+        Assert.Equal(
+            "HID++ FeatureSet: device 0xFF, " +
+            "feature 0x8130 (Display Game Data; G HUB static name), " +
+            "flags 0x00 (public), version 0, SW-ID 0x0B",
+            result);
+    }
+
+    [Theory]
+    [InlineData(0x80, 0x7A, "RPM Indicator")]
+    [InlineData(0x81, 0x39, "TRUEFORCE")]
+    [InlineData(0x81, 0x40, "FFB Filter")]
+    public void Decode_FeatureSetResponse_NamesKnownWheelNeighbors(
+        byte featureHigh,
+        byte featureLow,
+        string expectedName)
+    {
+        byte[] report =
+        [
+            0x11, 0xFF, 0x01, 0x1B,
+            featureHigh, featureLow, 0x00, 0x00
+        ];
+
+        string result = Rs50ReportDecoder.Decode(report);
+
+        Assert.Contains($"({expectedName}; G HUB static name)", result);
+    }
+
+    [Fact]
     public void Decode_NonFeatureSetReport_PreservesHeaderFields()
     {
         byte[] report = [0x11, 0x02, 0x07, 0x3A];

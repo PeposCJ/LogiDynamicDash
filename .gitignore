@@ -35,6 +35,8 @@ bld/
 # Potentially sensitive USB and HID diagnostic captures
 *.pcap
 *.pcapng
+*.dfu
+*_capture.zip
 rs50_passive_*.txt
 [Dd]iagnostic-[Cc]aptures/
 

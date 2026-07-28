@@ -2,7 +2,7 @@
 
 namespace LogiDynamicDash.Controllers;
 
-internal sealed class DisplayController
+internal sealed class DisplayController(TimeProvider? timeProvider = null)
 {
     private static readonly TimeSpan BrakeBiasDuration =
         TimeSpan.FromSeconds(2);
@@ -15,24 +15,27 @@ internal sealed class DisplayController
 
     private bool _lastLapInitialized;
 
-    private DateTime _brakeBiasExpiresAt =
-        DateTime.MinValue;
+    private readonly TimeProvider _timeProvider =
+        timeProvider ?? TimeProvider.System;
 
-    private DateTime _lastLapExpiresAt =
-        DateTime.MinValue;
+    private DateTimeOffset _brakeBiasExpiresAt =
+        DateTimeOffset.MinValue;
+
+    private DateTimeOffset _lastLapExpiresAt =
+        DateTimeOffset.MinValue;
 
     public DisplayMode SelectMode(
         TelemetrySnapshot snapshot)
     {
-        DateTime now = DateTime.UtcNow;
-
-        DetectCompletedLap(snapshot, now);
-        DetectBrakeBiasChange(snapshot, now);
+        DateTimeOffset now = _timeProvider.GetUtcNow();
 
         if (!IsConnected(snapshot))
         {
             return DisplayMode.ConnectionProblem;
         }
+
+        DetectCompletedLap(snapshot, now);
+        DetectBrakeBiasChange(snapshot, now);
 
         if (now < _brakeBiasExpiresAt)
         {
@@ -49,9 +52,11 @@ internal sealed class DisplayController
 
     private void DetectBrakeBiasChange(
         TelemetrySnapshot snapshot,
-        DateTime now)
+        DateTimeOffset now)
     {
-        if (snapshot.BrakeBiasPercent is not float currentBrakeBias)
+        if (snapshot.BrakeBiasPercent is not float currentBrakeBias ||
+            !float.IsFinite(currentBrakeBias) ||
+            currentBrakeBias is < 0 or > 100)
         {
             return;
         }
@@ -81,7 +86,7 @@ internal sealed class DisplayController
 
     private void DetectCompletedLap(
         TelemetrySnapshot snapshot,
-        DateTime now)
+        DateTimeOffset now)
     {
         if (!_lastLapInitialized)
         {
@@ -94,6 +99,7 @@ internal sealed class DisplayController
         }
 
         if (snapshot.LastLapTimeSeconds is not float currentLastLap ||
+            !float.IsFinite(currentLastLap) ||
             currentLastLap <= 0)
         {
             return;

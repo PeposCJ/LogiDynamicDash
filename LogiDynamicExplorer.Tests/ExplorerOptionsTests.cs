@@ -53,6 +53,45 @@ public sealed class ExplorerOptionsTests
     }
 
     [Fact]
+    public void Parse_OfflineComparison_ReturnsBothFiles()
+    {
+        ExplorerOptions result = ExplorerOptions.Parse(
+            ["--compare-reports", "baseline.tsv", "query.tsv"]);
+
+        Assert.Null(result.Error);
+        Assert.Equal("baseline.tsv", result.CompareBaselineFile);
+        Assert.Equal("query.tsv", result.CompareCandidateFile);
+        Assert.Null(result.MonitorCollection);
+    }
+
+    [Fact]
+    public void Parse_ComparisonWithoutCandidate_ReturnsError()
+    {
+        ExplorerOptions result = ExplorerOptions.Parse(
+            ["--compare-reports", "baseline.tsv"]);
+
+        Assert.Equal(
+            "--compare-reports requires baseline and candidate file paths.",
+            result.Error);
+    }
+
+    [Fact]
+    public void Parse_ComparisonWithHardwareMode_ReturnsError()
+    {
+        ExplorerOptions result = ExplorerOptions.Parse(
+            [
+                "--compare-reports",
+                "baseline.tsv",
+                "query.tsv",
+                "--inventory"
+            ]);
+
+        Assert.Equal(
+            "--compare-reports cannot be combined with hardware modes.",
+            result.Error);
+    }
+
+    [Fact]
     public void Parse_TimeLimitedMonitor_ReturnsNormalizedOptions()
     {
         ExplorerOptions result = ExplorerOptions.Parse(

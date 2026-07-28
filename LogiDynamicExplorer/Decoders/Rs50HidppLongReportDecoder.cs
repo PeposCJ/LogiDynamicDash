@@ -59,19 +59,9 @@ internal static class Rs50HidppLongReportDecoder
 
         return
             $"HID++ FeatureSet: device 0x{deviceIndex:X2}, " +
-            $"feature 0x{featureId:X4}{FormatFeatureName(featureId)}, " +
+            $"feature 0x{featureId:X4}{HidppFeatureNames.Format(featureId)}, " +
             $"flags 0x{flags:X2} ({FormatFlags(flags)}), " +
             $"version {version}, SW-ID 0x{softwareId:X2}";
-    }
-
-    private static string FormatFeatureName(ushort featureId)
-    {
-        return featureId switch
-        {
-            0x00C3 => " (SecureDFU)",
-            0x8091 => " (per-key/LED matrix)",
-            _ => string.Empty
-        };
     }
 
     private static string FormatParameters(ReadOnlySpan<byte> parameters)
