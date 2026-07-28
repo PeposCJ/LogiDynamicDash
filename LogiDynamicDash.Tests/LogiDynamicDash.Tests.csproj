@@ -20,6 +20,8 @@
       Include="..\Rs50SharedHidppTransport\Rs50SharedHidppTransport.csproj" />
     <ProjectReference
       Include="..\Rs50SharedHidppOneShot\Rs50SharedHidppOneShot.csproj" />
+    <ProjectReference
+      Include="..\Rs50SharedHidppBoundedStream\Rs50SharedHidppBoundedStream.csproj" />
   </ItemGroup>
 
   <ItemGroup>

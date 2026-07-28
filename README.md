@@ -101,6 +101,10 @@ screen on Logitech PRO Racing Wheel and RS50.
   all four fixed lines exactly, USBPcap captured only the expected endpoint-0
   discovery and Layout J `SET_REPORT` operations with exact acknowledgements,
   and the operator observed no LED, FFB, torque, or wheel-position change.
+- Build H compiles a separate bounded-stream executable for the next baseline.
+  It spells out exactly five fixed frames at 1 Hz with no loop, retry,
+  telemetry, or caller-controlled values. It is disconnected from the
+  dashboard and has not been executed against the physical RS50.
 
 Build the guarded native bridge and its non-hardware tests with:
 
@@ -124,4 +128,10 @@ Audit the unexecuted Build G one-shot surface with:
 
 ```powershell
 .\scripts\Test-Rs50SharedHidppOneShotSurface.ps1
+```
+
+Audit the unexecuted Build H bounded-stream surface with:
+
+```powershell
+.\scripts\Test-Rs50SharedHidppBoundedStreamSurface.ps1
 ```
