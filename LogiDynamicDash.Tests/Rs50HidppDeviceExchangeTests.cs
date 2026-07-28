@@ -138,6 +138,21 @@ public sealed class Rs50HidppDeviceExchangeTests
         Assert.True(fixture.ShortStream.Disposed);
     }
 
+    [Fact]
+    public void Open_AllowsDistinctTopLevelCollectionInstancePaths()
+    {
+        FakeFixture fixture = FakeFixture.Valid();
+
+        using Rs50HidppDeviceExchange exchange =
+            Rs50HidppDeviceExchange.Open(fixture.Catalog);
+
+        Assert.NotEqual(
+            fixture.ShortCollection.DevicePath,
+            fixture.VeryLongCollection.DevicePath);
+        Assert.Equal(1, fixture.ShortCollection.OpenCount);
+        Assert.Equal(1, fixture.VeryLongCollection.OpenCount);
+    }
+
     [Theory]
     [InlineData(CollectionMutation.RemoveShort)]
     [InlineData(CollectionMutation.RemoveVeryLong)]
@@ -153,7 +168,6 @@ public sealed class Rs50HidppDeviceExchangeTests
     [InlineData(CollectionMutation.WrongVeryLongOutputLength)]
     [InlineData(CollectionMutation.WrongShortPath)]
     [InlineData(CollectionMutation.WrongVeryLongPath)]
-    [InlineData(CollectionMutation.DifferentPhysicalInstance)]
     public void Open_RejectsAnyIdentityOrShapeMismatch(
         CollectionMutation mutation)
     {
@@ -184,8 +198,7 @@ public sealed class Rs50HidppDeviceExchangeTests
         WrongVeryLongInputLength,
         WrongVeryLongOutputLength,
         WrongShortPath,
-        WrongVeryLongPath,
-        DifferentPhysicalInstance
+        WrongVeryLongPath
     }
 
     private static byte[] ValidDiscoveryResponse()
@@ -228,7 +241,7 @@ public sealed class Rs50HidppDeviceExchangeTests
         private const string ShortPath =
             @"\\?\hid#vid_046d&pid_c276&mi_01&col01#8&abc#{guid}";
         private const string VeryLongPath =
-            @"\\?\hid#vid_046d&pid_c276&mi_01&col03#8&abc#{guid}";
+            @"\\?\hid#vid_046d&pid_c276&mi_01&col03#9&other#{guid}";
 
         private FakeFixture(
             FakeCatalog catalog,
@@ -333,10 +346,6 @@ public sealed class Rs50HidppDeviceExchangeTests
                 case CollectionMutation.WrongVeryLongPath:
                     VeryLongCollection.DevicePath =
                         VeryLongPath.Replace("col03", "col02");
-                    break;
-                case CollectionMutation.DifferentPhysicalInstance:
-                    VeryLongCollection.DevicePath =
-                        VeryLongPath.Replace("8&abc", "9&other");
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(mutation));

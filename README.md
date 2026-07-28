@@ -89,14 +89,17 @@ screen on Logitech PRO Racing Wheel and RS50.
   implementation in its protocol/session assemblies or CLI route.
 - Build F compiles a separate, unreferenced HidSharp adapter gated to the
   RS50's exact MI_01 COL01 (`FF43:0701`, 7-byte `0x10`) and COL03
-  (`FF43:0704`, 64-byte `0x12`) sibling collections. Its fake-only tests cover
+  (`FF43:0704`, 64-byte `0x12`) unique collections. Its fake-only tests cover
   routing, matching, disposal, uniqueness, identity, usage, length, and path
   failures. The dashboard does not reference or copy the transport assembly,
   and no Build F stream has been opened.
 - Build G compiles a separate one-shot executable with six exact ordered
   confirmations. It performs one feature discovery and one fixed Layout J
   setter, then closes both streams. It has no loop, telemetry, caller text, or
-  application route and has not been executed against the physical RS50.
+  application route. Its first physical preflight failed closed before stream
+  open because Windows uses distinct paths for each top-level collection;
+  USBPcap confirmed zero host output and the operator observed no physical
+  change.
 
 Build the guarded native bridge and its non-hardware tests with:
 

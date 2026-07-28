@@ -28,11 +28,18 @@ unless all of these match:
 - PID `0xC276`;
 - path marker `mi_01&col01` or `mi_01&col03`;
 - exactly one expected top-level usage;
-- exact maximum input and output report lengths;
-- identical normalized physical interface-instance paths.
+- exact maximum input and output report lengths.
 
-Missing, duplicate, malformed, or cross-device collections fail closed.
-MI_00, COL02, and MI_02 are never selected.
+Missing, duplicate, or malformed collections fail closed. If more than one
+RS50 is connected, its additional COL01/COL03 instances make the uniqueness
+gate reject before opening either stream. MI_00, COL02, and MI_02 are never
+selected.
+
+The first Build G preflight proved that Windows assigns different device-path
+instance segments to the RS50's top-level collections. Textual equality between
+the COL01 and COL03 paths is therefore not a valid sibling-device test. The
+gate relies instead on the exact VID/PID, MI_01 collection marker, usage,
+length, and system-wide uniqueness observed in the catalog.
 
 ## Exchange Routing
 
@@ -108,7 +115,7 @@ Build F tests use fake catalogs and streams only. They verify:
 - truncated responses fail;
 - both streams are disposed;
 - partial-open failure disposes the first stream;
-- every identity, usage, length, path, uniqueness, and sibling-instance gate.
+- every identity, usage, length, path-marker, and uniqueness gate.
 
 ## Gate Before First Physical Use
 

@@ -2,9 +2,11 @@
 
 ## Status
 
-Build G creates a separate physical one-shot executable. It compiles, but it
-has not been run. No Build G device enumeration, stream open, request, or
-report transmission has occurred.
+Build G creates a separate physical one-shot executable. Its first preflight
+execution on 2026-07-28 enumerated descriptors but failed closed on an invalid
+COL01/COL03 textual path-equality gate. No HID stream was opened and no request
+or report was transmitted. USBPcap and the operator independently confirmed no
+host output or physical change.
 
 `LogiDynamicDash` does not reference Build G, the physical transport, or
 HidSharp. Building or running the dashboard cannot activate this route.
@@ -88,3 +90,22 @@ Offline acceptance requires:
 If any side effect appears, no second physical run is authorized. Preserve the
 capture, return the wheel to a known safe state, and analyze the trace offline.
 Live telemetry and a full lap remain prohibited.
+
+## First Preflight Evidence
+
+Capture:
+
+```text
+2026-07-28_rs50_build_g_shared_hidpp_oneshot.pcapng
+```
+
+Offline extraction found device address `1.3`, 10,441 device-to-host reports,
+and zero host-to-device reports carrying HID data. Therefore the failed
+preflight contained no discovery, Layout J, `0x8123`, `0x807A`, or `0x807B`
+operation.
+
+The failure established that Windows top-level HID collections have distinct
+device-path instance segments. Build F now accepts those distinct paths while
+still requiring exactly one collection with every expected VID/PID, MI_01
+marker, usage, and report-length property. Connecting multiple RS50 devices
+would create duplicate matches and fail closed.

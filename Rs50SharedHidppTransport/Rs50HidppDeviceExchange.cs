@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using LogiDynamicDash.Hidpp;
 
 namespace Rs50SharedHidppTransport;
@@ -7,7 +6,7 @@ namespace Rs50SharedHidppTransport;
 /// Physical adapter compiled as a separate, unreferenced library.
 /// No application route constructs or loads this type.
 /// </summary>
-internal sealed partial class Rs50HidppDeviceExchange
+internal sealed class Rs50HidppDeviceExchange
     : IRs50HidppDisplayExchange
 {
     private const int LogitechVendorId = 0x046D;
@@ -55,16 +54,6 @@ internal sealed partial class Rs50HidppDeviceExchange
                 VeryLongCollectionUsage,
                 expectedInputLength: 64,
                 expectedOutputLength: 64);
-
-        if (!string.Equals(
-                NormalizeCollectionPath(shortCollection.DevicePath),
-                NormalizeCollectionPath(veryLongCollection.DevicePath),
-                StringComparison.OrdinalIgnoreCase))
-        {
-            throw new InvalidOperationException(
-                "The RS50 HID++ collections do not belong to the same " +
-                "physical interface instance.");
-        }
 
         IRs50HidStream? shortStream = null;
         try
@@ -251,11 +240,4 @@ internal sealed partial class Rs50HidppDeviceExchange
         return matches[0];
     }
 
-    private static string NormalizeCollectionPath(string path) =>
-        CollectionSuffixRegex().Replace(path, "&colXX");
-
-    [GeneratedRegex(
-        "&col(?:01|03)",
-        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
-    private static partial Regex CollectionSuffixRegex();
 }

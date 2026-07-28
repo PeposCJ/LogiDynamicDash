@@ -34,8 +34,9 @@ adapter therefore needs:
 2. MI_01 COL03 for Layout J writes and all matching responses.
 
 It does not need MI_00, MI_01 COL02, or MI_02. Build F rejects those
-collections as targets and requires COL01/COL03 to share the same normalized
-physical interface path.
+collections as targets and requires exactly one validated COL01 and one
+validated COL03. Windows gives top-level collections distinct device-path
+instance segments, so their full path strings are not expected to match.
 
 This inventory does not prove how Windows/HidSharp will implement an output
 write on these collections. A future captured stationary trial must verify

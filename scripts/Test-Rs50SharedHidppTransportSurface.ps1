@@ -115,6 +115,6 @@ if ($publicTypeCount -ne 0) {
 
 Write-Output "RS50 shared HID++ Build F transport audit passed."
 Write-Output "  Collections: MI_01 COL01 (FF43:0701) + COL03 (FF43:0704)"
-Write-Output "  VID/PID: 046D:C276 only; exact lengths and sibling path required"
+Write-Output "  VID/PID: 046D:C276 only; exact lengths and uniqueness required"
 Write-Output "  Application/CLI reference: absent"
 Write-Output "  DirectInput, FFB, LEDs, MI_00/MI_02, native HID APIs: absent"
