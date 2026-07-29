@@ -21,6 +21,7 @@ internal static class BuildJTelemetryTrialProgram
         "--confirm-rs50-awake",
         "--confirm-dynamic-selected",
         "--confirm-usbpcap-running",
+        "--confirm-video-recording",
         "--confirm-10-second-telemetry-trial"
     ];
 
@@ -83,6 +84,7 @@ internal static class BuildJTelemetryTrialProgram
             (string Speed, string Gear)? previousFrame = null;
             long previousTimestamp = 0;
             bool hasTransmitted = false;
+            bool connectedTelemetrySeen = false;
             bool stationaryTelemetrySeen = false;
             int transmissionCount = 0;
 
@@ -92,9 +94,17 @@ internal static class BuildJTelemetryTrialProgram
                 {
                     if (!snapshot.Connected)
                     {
+                        if (connectedTelemetrySeen)
+                        {
+                            throw new IOException(
+                                "iRacing telemetry disconnected during " +
+                                "the trial.");
+                        }
+
                         return;
                     }
 
+                    connectedTelemetrySeen = true;
                     ValidateStationarySnapshot(snapshot);
                     stationaryTelemetrySeen = true;
 

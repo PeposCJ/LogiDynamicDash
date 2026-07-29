@@ -11,12 +11,14 @@ string[] validArguments =
     "--confirm-rs50-awake",
     "--confirm-dynamic-selected",
     "--confirm-usbpcap-running",
+    "--confirm-video-recording",
     "--confirm-10-second-telemetry-trial"
 ];
 
 await VerifyInvalidArguments();
 await VerifyFormattingDeduplicationAndRateLimit();
 await VerifyMovementFailure();
+await VerifyDisconnectAfterTelemetryFailure();
 await VerifyEarlySourceEnd();
 await VerifyProtocolFailure();
 
@@ -126,6 +128,32 @@ async Task VerifyMovementFailure()
     Require(
         exchange.Transactions.Count == 1,
         "Movement must stop before a layout setter.");
+}
+
+async Task VerifyDisconnectAfterTelemetryFailure()
+{
+    var exchange = new RecordingExchange();
+    var source = new ScriptedTelemetrySource(
+        [
+            new(true, true, 0, 0.0f),
+            new(false, null, null, null)
+        ],
+        cancelAtEnd: false);
+
+    int exitCode = await BuildJTelemetryTrialProgram.RunAsync(
+        validArguments,
+        source,
+        () => exchange,
+        new ManualTimeProvider(),
+        CancellationToken.None,
+        TextWriter.Null,
+        TextWriter.Null);
+
+    Require(exitCode == 1, "A telemetry disconnect must fail closed.");
+    Require(exchange.Disposed, "A disconnect must dispose the exchange.");
+    Require(
+        exchange.Transactions.Count == 2,
+        "A disconnect must not send an additional layout frame.");
 }
 
 async Task VerifyEarlySourceEnd()

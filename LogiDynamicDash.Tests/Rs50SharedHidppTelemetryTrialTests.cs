@@ -14,6 +14,7 @@ public sealed class Rs50SharedHidppTelemetryTrialTests
         "--confirm-rs50-awake",
         "--confirm-dynamic-selected",
         "--confirm-usbpcap-running",
+        "--confirm-video-recording",
         "--confirm-10-second-telemetry-trial"
     ];
 
@@ -88,6 +89,30 @@ public sealed class Rs50SharedHidppTelemetryTrialTests
         Assert.Equal(1, exitCode);
         Assert.True(exchange.Disposed);
         Assert.Single(exchange.Transactions);
+    }
+
+    [Fact]
+    public async Task DisconnectAfterValidTelemetry_FailsWithoutAnotherSetter()
+    {
+        var source = new RecordingSource(
+        [
+            new(true, true, 0, 0.0f),
+            new(false, null, null, null)
+        ]);
+        var exchange = new RecordingExchange();
+
+        int exitCode = await BuildJTelemetryTrialProgram.RunAsync(
+            ValidArguments,
+            source,
+            () => exchange,
+            TimeProvider.System,
+            CancellationToken.None,
+            TextWriter.Null,
+            TextWriter.Null);
+
+        Assert.Equal(1, exitCode);
+        Assert.True(exchange.Disposed);
+        Assert.Equal(2, exchange.Transactions.Count);
     }
 
     private static string ReadText(

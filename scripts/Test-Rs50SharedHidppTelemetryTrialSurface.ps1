@@ -73,6 +73,7 @@ $requiredArguments = @(
     "--confirm-rs50-awake",
     "--confirm-dynamic-selected",
     "--confirm-usbpcap-running",
+    "--confirm-video-recording",
     "--confirm-10-second-telemetry-trial"
 )
 
@@ -193,7 +194,7 @@ if ($publicTypeCount -ne 0) {
 }
 
 Write-Output "RS50 shared HID++ Build J telemetry audit passed."
-Write-Output "  Arming: eight exact ordered stationary confirmations"
+Write-Output "  Arming: nine exact ordered stationary confirmations"
 Write-Output "  Telemetry: IsOnTrackCar, Gear, and Speed only"
 Write-Output "  Limits: 10 seconds, 5 Hz, deduplicated, stop above 0.5 m/s"
 Write-Output "  Operations: typed discovery and Layout J setter only"

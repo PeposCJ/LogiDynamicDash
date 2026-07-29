@@ -20,6 +20,8 @@ suppressed, changed frames are limited to 5 Hz, and execution ends after ten
 seconds. Missing telemetry, leaving the car, invalid gear, negative/non-finite
 speed, speed above 0.5 m/s, protocol failure, or an early telemetry shutdown
 fails closed and disposes the HID++ exchange.
+After the first connected telemetry update, a simulator telemetry disconnect
+also fails closed immediately.
 
 This is not authorization for moving-car use or a full lap.
 
@@ -54,6 +56,7 @@ All arguments must appear exactly in this order:
 --confirm-rs50-awake
 --confirm-dynamic-selected
 --confirm-usbpcap-running
+--confirm-video-recording
 --confirm-10-second-telemetry-trial
 ```
 
@@ -70,6 +73,7 @@ RS50. It covers:
 - disconnected-frame suppression;
 - identical-frame suppression and the 200 ms minimum interval;
 - immediate stop before a setter when speed exceeds 0.5 m/s;
+- immediate failure after a connected telemetry stream disconnects;
 - failure on an early telemetry-source return;
 - failure and disposal on an invalid acknowledgement.
 
@@ -105,11 +109,27 @@ Preparation:
 7. briefly rev in neutral and confirm the shift LEDs respond;
 8. return to idle and reconfirm `Speed 0 km/h`, `Gear N`;
 9. start USBPcapCMD filtered to the RS50 device address with a 128 MB buffer;
-10. capture at least ten seconds of untouched baseline traffic.
+10. start a video recording that clearly shows the OLED;
+11. capture at least ten seconds of untouched baseline traffic.
 
 After a separate authorization, run Build J exactly once. Do not move the car,
 change gear, rev the engine, steer, or touch the OLED settings during its ten
 seconds.
+
+Run the already validated Release executable with this exact command:
+
+```powershell
+& .\Rs50SharedHidppTelemetryTrial\bin\Release\net10.0\Rs50SharedHidppTelemetryTrial.exe `
+  --arm-rs50-shared-hidpp-telemetry `
+  --confirm-ghub-closed `
+  --confirm-iracing-running `
+  --confirm-car-stationary-in-pits `
+  --confirm-rs50-awake `
+  --confirm-dynamic-selected `
+  --confirm-usbpcap-running `
+  --confirm-video-recording `
+  --confirm-10-second-telemetry-trial
+```
 
 Continue capturing after the process closes:
 
@@ -118,7 +138,8 @@ Continue capturing after the process closes:
 3. briefly rev in neutral and confirm the shift LEDs still respond;
 4. confirm inputs and simulator connection remain normal;
 5. capture at least ten more seconds;
-6. stop and save USBPcap without driving.
+6. stop and save USBPcap without driving;
+7. stop and save the video.
 
 ## Acceptance Conditions
 
