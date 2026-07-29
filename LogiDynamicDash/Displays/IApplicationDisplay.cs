@@ -8,5 +8,9 @@ internal interface IApplicationDisplay
 
     void Render(TelemetrySnapshot snapshot, DisplayMode mode);
 
+    void Flush()
+    {
+    }
+
     void Stop();
 }

@@ -41,6 +41,26 @@ public sealed class OfflineCommandLineTests
         Assert.Equal("scenario.json", command.TelemetryPath);
     }
 
+    [Fact]
+    public void TryParse_AcceptsBoundedTelemetryRecording()
+    {
+        Assert.True(
+            OfflineCommandLine.TryParse(
+                [
+                    "--record-telemetry",
+                    "--output",
+                    "recording.json",
+                    "--duration-seconds",
+                    "300"
+                ],
+                out OfflineCommand? command));
+
+        Assert.NotNull(command);
+        Assert.Equal(OfflineCommandKind.RecordTelemetry, command.Kind);
+        Assert.Equal("recording.json", command.OutputPath);
+        Assert.Equal(300, command.DurationSeconds);
+    }
+
     [Theory]
     [InlineData("--preview")]
     [InlineData("--simulate")]

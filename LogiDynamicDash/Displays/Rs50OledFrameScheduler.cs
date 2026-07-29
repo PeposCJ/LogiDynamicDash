@@ -22,7 +22,6 @@ internal sealed class Rs50OledFrameScheduler(IRs50OledSession session)
         if (pendingFrame is not null)
         {
             Rs50OledFrame queued = pendingFrame;
-            bool queuedIsCritical = pendingIsCritical;
             Rs50OledSendResult pendingResult = session.Send(queued);
             if (pendingResult == Rs50OledSendResult.RateLimited)
             {
@@ -37,11 +36,6 @@ internal sealed class Rs50OledFrameScheduler(IRs50OledSession session)
                 return;
             }
 
-            if (queuedIsCritical && isCritical)
-            {
-                // The newest critical state still needs to follow the one that
-                // was just acknowledged.
-            }
         }
 
         Rs50OledSendResult result = session.Send(frame);
@@ -49,6 +43,21 @@ internal sealed class Rs50OledFrameScheduler(IRs50OledSession session)
         {
             pendingFrame = frame;
             pendingIsCritical = isCritical;
+        }
+    }
+
+    internal void Flush()
+    {
+        if (pendingFrame is null)
+        {
+            return;
+        }
+
+        Rs50OledSendResult result = session.Send(pendingFrame);
+        if (result != Rs50OledSendResult.RateLimited)
+        {
+            pendingFrame = null;
+            pendingIsCritical = false;
         }
     }
 

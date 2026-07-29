@@ -80,8 +80,36 @@ internal class Program
     {
         try
         {
+            if (command.Kind == OfflineCommandKind.RecordTelemetry)
+            {
+                Rs50TelemetryRecorder recorder = new(
+                    new IRacingTelemetryService());
+                using CancellationTokenSource recordingCancellation = new();
+                ConsoleCancelEventHandler cancelHandler = (_, eventArgs) =>
+                {
+                    eventArgs.Cancel = true;
+                    recordingCancellation.Cancel();
+                };
+                Console.CancelKeyPress += cancelHandler;
+                try
+                {
+                    await recorder.RecordAsync(
+                        command.OutputPath!,
+                        TimeSpan.FromSeconds(command.DurationSeconds!.Value),
+                        recordingCancellation.Token);
+                }
+                finally
+                {
+                    Console.CancelKeyPress -= cancelHandler;
+                }
+
+                Console.WriteLine(
+                    $"Telemetry replay saved to '{command.OutputPath}'.");
+                return 0;
+            }
+
             Rs50OledConfiguration configuration =
-                Rs50OledConfigurationFile.Load(command.ConfigurationPath);
+                Rs50OledConfigurationFile.Load(command.ConfigurationPath!);
             switch (command.Kind)
             {
                 case OfflineCommandKind.PreviewAll:

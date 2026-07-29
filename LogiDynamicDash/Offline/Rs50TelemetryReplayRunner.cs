@@ -76,6 +76,33 @@ internal static class TelemetryReplayFile
         return Parse(File.ReadAllText(file.FullName));
     }
 
+    internal static void Save(
+        string path,
+        IReadOnlyList<TelemetryReplayEvent> events)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        ArgumentNullException.ThrowIfNull(events);
+        if (events.Count is < 1 or > 10000)
+        {
+            throw new InvalidDataException(
+                "Telemetry replay events must contain 1 through 10000 items.");
+        }
+
+        string json = JsonSerializer.Serialize(
+            new
+            {
+                schemaVersion = 1,
+                events = events.Select(TelemetryReplayFileExtensions.ToSerializable)
+            },
+            new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+        _ = Parse(json);
+        File.WriteAllText(path, json + Environment.NewLine);
+    }
+
     internal static IReadOnlyList<TelemetryReplayEvent> Parse(string json)
     {
         ArgumentNullException.ThrowIfNull(json);
@@ -248,7 +275,6 @@ internal sealed class ReplayTelemetrySource(
     ReplayTimeProvider clock) : ITelemetrySource
 {
     public Task MonitorAsync(
-        TelemetrySnapshot snapshot,
         Action<TelemetrySnapshot> onTelemetryUpdated,
         Action<TelemetrySnapshot> onStatusChanged,
         CancellationToken cancellationToken)
@@ -257,13 +283,16 @@ internal sealed class ReplayTelemetrySource(
         {
             cancellationToken.ThrowIfCancellationRequested();
             clock.AdvanceTo(TimeSpan.FromMilliseconds(replayEvent.AtMilliseconds));
-            snapshot.ConnectionState = replayEvent.ConnectionState;
-            snapshot.IsOnTrack = replayEvent.IsOnTrack;
-            snapshot.Gear = replayEvent.Gear;
-            snapshot.Rpm = replayEvent.Rpm;
-            snapshot.SpeedMetersPerSecond = replayEvent.SpeedMetersPerSecond;
-            snapshot.BrakeBiasPercent = replayEvent.BrakeBiasPercent;
-            snapshot.LastLapTimeSeconds = replayEvent.LastLapTimeSeconds;
+            TelemetrySnapshot snapshot = new()
+            {
+                ConnectionState = replayEvent.ConnectionState,
+                IsOnTrack = replayEvent.IsOnTrack,
+                Gear = replayEvent.Gear,
+                Rpm = replayEvent.Rpm,
+                SpeedMetersPerSecond = replayEvent.SpeedMetersPerSecond,
+                BrakeBiasPercent = replayEvent.BrakeBiasPercent,
+                LastLapTimeSeconds = replayEvent.LastLapTimeSeconds
+            };
             if (replayEvent.StatusChanged)
             {
                 onStatusChanged(snapshot);

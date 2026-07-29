@@ -2,6 +2,7 @@ using LogiDynamicDash.Controllers;
 using LogiDynamicDash.Displays;
 using LogiDynamicDash.Models;
 using LogiDynamicDash.Services;
+using System.Runtime.ExceptionServices;
 
 namespace LogiDynamicDash;
 
@@ -24,7 +25,6 @@ internal sealed class LogiDynamicDashApplication(
         TimeSpan.FromMilliseconds(200);
 
     private readonly TimeProvider clock = timeProvider ?? TimeProvider.System;
-    private readonly TelemetrySnapshot snapshot = new();
     private readonly object renderSynchronization = new();
     private long lastRefreshTimestamp;
     private bool hasRefreshed;
@@ -47,13 +47,9 @@ internal sealed class LogiDynamicDashApplication(
             display.Initialize();
             initialized = true;
             State = ApplicationLifecycleState.Active;
-            Render(snapshot);
+            Render(new TelemetrySnapshot());
 
-            await telemetrySource.MonitorAsync(
-                snapshot,
-                HandleTelemetryUpdated,
-                HandleStatusChanged,
-                cancellationToken);
+            await MonitorWithHeartbeatAsync(cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -82,6 +78,78 @@ internal sealed class LogiDynamicDashApplication(
             if (State != ApplicationLifecycleState.Faulted)
             {
                 State = ApplicationLifecycleState.Stopped;
+            }
+        }
+    }
+
+    private async Task MonitorWithHeartbeatAsync(
+        CancellationToken cancellationToken)
+    {
+        using CancellationTokenSource linked =
+            CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        Task monitor = telemetrySource.MonitorAsync(
+            HandleTelemetryUpdated,
+            HandleStatusChanged,
+            linked.Token);
+        Task heartbeat = FlushLoopAsync(linked.Token);
+        Task completed = await Task.WhenAny(monitor, heartbeat);
+
+        if (completed == heartbeat)
+        {
+            Exception? heartbeatFailure = null;
+            try
+            {
+                await heartbeat;
+            }
+            catch (Exception exception)
+            {
+                heartbeatFailure = exception;
+            }
+
+            linked.Cancel();
+            try
+            {
+                await monitor;
+            }
+            catch (OperationCanceledException) when (linked.IsCancellationRequested)
+            {
+                // The source observed cancellation after the heartbeat ended.
+            }
+
+            if (heartbeatFailure is not null)
+            {
+                ExceptionDispatchInfo.Capture(heartbeatFailure).Throw();
+            }
+
+            return;
+        }
+
+        try
+        {
+            await monitor;
+        }
+        finally
+        {
+            linked.Cancel();
+            try
+            {
+                await heartbeat;
+            }
+            catch (OperationCanceledException) when (linked.IsCancellationRequested)
+            {
+                // Expected when telemetry monitoring completes first.
+            }
+        }
+    }
+
+    private async Task FlushLoopAsync(CancellationToken cancellationToken)
+    {
+        using PeriodicTimer timer = new(RefreshInterval, clock);
+        while (await timer.WaitForNextTickAsync(cancellationToken))
+        {
+            lock (renderSynchronization)
+            {
+                display.Flush();
             }
         }
     }

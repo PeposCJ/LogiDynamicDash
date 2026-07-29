@@ -4,13 +4,16 @@ internal enum OfflineCommandKind
 {
     PreviewAll,
     SimulateAll,
-    Replay
+    Replay,
+    RecordTelemetry
 }
 
 internal sealed record OfflineCommand(
     OfflineCommandKind Kind,
-    string ConfigurationPath,
-    string? TelemetryPath = null);
+    string? ConfigurationPath = null,
+    string? TelemetryPath = null,
+    string? OutputPath = null,
+    int? DurationSeconds = null);
 
 internal static class OfflineCommandLine
 {
@@ -20,6 +23,21 @@ internal static class OfflineCommandLine
     {
         ArgumentNullException.ThrowIfNull(arguments);
         command = null;
+        if (arguments.Length == 5 &&
+            arguments[0] == "--record-telemetry" &&
+            arguments[1] == "--output" &&
+            !string.IsNullOrWhiteSpace(arguments[2]) &&
+            arguments[3] == "--duration-seconds" &&
+            int.TryParse(arguments[4], out int durationSeconds) &&
+            durationSeconds is >= 1 and <= 1800)
+        {
+            command = new OfflineCommand(
+                OfflineCommandKind.RecordTelemetry,
+                OutputPath: arguments[2],
+                DurationSeconds: durationSeconds);
+            return true;
+        }
+
         if (arguments.Length == 5 &&
             arguments[0] == "--replay" &&
             arguments[1] == "--config" &&
@@ -61,5 +79,7 @@ internal static class OfflineCommandLine
         "  LogiDynamicDash.exe --preview-all --config <json-path>\n" +
         "  LogiDynamicDash.exe --simulate-all --config <json-path>\n" +
         "  LogiDynamicDash.exe --replay --config <json-path> " +
-        "--telemetry <json-path>";
+        "--telemetry <json-path>\n" +
+        "  LogiDynamicDash.exe --record-telemetry --output <json-path> " +
+        "--duration-seconds <1-1800>";
 }

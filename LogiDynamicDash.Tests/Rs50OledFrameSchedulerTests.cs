@@ -61,6 +61,22 @@ public sealed class Rs50OledFrameSchedulerTests
         Assert.False(scheduler.HasPendingFrame);
     }
 
+    [Fact]
+    public void Flush_DeliversPendingCriticalFrameWithoutAnotherSubmission()
+    {
+        FakeSession session = new(
+            Rs50OledSendResult.RateLimited,
+            Rs50OledSendResult.Transmitted);
+        Rs50OledFrameScheduler scheduler = new(session);
+        Rs50OledFrame critical = new Rs50LayoutHFrame("IRACING", "ERROR");
+
+        scheduler.Submit(critical, isCritical: true);
+        scheduler.Flush();
+
+        Assert.Equal([critical, critical], session.Frames);
+        Assert.False(scheduler.HasPendingFrame);
+    }
+
     private sealed class FakeSession(params Rs50OledSendResult[] results)
         : IRs50OledSession
     {

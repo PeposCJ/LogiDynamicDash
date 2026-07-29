@@ -81,24 +81,68 @@ public sealed class LogiDynamicDashApplicationTests
         Assert.Equal(1, display.StopCount);
     }
 
+    [Fact]
+    public async Task RunAsync_FlushesPendingDisplaysWithoutTelemetryCallbacks()
+    {
+        RecordingDisplay display = new();
+        LogiDynamicDashApplication application = new(
+            new DelayedSource(),
+            display,
+            new DisplayController());
+
+        await application.RunAsync(CancellationToken.None);
+
+        Assert.True(display.FlushCount >= 2);
+        Assert.Equal(ApplicationLifecycleState.Stopped, application.State);
+    }
+
+    [Fact]
+    public async Task RunAsync_FlushFailureCancelsSourceAndFaultsApplication()
+    {
+        RecordingDisplay display = new()
+        {
+            FlushException = new IOException("injected flush failure")
+        };
+        LogiDynamicDashApplication application = new(
+            new DelayedSource(),
+            display,
+            new DisplayController());
+
+        await Assert.ThrowsAsync<IOException>(
+            () => application.RunAsync(CancellationToken.None));
+
+        Assert.Equal(ApplicationLifecycleState.Faulted, application.State);
+        Assert.Equal(1, display.StopCount);
+    }
+
     private sealed class ScriptedSource(ManualTimeProvider clock)
         : ITelemetrySource
     {
         public Task MonitorAsync(
-            TelemetrySnapshot snapshot,
             Action<TelemetrySnapshot> onTelemetryUpdated,
             Action<TelemetrySnapshot> onStatusChanged,
             CancellationToken cancellationToken)
         {
-            snapshot.ConnectionState = "CONNECTED";
-            snapshot.SpeedMetersPerSecond = 0;
+            TelemetrySnapshot snapshot = new()
+            {
+                ConnectionState = "CONNECTED",
+                SpeedMetersPerSecond = 0
+            };
             onStatusChanged(snapshot);
             clock.Advance(TimeSpan.FromMilliseconds(100));
-            snapshot.Gear = 1;
-            onTelemetryUpdated(snapshot);
+            onTelemetryUpdated(new TelemetrySnapshot
+            {
+                ConnectionState = "CONNECTED",
+                SpeedMetersPerSecond = 0,
+                Gear = 1
+            });
             clock.Advance(TimeSpan.FromMilliseconds(100));
-            snapshot.Gear = 2;
-            onTelemetryUpdated(snapshot);
+            onTelemetryUpdated(new TelemetrySnapshot
+            {
+                ConnectionState = "CONNECTED",
+                SpeedMetersPerSecond = 0,
+                Gear = 2
+            });
             return Task.CompletedTask;
         }
     }
@@ -106,7 +150,6 @@ public sealed class LogiDynamicDashApplicationTests
     private sealed class EmptySource : ITelemetrySource
     {
         public Task MonitorAsync(
-            TelemetrySnapshot snapshot,
             Action<TelemetrySnapshot> onTelemetryUpdated,
             Action<TelemetrySnapshot> onStatusChanged,
             CancellationToken cancellationToken) =>
@@ -116,13 +159,18 @@ public sealed class LogiDynamicDashApplicationTests
     private sealed class ConcurrentSource : ITelemetrySource
     {
         public Task MonitorAsync(
-            TelemetrySnapshot snapshot,
             Action<TelemetrySnapshot> onTelemetryUpdated,
             Action<TelemetrySnapshot> onStatusChanged,
             CancellationToken cancellationToken)
         {
-            snapshot.ConnectionState = "CONNECTED";
-            Parallel.For(0, 100, _ => onStatusChanged(snapshot));
+            Parallel.For(
+                0,
+                100,
+                index => onStatusChanged(new TelemetrySnapshot
+                {
+                    ConnectionState = "CONNECTED",
+                    Gear = index
+                }));
             return Task.CompletedTask;
         }
     }
@@ -130,7 +178,6 @@ public sealed class LogiDynamicDashApplicationTests
     private sealed class CancellationSource : ITelemetrySource
     {
         public Task MonitorAsync(
-            TelemetrySnapshot snapshot,
             Action<TelemetrySnapshot> onTelemetryUpdated,
             Action<TelemetrySnapshot> onStatusChanged,
             CancellationToken cancellationToken)
@@ -140,12 +187,25 @@ public sealed class LogiDynamicDashApplicationTests
         }
     }
 
+    private sealed class DelayedSource : ITelemetrySource
+    {
+        public async Task MonitorAsync(
+            Action<TelemetrySnapshot> onTelemetryUpdated,
+            Action<TelemetrySnapshot> onStatusChanged,
+            CancellationToken cancellationToken) =>
+            await Task.Delay(
+                TimeSpan.FromMilliseconds(450),
+                cancellationToken);
+    }
+
     private sealed class RecordingDisplay : IApplicationDisplay
     {
         public List<DisplayMode> Modes { get; } = [];
         public int InitializeCount { get; private set; }
         public int StopCount { get; private set; }
+        public int FlushCount { get; private set; }
         public Exception? RenderException { get; set; }
+        public Exception? FlushException { get; set; }
 
         public void Initialize() => InitializeCount++;
 
@@ -160,6 +220,15 @@ public sealed class LogiDynamicDashApplicationTests
         }
 
         public void Stop() => StopCount++;
+
+        public void Flush()
+        {
+            FlushCount++;
+            if (FlushException is not null)
+            {
+                throw FlushException;
+            }
+        }
     }
 
     private sealed class ConcurrentRecordingDisplay : IApplicationDisplay

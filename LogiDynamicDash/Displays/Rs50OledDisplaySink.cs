@@ -101,6 +101,28 @@ internal sealed class Rs50OledDisplaySink(
         }
     }
 
+    public void Flush()
+    {
+        lock (synchronization)
+        {
+            if (State != OledDeviceState.Active || scheduler is null)
+            {
+                throw new InvalidOperationException(
+                    "The RS50 OLED display sink is not initialized.");
+            }
+
+            try
+            {
+                scheduler.Flush();
+            }
+            catch
+            {
+                State = OledDeviceState.Faulted;
+                throw;
+            }
+        }
+    }
+
     private static void RequireStationary(TelemetrySnapshot snapshot)
     {
         if (snapshot.IsOnTrack != true)

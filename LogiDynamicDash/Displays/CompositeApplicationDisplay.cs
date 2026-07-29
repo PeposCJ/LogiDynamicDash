@@ -66,6 +66,20 @@ internal sealed class CompositeApplicationDisplay(
         StopInitializedDisplays();
     }
 
+    public void Flush()
+    {
+        if (initializedCount != displays.Length || stopped)
+        {
+            throw new InvalidOperationException(
+                "The composite display is not initialized.");
+        }
+
+        foreach (IApplicationDisplay display in displays)
+        {
+            display.Flush();
+        }
+    }
+
     private void StopInitializedDisplays()
     {
         Exception? firstException = null;
