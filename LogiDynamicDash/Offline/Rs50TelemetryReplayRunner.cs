@@ -15,7 +15,8 @@ internal sealed record TelemetryReplayEvent(
     float? Rpm,
     float? SpeedMetersPerSecond,
     float? BrakeBiasPercent,
-    float? LastLapTimeSeconds);
+    float? LastLapTimeSeconds,
+    IRacingSessionIdentity? SessionIdentity = null);
 
 internal static class Rs50TelemetryReplayRunner
 {
@@ -43,7 +44,7 @@ internal static class Rs50TelemetryReplayRunner
 internal static class TelemetryReplayFile
 {
     private const int MaximumFileBytes = 256 * 1024;
-    private static readonly string[] EventProperties =
+    private static readonly string[] EventPropertiesV1 =
     [
         "atMilliseconds",
         "statusChanged",
@@ -54,6 +55,28 @@ internal static class TelemetryReplayFile
         "speedMetersPerSecond",
         "brakeBiasPercent",
         "lastLapTimeSeconds"
+    ];
+    private static readonly string[] EventPropertiesV2 =
+    [
+        .. EventPropertiesV1,
+        "sessionIdentity"
+    ];
+    private static readonly string[] IdentityProperties =
+    [
+        "discipline",
+        "rawCategory",
+        "trackType",
+        "car"
+    ];
+    private static readonly string[] CarProperties =
+    [
+        "carId",
+        "carPath",
+        "displayName",
+        "shortName",
+        "carClassId",
+        "carClassShortName",
+        "isElectric"
     ];
 
     internal static IReadOnlyList<TelemetryReplayEvent> Load(string path)
@@ -91,7 +114,7 @@ internal static class TelemetryReplayFile
         string json = JsonSerializer.Serialize(
             new
             {
-                schemaVersion = 1,
+                schemaVersion = 2,
                 events = events.Select(TelemetryReplayFileExtensions.ToSerializable)
             },
             new JsonSerializerOptions
@@ -118,14 +141,14 @@ internal static class TelemetryReplayFile
             {
                 AllowTrailingCommas = false,
                 CommentHandling = JsonCommentHandling.Disallow,
-                MaxDepth = 4
+                MaxDepth = 6
             });
         JsonElement root = document.RootElement;
         RequireObject(root, "Telemetry replay root");
         Dictionary<string, JsonElement> rootProperties = Unique(root);
         RequireExact(rootProperties, ["schemaVersion", "events"], "replay");
         if (!rootProperties["schemaVersion"].TryGetInt32(out int version) ||
-            version != 1)
+            version is not (1 or 2))
         {
             throw new InvalidDataException(
                 "Unsupported telemetry replay schema version.");
@@ -145,7 +168,10 @@ internal static class TelemetryReplayFile
         {
             RequireObject(element, "Telemetry replay event");
             Dictionary<string, JsonElement> values = Unique(element);
-            RequireExact(values, EventProperties, "telemetry event");
+            RequireExact(
+                values,
+                version == 1 ? EventPropertiesV1 : EventPropertiesV2,
+                "telemetry event");
             int atMilliseconds = RequireInt(values["atMilliseconds"], 0, 86_400_000);
             if (atMilliseconds < previousMilliseconds)
             {
@@ -170,7 +196,10 @@ internal static class TelemetryReplayFile
                 RequireNullableFloat(values["rpm"], 0, 30000),
                 RequireNullableFloat(values["speedMetersPerSecond"], 0, 200),
                 RequireNullableFloat(values["brakeBiasPercent"], 0, 100),
-                RequireNullableFloat(values["lastLapTimeSeconds"], 0, 6000)));
+                RequireNullableFloat(values["lastLapTimeSeconds"], 0, 6000),
+                version == 2
+                    ? ParseIdentity(values["sessionIdentity"])
+                    : null));
         }
 
         return events;
@@ -189,6 +218,56 @@ internal static class TelemetryReplayFile
         }
 
         return values;
+    }
+
+    private static IRacingSessionIdentity? ParseIdentity(JsonElement element)
+    {
+        if (element.ValueKind == JsonValueKind.Null)
+        {
+            return null;
+        }
+
+        RequireObject(element, "Replay sessionIdentity");
+        Dictionary<string, JsonElement> values = Unique(element);
+        RequireExact(values, IdentityProperties, "sessionIdentity");
+        string disciplineName = RequireBoundedString(
+            values["discipline"],
+            32);
+        if (!Enum.TryParse(
+                disciplineName,
+                ignoreCase: false,
+                out IRacingDiscipline discipline) ||
+            !Enum.IsDefined(discipline))
+        {
+            throw new InvalidDataException(
+                "Replay discipline is not recognized.");
+        }
+
+        return new IRacingSessionIdentity(
+            discipline,
+            RequireBoundedString(values["rawCategory"], 32),
+            RequireBoundedString(values["trackType"], 64),
+            ParseCar(values["car"]));
+    }
+
+    private static CarIdentity? ParseCar(JsonElement element)
+    {
+        if (element.ValueKind == JsonValueKind.Null)
+        {
+            return null;
+        }
+
+        RequireObject(element, "Replay car");
+        Dictionary<string, JsonElement> values = Unique(element);
+        RequireExact(values, CarProperties, "car");
+        return new CarIdentity(
+            RequireNullableInt(values["carId"], 1, int.MaxValue),
+            RequireBoundedString(values["carPath"], 128),
+            RequireBoundedString(values["displayName"], 128),
+            RequireBoundedString(values["shortName"], 64),
+            RequireNullableInt(values["carClassId"], 1, int.MaxValue),
+            RequireBoundedString(values["carClassShortName"], 64),
+            RequireBoolean(values["isElectric"]));
     }
 
     private static void RequireExact(
@@ -217,6 +296,19 @@ internal static class TelemetryReplayFile
         element.ValueKind == JsonValueKind.String
             ? element.GetString()!
             : throw new InvalidDataException("Replay value must be text.");
+
+    private static string RequireBoundedString(
+        JsonElement element,
+        int maximumLength)
+    {
+        string value = RequireString(element);
+        if (value.Length > maximumLength)
+        {
+            throw new InvalidDataException("Replay text is too long.");
+        }
+
+        return value;
+    }
 
     private static bool RequireBoolean(JsonElement element) =>
         element.ValueKind is JsonValueKind.True or JsonValueKind.False
@@ -291,7 +383,8 @@ internal sealed class ReplayTelemetrySource(
                 Rpm = replayEvent.Rpm,
                 SpeedMetersPerSecond = replayEvent.SpeedMetersPerSecond,
                 BrakeBiasPercent = replayEvent.BrakeBiasPercent,
-                LastLapTimeSeconds = replayEvent.LastLapTimeSeconds
+                LastLapTimeSeconds = replayEvent.LastLapTimeSeconds,
+                SessionIdentity = replayEvent.SessionIdentity
             };
             if (replayEvent.StatusChanged)
             {

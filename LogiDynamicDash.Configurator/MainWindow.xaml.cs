@@ -26,7 +26,8 @@ public partial class MainWindow : Window
             ConnectionLayoutBox
         ];
 
-        DisciplineBox.ItemsSource = Enum.GetValues<DrivingDiscipline>();
+        DisciplineBox.ItemsSource =
+            DisciplineProfileRecommendations.SupportedDisciplines;
         SpeedUnitBox.ItemsSource = Enum.GetValues<SpeedUnit>();
         foreach (ComboBox box in layoutBoxes)
         {
@@ -39,20 +40,20 @@ public partial class MainWindow : Window
         MaximumRpmBox.TextChanged += (_, _) => UpdatePreview();
         GaugeSpeedBox.TextChanged += (_, _) => UpdatePreview();
 
-        DisciplineBox.SelectedItem = DrivingDiscipline.Road;
+        DisciplineBox.SelectedItem = IRacingDiscipline.SportsCar;
         SpeedUnitBox.SelectedItem = SpeedUnit.KilometersPerHour;
-        ApplyRecommendation(DrivingDiscipline.Road);
+        ApplyRecommendation(IRacingDiscipline.SportsCar);
     }
 
     private void ApplyRecommendation_Click(object sender, RoutedEventArgs e)
     {
-        if (DisciplineBox.SelectedItem is DrivingDiscipline discipline)
+        if (DisciplineBox.SelectedItem is IRacingDiscipline discipline)
         {
             ApplyRecommendation(discipline);
         }
     }
 
-    private void ApplyRecommendation(DrivingDiscipline discipline)
+    private void ApplyRecommendation(IRacingDiscipline discipline)
     {
         SpeedUnit unit = SpeedUnitBox.SelectedItem is SpeedUnit selected
             ? selected
@@ -67,7 +68,7 @@ public partial class MainWindow : Window
     private void UpdateRecommendation()
     {
         if (updating ||
-            DisciplineBox.SelectedItem is not DrivingDiscipline discipline ||
+            DisciplineBox.SelectedItem is not IRacingDiscipline discipline ||
             SpeedUnitBox.SelectedItem is not SpeedUnit unit)
         {
             return;

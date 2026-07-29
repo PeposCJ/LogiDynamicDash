@@ -19,7 +19,9 @@ Completed offline components:
 - injectable application orchestration and deterministic telemetry replay;
 - copied telemetry snapshots and a 200 ms display heartbeat;
 - bounded hardware-free telemetry recording;
-- hardware-free Windows configuration GUI with Road/Oval recommendations;
+- hardware-free Windows configuration GUI with all five current iRacing
+  category recommendations;
+- exact iRacing event-category and driver-car identity capture;
 - explicit Disabled/Opening/Active/Faulted/Stopped lifecycle without reconnect;
 - console plus optional OLED display composition;
 - strict persistent JSON configuration;
@@ -35,7 +37,7 @@ No production executable from this branch has been run against hardware.
 
 The current production branch passes:
 
-- 114 unit and integration tests, including one million scheduler submissions;
+- 135 unit and integration tests, including one million scheduler submissions;
 - Release build with warnings treated as errors;
 - `dotnet format --verify-no-changes`;
 - `git diff --check`;
@@ -62,7 +64,7 @@ tests. CI does not sign or release either artifact.
 ## Data Flow
 
 ```text
-iRacing telemetry
+iRacing telemetry + authoritative session category/car identity
       |
       v
 ITelemetrySource -> application lifecycle and 200 ms refresh coordinator
@@ -198,8 +200,10 @@ without HID:
 Schema 1 remains accepted and maps its single layout to all four modes.
 Replay files are strict, bounded JSON and never construct a physical adapter.
 Recording samples copied telemetry at no more than 5 Hz and never constructs a
-physical adapter. The Windows configurator edits and previews the same strict
-configuration without a physical-session reference.
+physical adapter. New recordings use replay schema 2 to retain session
+category and car identity; replay schema 1 remains accepted. The Windows
+configurator edits and previews the same strict configuration without a
+physical-session reference.
 The deterministic failure coverage is listed in
 `docs/OFFLINE_FAULT_MATRIX.md`.
 

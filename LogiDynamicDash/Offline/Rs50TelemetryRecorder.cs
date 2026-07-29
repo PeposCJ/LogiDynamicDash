@@ -108,7 +108,8 @@ internal sealed class Rs50TelemetryRecorder(
                 snapshot.Rpm,
                 snapshot.SpeedMetersPerSecond,
                 snapshot.BrakeBiasPercent,
-                snapshot.LastLapTimeSeconds));
+                snapshot.LastLapTimeSeconds,
+                snapshot.SessionIdentity));
             if (!statusChanged)
             {
                 lastUpdate = now;
@@ -131,6 +132,27 @@ internal static partial class TelemetryReplayFileExtensions
             replayEvent.Rpm,
             replayEvent.SpeedMetersPerSecond,
             replayEvent.BrakeBiasPercent,
-            replayEvent.LastLapTimeSeconds
+            replayEvent.LastLapTimeSeconds,
+            SessionIdentity = replayEvent.SessionIdentity is null
+                ? null
+                : new
+                {
+                    Discipline =
+                        replayEvent.SessionIdentity.Discipline.ToString(),
+                    replayEvent.SessionIdentity.RawCategory,
+                    replayEvent.SessionIdentity.TrackType,
+                    Car = replayEvent.SessionIdentity.Car is null
+                        ? null
+                        : new
+                        {
+                            replayEvent.SessionIdentity.Car.CarId,
+                            replayEvent.SessionIdentity.Car.CarPath,
+                            replayEvent.SessionIdentity.Car.DisplayName,
+                            replayEvent.SessionIdentity.Car.ShortName,
+                            replayEvent.SessionIdentity.Car.CarClassId,
+                            replayEvent.SessionIdentity.Car.CarClassShortName,
+                            replayEvent.SessionIdentity.Car.IsElectric
+                        }
+                }
         };
 }

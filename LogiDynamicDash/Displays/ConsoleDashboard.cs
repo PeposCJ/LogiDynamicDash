@@ -78,8 +78,28 @@ internal sealed class ConsoleDashboard : IApplicationDisplay
 
         WriteCentered($"GEAR {gear}");
         WriteCentered(speed);
-        WriteDashboardLine();
-        WriteDashboardLine();
+        if (snapshot.SessionIdentity is IRacingSessionIdentity identity)
+        {
+            string? car = identity.Car?.ShortName;
+            if (string.IsNullOrWhiteSpace(car))
+            {
+                car = identity.Car?.DisplayName;
+            }
+
+            WriteCentered(
+                Truncate(
+                    $"{IRacingDisciplineDisplay.Name(identity.Discipline)}"));
+            WriteCentered(
+                Truncate(
+                    string.IsNullOrWhiteSpace(car)
+                        ? "CAR UNKNOWN"
+                        : $"CAR {car}"));
+        }
+        else
+        {
+            WriteDashboardLine();
+            WriteDashboardLine();
+        }
     }
 
     private static void RenderBrakeBias(
@@ -150,6 +170,11 @@ internal sealed class ConsoleDashboard : IApplicationDisplay
         return
             $"{minutes}:{time.Seconds:00}.{time.Milliseconds:000}";
     }
+
+    private static string Truncate(string value) =>
+        value.Length <= DashboardWidth
+            ? value
+            : value[..DashboardWidth];
 
     private static string FormatGear(
         int? gear)

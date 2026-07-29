@@ -54,6 +54,21 @@ internal sealed class IRacingTelemetryService : ITelemetrySource
                     return Task.CompletedTask;
                 },
 
+                OnSessionInfoUpdate = session =>
+                {
+                    TelemetrySnapshot snapshot;
+                    lock (synchronization)
+                    {
+                        latest.SessionIdentity =
+                            IRacingSessionIdentityResolver.Resolve(session);
+                        snapshot = latest.Copy();
+                    }
+
+                    onStatusChanged(snapshot);
+
+                    return Task.CompletedTask;
+                },
+
                 OnError = _ =>
                 {
                     TelemetrySnapshot snapshot;

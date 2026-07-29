@@ -15,6 +15,8 @@ internal sealed class TelemetrySnapshot
 
     public float? LastLapTimeSeconds { get; set; }
 
+    public IRacingSessionIdentity? SessionIdentity { get; set; }
+
     internal TelemetrySnapshot Copy() =>
         new()
         {
@@ -24,6 +26,7 @@ internal sealed class TelemetrySnapshot
             Rpm = Rpm,
             SpeedMetersPerSecond = SpeedMetersPerSecond,
             BrakeBiasPercent = BrakeBiasPercent,
-            LastLapTimeSeconds = LastLapTimeSeconds
+            LastLapTimeSeconds = LastLapTimeSeconds,
+            SessionIdentity = SessionIdentity
         };
 }

@@ -70,7 +70,7 @@
                                    FontSize="20"
                                    FontWeight="SemiBold"
                                    Margin="0,0,0,14" />
-                        <TextBlock Text="Discipline" />
+                        <TextBlock Text="Official iRacing category" />
                         <ComboBox x:Name="DisciplineBox" />
                         <TextBlock Text="Speed unit" />
                         <ComboBox x:Name="SpeedUnitBox" />

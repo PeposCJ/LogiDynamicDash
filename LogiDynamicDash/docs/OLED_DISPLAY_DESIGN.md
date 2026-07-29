@@ -246,13 +246,18 @@ Different types of racing may require different normal screens.
 
 Potential profiles:
 
-- Road
+- Sports Car
+- Formula Car
 - Oval
-- Formula
+- Dirt Oval
+- Dirt Road
 - Endurance
 - Custom
 
-### Road and formula
+The first five names match current iRacing license/event categories.
+Endurance and Custom are profile variants, not inferred iRacing categories.
+
+### Sports Car and Formula Car
 
 Likely priorities:
 
@@ -272,6 +277,13 @@ Likely priorities:
 - Last lap
 
 Gear may be less important during long periods in the same gear.
+
+### Dirt Oval and Dirt Road
+
+Dirt Oval starts from the compact Oval presentation at a lower speed scale.
+Dirt Road starts from the shift-focused Sports Car presentation. Both remain
+separate categories so future slip, launch, and surface-specific information
+can be introduced without heuristic reclassification.
 
 ### Endurance
 

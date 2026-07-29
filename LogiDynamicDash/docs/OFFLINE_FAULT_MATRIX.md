@@ -23,6 +23,9 @@ postponed physical validation stages.
 | Requested cancellation | Stop and dispose cleanly | `LogiDynamicDashApplicationTests` |
 | Concurrent telemetry/status callbacks | Serialize display rendering | `LogiDynamicDashApplicationTests` |
 | Concurrent mutable source state | Emit copied snapshots to consumers | `IRacingTelemetryService`, application tests |
+| Track type conflicts with official event category | Keep `WeekendInfo.Category` authoritative; never guess from track | `IRacingSessionIdentityTests` |
+| Unknown/legacy category or missing driver row | Preserve metadata, require manual fallback, and never invent a car | `IRacingSessionIdentityTests`, `DisciplineProfileRecommendationTests` |
+| Replay identity is unknown, malformed, or ambiguous | Reject schema 2 input while retaining schema 1 compatibility | `TelemetryReplayTests` |
 | One million virtual submissions | Remain single-consumer without a pending leak | `Rs50OledFrameSchedulerTests` |
 | Six virtual hours at 20 Hz | Preserve typed formatting without failure | `VirtualEnduranceTests` |
 | Accidental layout output change | Fail reviewed A-J golden output | `GoldenPreviewTests` |

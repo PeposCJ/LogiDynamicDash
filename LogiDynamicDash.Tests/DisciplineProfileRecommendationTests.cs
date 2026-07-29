@@ -5,11 +5,11 @@ namespace LogiDynamicDash.Tests;
 public sealed class DisciplineProfileRecommendationTests
 {
     [Fact]
-    public void Road_UsesGearFocusedLayoutEAndClearTemporaryPages()
+    public void SportsCar_UsesGearFocusedLayoutEAndClearTemporaryPages()
     {
         DisciplineProfileRecommendation recommendation =
             DisciplineProfileRecommendations.Create(
-                DrivingDiscipline.Road,
+                IRacingDiscipline.SportsCar,
                 SpeedUnit.KilometersPerHour);
 
         Assert.Equal(
@@ -29,7 +29,7 @@ public sealed class DisciplineProfileRecommendationTests
     {
         DisciplineProfileRecommendation recommendation =
             DisciplineProfileRecommendations.Create(
-                DrivingDiscipline.Oval,
+                IRacingDiscipline.Oval,
                 SpeedUnit.MilesPerHour);
 
         Assert.Equal(
@@ -37,5 +37,45 @@ public sealed class DisciplineProfileRecommendationTests
             recommendation.Configuration.LayoutFor(DisplayMode.Normal));
         Assert.Equal(9000, recommendation.Configuration.MaximumRpm);
         Assert.Equal(225, recommendation.Configuration.GaugeMaximumSpeed);
+    }
+
+    [Theory]
+    [InlineData("SportsCar", "E", 8000, 300)]
+    [InlineData("FormulaCar", "E", 12000, 350)]
+    [InlineData("Oval", "D", 9000, 360)]
+    [InlineData("DirtOval", "D", 8500, 180)]
+    [InlineData("DirtRoad", "E", 9000, 220)]
+    public void CurrentCategory_HasAnExplicitProfile(
+        string disciplineName,
+        string normalLayoutName,
+        double maximumRpm,
+        double maximumSpeed)
+    {
+        IRacingDiscipline discipline =
+            Enum.Parse<IRacingDiscipline>(disciplineName);
+        Rs50OledLayout normalLayout =
+            Enum.Parse<Rs50OledLayout>(normalLayoutName);
+        DisciplineProfileRecommendation recommendation =
+            DisciplineProfileRecommendations.Create(
+                discipline,
+                SpeedUnit.KilometersPerHour);
+
+        Assert.Equal(normalLayout, recommendation.Configuration.LayoutFor(
+            DisplayMode.Normal));
+        Assert.Equal(maximumRpm, recommendation.Configuration.MaximumRpm);
+        Assert.Equal(maximumSpeed, recommendation.Configuration.GaugeMaximumSpeed);
+    }
+
+    [Theory]
+    [InlineData("Unknown")]
+    [InlineData("LegacyRoad")]
+    public void NonCurrentCategory_RequiresManualFallback(string disciplineName)
+    {
+        IRacingDiscipline discipline =
+            Enum.Parse<IRacingDiscipline>(disciplineName);
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => DisciplineProfileRecommendations.Create(
+                discipline,
+                SpeedUnit.KilometersPerHour));
     }
 }

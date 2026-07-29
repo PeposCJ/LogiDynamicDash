@@ -69,7 +69,7 @@ public sealed class Rs50OledConfigurationFileTests
     {
         Rs50OledConfiguration original =
             DisciplineProfileRecommendations.Create(
-                DrivingDiscipline.Oval,
+                IRacingDiscipline.Oval,
                 SpeedUnit.MilesPerHour).Configuration;
 
         string json = Rs50OledConfigurationFile.Serialize(original);

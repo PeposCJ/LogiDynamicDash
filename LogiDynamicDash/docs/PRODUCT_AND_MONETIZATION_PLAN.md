@@ -20,7 +20,8 @@ customization," not custom fonts, unrestricted graphics, or pixel drawing.
 
 The `LogiDynamicDash.Configurator` Windows application is hardware-free. It:
 
-- applies reviewed Road and Oval recommendations;
+- applies reviewed Sports Car, Formula Car, Oval, Dirt Oval, and Dirt Road
+  recommendations;
 - selects a layout for Normal, Brake Bias, Last Lap, and Connection Problem;
 - edits speed unit, maximum RPM, and gauge maximum speed;
 - renders a typed semantic preview;
@@ -32,7 +33,7 @@ manage licenses, sign users in, or write to the OLED.
 
 ## Discipline Recommendations
 
-### Road
+### Sports Car
 
 | Mode | Default | Rationale |
 |---|---:|---|
@@ -41,35 +42,82 @@ manage licenses, sign users in, or write to the OLED.
 | Last Lap | J | Four centered rows give lap identity and time maximum clarity. |
 | Connection Problem | H | A large two-row warning is harder to confuse with live telemetry. |
 
-Initial scales: 8,000 RPM and 300 km/h or 190 mph. They remain editable
-because GT, prototype, formula, and road cars differ substantially.
+Initial scales: 8,000 RPM and 300 km/h or 190 mph.
+
+### Formula Car
+
+Formula Car uses the same E/H/J/H layout mapping as Sports Car because gear,
+RPM, and speed dominate the normal page. Its initial scale is 12,000 RPM and
+350 km/h or 220 mph to avoid clipping common formula-car ranges.
 
 ### Oval
 
 | Mode | Default | Rationale |
 |---|---:|---|
-| Normal | D | Keeps RPM and speed indicators visible while using compact text for gear/status; gear changes are less frequent than in Road. |
+| Normal | D | Keeps RPM and speed indicators visible while using compact text for gear/status; gear changes are less frequent than in Sports Car or Formula Car. |
 | Brake Bias | H | Makes an adjustment readable without a dense race page. |
 | Last Lap | J | Lap time is central to pace and tire-run evaluation. |
-| Connection Problem | H | Uses the same unmistakable warning page as Road. |
+| Connection Problem | H | Uses the same unmistakable warning page as every other category. |
 
 Initial scales: 9,000 RPM and 360 km/h or 225 mph. Short-track and stock-car
 profiles will eventually override these values per car.
 
-### Automatic Selection
+### Dirt Oval
 
-Automatic Road/Oval selection is not implemented yet. It requires trustworthy
-session metadata for the current car/category and a reviewed fallback policy:
+Dirt Oval uses D/H/J/H with initial scales of 8,500 RPM and 180 km/h or
+110 mph. It remains distinct from paved Oval so future dirt-specific data does
+not require guessing from track names.
 
-1. read simulator-provided category metadata;
-2. normalize it to `Road`, `Oval`, or `Unknown`;
+### Dirt Road
+
+Dirt Road uses E/H/J/H with initial scales of 9,000 RPM and 220 km/h or
+140 mph. Frequent shifts and variable speeds make the shift-focused normal
+layout the safer starting point.
+
+All scales remain editable and will eventually support exact per-car
+overrides.
+
+### Identity and Automatic Selection
+
+iRacing's current official categories are `SportsCar`, `FormulaCar`, `Oval`,
+`DirtOval`, and `DirtRoad`. The former `Road` license is retained only as a
+legacy input and must not silently select a current profile.
+
+The identity priority is:
+
+1. `WeekendInfo.Category` is the authoritative event category;
+2. the driver's row selected by `DriverInfo.DriverCarIdx` supplies `CarID`;
+3. `CarPath`, full/short name, `CarClassID`, class name, and electric flag
+   provide human-readable and migration context;
+4. `TrackType` is diagnostic context only and never overrides the category;
+5. unknown category or missing car identity fails closed to a manual profile.
+
+This matters because event classification can differ from what the track name
+or geometry suggests. A road-course week in another discipline must follow
+the category emitted for that event.
+
+Session metadata capture and normalization are implemented. Automatic
+activation remains deliberately separate until the physical production gate
+passes. Its fallback policy is:
+
+1. read simulator-provided category and driver-car metadata;
+2. normalize only recognized official values;
 3. select the matching profile only when confidence is exact;
 4. retain the user's last manual choice for `Unknown`;
-5. show the selected discipline in the GUI and local diagnostic;
+5. show both detected category and car identity in the GUI and local
+   diagnostic;
 6. allow a per-car override.
 
-The application must never infer discipline from speed, steering, track name,
-or other heuristics that could switch the OLED while driving.
+The application must never infer category from speed, steering, track name,
+track type, car-name keywords, or other heuristics that could switch the OLED
+while driving.
+
+Official taxonomy references:
+
+- iRacing license classes:
+  https://support.iracing.com/support/solutions/articles/31000133459
+- 2024 Road split into Sports Car and Formula Car:
+  https://support.iracing.com/support/solutions/articles/31000172516-road-license-type-split
 
 ## Recommended Free Scope
 
@@ -77,10 +125,10 @@ Free must be a complete and safe product, not a demo:
 
 - confirmed RS50 support and all compatibility/safety fixes;
 - live gear, speed, RPM, brake-bias, last-lap, and connection states;
-- curated Road and Oval profiles;
-- automatic Road/Oval selection once verified;
+- curated profiles for all five current iRacing categories;
+- exact automatic category selection once physically verified;
 - KMH/MPH and gauge scale controls;
-- one active Road profile and one active Oval profile;
+- one active profile per current iRacing category;
 - all firmware layouts A-J;
 - offline preview, telemetry recording, and replay;
 - local JSON import/export;
@@ -113,7 +161,7 @@ functions, raw reports, arbitrary graphics, firmware access, or unsafe rates.
 ## What Not to Put Behind the Paywall
 
 - OLED connectivity and basic telemetry;
-- Road/Oval automatic selection;
+- exact category/car detection and safe automatic selection;
 - layouts A-J themselves;
 - stationary/movement safety gates;
 - bug fixes and new confirmed device compatibility;
@@ -178,7 +226,8 @@ Official market references:
 - typed RS50 protocol and bounded hardware route;
 - offline preview, simulation, recorder, and replay;
 - hardware-free configurator;
-- manual Road/Oval recommendations;
+- manual recommendations for all five current iRacing categories;
+- exact session category and driver-car identity capture;
 - stationary production smoke test still required.
 
 ### 0.3 Hardware Beta
@@ -186,13 +235,13 @@ Official market references:
 - successful stationary production gate;
 - explicitly authorized moving validation;
 - installer and signed release candidate;
-- automatic discipline metadata investigation;
+- surface detected category/car identity in diagnostics and GUI;
 - local crash/fault reporting with explicit opt-in.
 
 ### 0.4 Profile Beta
 
-- automatic Road/Oval selection with `Unknown` fallback;
-- per-car identity model;
+- automatic five-category selection with `Unknown`/legacy fallback;
+- per-car override matching against the exact identity model;
 - free profile activation;
 - experimental Pro profile editor without billing enforcement;
 - user research on customization demand.
@@ -200,7 +249,7 @@ Official market references:
 ### 1.0 Free
 
 - stable RS50 live use;
-- complete Road/Oval defaults;
+- complete defaults for all five current iRacing categories;
 - documented PRO status;
 - updater and migration guarantees;
 - accessible GUI and onboarding.
@@ -221,7 +270,8 @@ Before implementing automatic profiles or Pro entitlements, decide:
 1. whether the commercial distribution will remain MIT or use an open-core
    split for new commercial components;
 2. whether Pro is one-time, subscription, or one-time plus update renewal;
-3. which simulator supplies the first trusted Road/Oval car metadata;
+3. which simulator follows iRacing with an equally trustworthy category and
+   car identity contract;
 4. whether community profiles require hosted accounts;
 5. whether user telemetry always remains local by default;
 6. which supported telemetry fields are safe and legible in every layout.
