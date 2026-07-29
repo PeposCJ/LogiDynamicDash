@@ -3,7 +3,10 @@
 ## Status
 
 Build J compiles as a separate, offline-validated executable for the first
-shared-HID++ telemetry trial. It has not been executed against the RS50.
+shared-HID++ telemetry trial. J1 ran exactly once on 2026-07-29. The native
+process and physical/video observations passed, but the PCAP did not retain
+the Layout J setter/ACK pair, so its strict USB acceptance remains
+inconclusive.
 
 The trial reads only iRacing `IsOnTrackCar`, `Gear`, and `Speed`. While iRacing
 reports the car on track and stationary, it renders:
@@ -90,12 +93,12 @@ Windows Code Integrity policy
 `{0283ac0f-fff1-49ae-ada1-8a933130cad6}`; that policy must not be disabled or
 modified.
 
-## Proposed Physical J1 Trial
+## Executed Physical J1 Trial
 
 Use a fresh capture:
 
 ```text
-2026-07-28_rs50_build_j_iracing_stationary_telemetry_10s.pcapng
+2026-07-29_rs50_build_j_iracing_stationary_telemetry_10s.pcapng
 ```
 
 Preparation:
@@ -156,3 +159,11 @@ Accept J1 only if all conditions pass:
 - the high-buffer capture contains the complete discovery/setter/ACK evidence.
 
 Any failure keeps moving-car telemetry and full-lap testing prohibited.
+
+J1 met the native, OLED, centering, LED, input, and physical-safety
+conditions. It did not meet the complete-capture condition: offline analysis
+found the `0x8130` discovery but no setter/ACK pair. Complete evidence and the
+decision boundary are recorded in
+[`evidence/RS50_BUILD_J_STATIONARY_TELEMETRY_RESULT_2026-07-29.md`](evidence/RS50_BUILD_J_STATIONARY_TELEMETRY_RESULT_2026-07-29.md).
+Do not repeat J1 or advance to moving-car testing without a new reviewed
+capture plan and fresh authorization.
