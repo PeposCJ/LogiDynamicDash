@@ -24,6 +24,20 @@ Run the offline test suite:
 dotnet test .\LogiDynamicDash.slnx -c Release
 ```
 
+Copy `logidynamicdash.example.json` and edit the copy to select layout A-J,
+KMH or MPH, maximum RPM, and the full-scale speed for the secondary gauge.
+Validate every layout without HID:
+
+```powershell
+LogiDynamicDash.exe --preview-all --config .\my-dashboard.json
+LogiDynamicDash.exe --simulate-all --config .\my-dashboard.json
+```
+
+Preview prints the four application modes for every layout. Simulation runs
+30 seconds of virtual telemetry through the real formatter, session, rate
+limit, protocol encoder, and a simulated acknowledgement exchange. Neither
+command enumerates or opens HID devices.
+
 Do not run the stationary hardware route without a separately reviewed
 checklist, fresh authorization, and capture. Its complete arming contract is
 documented in

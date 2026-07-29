@@ -16,6 +16,9 @@ Completed offline components:
 - identical-frame suppression and 5 Hz change limit;
 - km/h and mph telemetry formatting for all layouts;
 - console plus optional OLED display composition;
+- strict persistent JSON configuration;
+- offline A-J preview and end-to-end virtual telemetry simulation;
+- sanitized JSONL diagnostics without report bytes or device identity;
 - exact command-line arming contract;
 - ten-second automatic cancellation;
 - moving-car rejection before the next frame is transmitted.
@@ -26,7 +29,7 @@ No production executable from this branch has been run against hardware.
 
 The current production branch passes:
 
-- 72 unit and integration tests;
+- 85 unit and integration tests, including 20,000 virtual updates;
 - Release build with warnings treated as errors;
 - `dotnet format --verify-no-changes`;
 - `git diff --check`;
@@ -37,8 +40,17 @@ The current production branch passes:
 - invalid-command smoke test, which exits with code 2 before constructing a
   session.
 
+The deterministic 30-second simulation processes 601 updates for each layout.
+Static layouts A/B transmit once; the dynamic layouts transmit between 85 and
+132 acknowledged frames, remaining below the theoretical 151-frame 5 Hz
+ceiling. A separate stress test processes 20,000 virtual changed frames while
+preserving the same bound.
+
 The same build, test, format, surface-audit, and vulnerability steps run in
-the Windows GitHub Actions workflow for pushes and pull requests.
+the Windows GitHub Actions workflow for pushes and pull requests. After those
+checks pass, CI publishes a framework-dependent `win-x64` artifact with the
+example configuration, notices, and SHA-256 manifest. CI does not sign or
+release the artifact.
 
 ## Data Flow
 
@@ -132,7 +144,28 @@ dotnet run --project .\LogiDynamicDash\LogiDynamicDash.csproj
 Any nonempty argument list that does not exactly match the stationary arming
 contract is rejected before constructing a HID session.
 
-The compiled hardware route requires these 16 arguments in this exact order:
+The configuration file is a strict schema-versioned JSON object:
+
+```json
+{
+  "schemaVersion": 1,
+  "layout": "E",
+  "speedUnit": "KMH",
+  "maximumRpm": 8000,
+  "gaugeMaximumSpeed": 300
+}
+```
+
+Unknown, duplicate, missing, invalid-type, out-of-range, commented, or
+oversized configurations are rejected. Preview and simulation are available
+without HID:
+
+```text
+--preview-all --config <json-path>
+--simulate-all --config <json-path>
+```
+
+The compiled hardware route requires these ten arguments in this exact order:
 
 ```text
 --enable-rs50-oled-stationary-trial
@@ -142,10 +175,7 @@ The compiled hardware route requires these 16 arguments in this exact order:
 --confirm-rs50-dynamic-selected
 --confirm-10-second-limit
 --acknowledge-no-moving-car-use
---layout <A-J>
---speed-unit <KMH|MPH>
---maximum-rpm <1000-30000>
---gauge-maximum-speed <10-500>
+--config <json-path>
 --confirm-settings
 ```
 
@@ -155,6 +185,12 @@ speed stops the application before another OLED frame is sent.
 
 This route is compiled for a future stationary production smoke test. Its
 presence is not authorization to run it.
+
+When that route is eventually authorized, it writes a local sanitized JSONL
+diagnostic under the user's local application-data directory. Events contain
+only UTC timestamp, operation, layout, typed result, elapsed microseconds, or
+exception type. They never contain HID paths, serial numbers, raw requests,
+raw responses, payload text, or exception messages.
 
 ## Remaining Gates
 
