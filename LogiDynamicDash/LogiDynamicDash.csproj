@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="HidSharp" Version="2.6.4" />
     <PackageReference Include="SVappsLAB.iRacingTelemetrySDK" Version="2.1.0" />
   </ItemGroup>
 
