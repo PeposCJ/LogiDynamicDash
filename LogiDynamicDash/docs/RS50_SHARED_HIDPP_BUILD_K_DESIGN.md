@@ -2,8 +2,9 @@
 
 ## Purpose and Status
 
-Build K is an offline-validated, not-yet-executed physical gallery for all ten
-firmware-rendered Display Game Data layouts. It exists to answer:
+Build K is an offline-validated and physically accepted gallery for all ten
+firmware-rendered Display Game Data layouts. K1 ran exactly once on
+2026-07-28 and answered:
 
 - which layouts contain bars, gauges, fixed graphics, or decoration;
 - which text rows use visibly different font sizes or styles;
@@ -56,7 +57,9 @@ Run the offline source audit with:
 
 ## Proposed K1 Physical Procedure
 
-Do not execute until a fresh operator authorization is supplied.
+K1 completed under a fresh operator authorization. This procedure is retained
+as the exact historical protocol; do not repeat it without a new reason,
+design review, and authorization.
 
 Files:
 
@@ -92,16 +95,16 @@ After completion:
 
 | Layout | Visible result | Bars/graphics | Text/font observations |
 |---|---|---|---|
-| A | pending | pending | pending |
-| B | pending | pending | pending |
-| C | pending | pending | pending |
-| D | pending | pending | pending |
-| E | pending | pending | pending |
-| F | pending | pending | pending |
-| G | pending | pending | pending |
-| H | pending | pending | pending |
-| I | pending | pending | pending |
-| J | pending | pending | pending |
+| A | blank OLED | none | none |
+| B | firmware Test screen | four striped vertical bars `C/B/G/H` | fixed small labels |
+| C | one horizontal gauge | 50% solid, remainder diagonally striped | none |
+| D | text plus two indicators | 25% main gauge; 75% thin lower indicator | one 16 px text region |
+| E | split text plus two indicators | same 25%/75% indicators | left/right 16 px regions |
+| F | split numeric composition | fixed vertical separator | 27 px left; 37 px right |
+| G | reversed numeric composition | fixed vertical separator | 37 px left; 27 px right |
+| H | two-row composition | reserved left field blank in K1 | 9 px centered; 18 px right-aligned |
+| I | four-row composition | two reserved left fields blank in K1 | alternating 9/18 px; mixed center/right alignment |
+| J | four-row composition | none | alternating 9/18 px; all rows centered |
 
 ## Acceptance
 
@@ -115,3 +118,6 @@ Accept K1 only if:
 - the wheel remains physically normal throughout and after the trial.
 
 Any unexpected response or physical effect stops further testing.
+
+K1 met every acceptance condition. Complete evidence is in
+[`evidence/RS50_BUILD_K_LAYOUT_GALLERY_SUCCESS_2026-07-28.md`](evidence/RS50_BUILD_K_LAYOUT_GALLERY_SUCCESS_2026-07-28.md).

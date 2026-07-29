@@ -36,6 +36,8 @@ bld/
 *.pcap
 *.pcapng
 *.dfu
+*.mov
+*.mp4
 *_capture.zip
 rs50_passive_*.txt
 [Dd]iagnostic-[Cc]aptures/

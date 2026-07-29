@@ -161,6 +161,7 @@ Use one row per controlled observation:
 | 6C | Open | Unknown | All RS50 interfaces | Capture a game/G HUB session with visibly changing RPM LEDs | Runtime `0x0B` (`RPM Indicator`) streamed states 0-10; runtime `0x12` (`DisplayGameData`) received zero host reports | Confirmed negative evidence |
 | 7A | Open | Dynamic | All RS50 interfaces | Run a legitimate telemetry-capable producer; do not inject HID reports | Pending: look specifically for host calls to dev `0xFF`, runtime `0x12`, especially function `3` | Unknown |
 | 7B | Open | Dynamic | None | After a successful 7A, stop the legitimate producer and time the fallback | Static expectation: pending Dynamic data expires after approximately 240 seconds | Unknown |
+| K1 | Closed | Dynamic | MI_01 COL01/COL03 | One separately authorized fixed A-J gallery with video and USBPcap | All layouts rendered in order; 1 discovery + 10 setters + 11 exact ACKs; no unrelated host operation or observed physical side effect | Confirmed |
 
 ## Phase 5: Legitimate Dynamic Producer Capture
 

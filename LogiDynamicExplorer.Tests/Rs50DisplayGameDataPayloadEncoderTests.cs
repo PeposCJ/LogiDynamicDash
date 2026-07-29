@@ -53,13 +53,13 @@ public sealed class Rs50DisplayGameDataPayloadEncoderTests
     }
 
     [Fact]
-    public void EncodeLayoutE_PreservesRecoveredFieldBoundaries()
+    public void EncodeLayoutE_EncodesRightFieldBeforeLeftFieldOnWire()
     {
         byte[] result = Rs50DisplayGameDataPayloadEncoder.EncodeLayoutE(
-            0.0f,
-            1.0f,
-            "N",
-            "speed");
+            mainGaugeValue: 0.0f,
+            thinIndicatorValue: 1.0f,
+            rightText: "N",
+            leftText: "speed");
 
         Assert.Equal(13, result.Length);
         Assert.Equal([4, 0, 255], result[..3]);

@@ -13,45 +13,53 @@ internal static class Rs50DisplayGameDataPayloadEncoder
 
     public static byte[] EncodeLayoutB() => [1];
 
-    public static byte[] EncodeLayoutC(float value) =>
-        [2, EncodeNormalizedValue(value, nameof(value))];
+    public static byte[] EncodeLayoutC(float mainGaugeValue) =>
+        [2, EncodeNormalizedValue(mainGaugeValue, nameof(mainGaugeValue))];
 
     public static byte[] EncodeLayoutD(
-        float firstValue,
-        float secondValue,
+        float mainGaugeValue,
+        float thinIndicatorValue,
         string text)
     {
         byte[] parameters = new byte[14];
         parameters[0] = 3;
-        parameters[1] = EncodeNormalizedValue(firstValue, nameof(firstValue));
-        parameters[2] = EncodeNormalizedValue(secondValue, nameof(secondValue));
+        parameters[1] = EncodeNormalizedValue(
+            mainGaugeValue,
+            nameof(mainGaugeValue));
+        parameters[2] = EncodeNormalizedValue(
+            thinIndicatorValue,
+            nameof(thinIndicatorValue));
         WriteText(parameters.AsSpan(3, 11), text, nameof(text));
         return parameters;
     }
 
     public static byte[] EncodeLayoutE(
-        float firstValue,
-        float secondValue,
-        string firstText,
-        string secondText)
+        float mainGaugeValue,
+        float thinIndicatorValue,
+        string rightText,
+        string leftText)
     {
         byte[] parameters = new byte[13];
         parameters[0] = 4;
-        parameters[1] = EncodeNormalizedValue(firstValue, nameof(firstValue));
-        parameters[2] = EncodeNormalizedValue(secondValue, nameof(secondValue));
-        WriteText(parameters.AsSpan(3, 3), firstText, nameof(firstText));
-        WriteText(parameters.AsSpan(6, 7), secondText, nameof(secondText));
+        parameters[1] = EncodeNormalizedValue(
+            mainGaugeValue,
+            nameof(mainGaugeValue));
+        parameters[2] = EncodeNormalizedValue(
+            thinIndicatorValue,
+            nameof(thinIndicatorValue));
+        WriteText(parameters.AsSpan(3, 3), rightText, nameof(rightText));
+        WriteText(parameters.AsSpan(6, 7), leftText, nameof(leftText));
         return parameters;
     }
 
-    public static byte[] EncodeLayoutF(string firstText, string secondText) =>
-        EncodeTwoTextLayout(5, 1, 3, firstText, secondText);
+    public static byte[] EncodeLayoutF(string leftText, string rightText) =>
+        EncodeTwoTextLayout(5, 1, 3, leftText, rightText);
 
-    public static byte[] EncodeLayoutG(string firstText, string secondText) =>
-        EncodeTwoTextLayout(6, 1, 3, firstText, secondText);
+    public static byte[] EncodeLayoutG(string leftText, string rightText) =>
+        EncodeTwoTextLayout(6, 1, 3, leftText, rightText);
 
-    public static byte[] EncodeLayoutH(string firstText, string secondText) =>
-        EncodeTwoTextLayout(7, 21, 10, firstText, secondText);
+    public static byte[] EncodeLayoutH(string topText, string bottomText) =>
+        EncodeTwoTextLayout(7, 21, 10, topText, bottomText);
 
     public static byte[] EncodeLayoutI(
         string firstText,

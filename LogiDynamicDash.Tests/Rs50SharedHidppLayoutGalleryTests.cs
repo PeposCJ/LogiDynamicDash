@@ -33,10 +33,10 @@ public sealed class Rs50SharedHidppLayoutGalleryTests
                 "LAYOUT D"),
             Rs50HidppDisplayProtocol.CreateLayoutE(
                 0x12,
-                64,
-                191,
-                "E1",
-                "LAYOUTE"),
+                mainGaugeValue: 64,
+                thinIndicatorValue: 191,
+                rightText: "E1",
+                leftText: "LAYOUTE"),
             Rs50HidppDisplayProtocol.CreateLayoutF(
                 0x12,
                 "F",

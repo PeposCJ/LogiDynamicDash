@@ -92,12 +92,12 @@ internal static class Rs50HidppDisplayProtocol
 
     internal static Rs50HidppDisplayTransaction CreateLayoutC(
         byte runtimeIndex,
-        byte value)
+        byte mainGaugeValue)
     {
         byte[] request = CreateLayoutRequestBytes(
             runtimeIndex,
             layoutIndex: 2);
-        request[5] = value;
+        request[5] = mainGaugeValue;
         return Rs50HidppDisplayTransaction.CreateLayout(
             Rs50HidppDisplayTransactionKind.SetLayoutC,
             request);
@@ -105,16 +105,16 @@ internal static class Rs50HidppDisplayProtocol
 
     internal static Rs50HidppDisplayTransaction CreateLayoutD(
         byte runtimeIndex,
-        byte firstValue,
-        byte secondValue,
+        byte mainGaugeValue,
+        byte thinIndicatorValue,
         string text)
     {
         ValidateText(text, 11, nameof(text));
         byte[] request = CreateLayoutRequestBytes(
             runtimeIndex,
             layoutIndex: 3);
-        request[5] = firstValue;
-        request[6] = secondValue;
+        request[5] = mainGaugeValue;
+        request[6] = thinIndicatorValue;
         WriteAscii(request.AsSpan(7, 11), text);
         return Rs50HidppDisplayTransaction.CreateLayout(
             Rs50HidppDisplayTransactionKind.SetLayoutD,
@@ -123,20 +123,20 @@ internal static class Rs50HidppDisplayProtocol
 
     internal static Rs50HidppDisplayTransaction CreateLayoutE(
         byte runtimeIndex,
-        byte firstValue,
-        byte secondValue,
-        string firstText,
-        string secondText)
+        byte mainGaugeValue,
+        byte thinIndicatorValue,
+        string rightText,
+        string leftText)
     {
-        ValidateText(firstText, 3, nameof(firstText));
-        ValidateText(secondText, 7, nameof(secondText));
+        ValidateText(rightText, 3, nameof(rightText));
+        ValidateText(leftText, 7, nameof(leftText));
         byte[] request = CreateLayoutRequestBytes(
             runtimeIndex,
             layoutIndex: 4);
-        request[5] = firstValue;
-        request[6] = secondValue;
-        WriteAscii(request.AsSpan(7, 3), firstText);
-        WriteAscii(request.AsSpan(10, 7), secondText);
+        request[5] = mainGaugeValue;
+        request[6] = thinIndicatorValue;
+        WriteAscii(request.AsSpan(7, 3), rightText);
+        WriteAscii(request.AsSpan(10, 7), leftText);
         return Rs50HidppDisplayTransaction.CreateLayout(
             Rs50HidppDisplayTransactionKind.SetLayoutE,
             request);
@@ -144,41 +144,41 @@ internal static class Rs50HidppDisplayProtocol
 
     internal static Rs50HidppDisplayTransaction CreateLayoutF(
         byte runtimeIndex,
-        string firstText,
-        string secondText) =>
+        string leftText,
+        string rightText) =>
         CreateTwoTextLayout(
             runtimeIndex,
             layoutIndex: 5,
             Rs50HidppDisplayTransactionKind.SetLayoutF,
-            firstText,
+            leftText,
             firstMaximumLength: 1,
-            secondText,
+            rightText,
             secondMaximumLength: 3);
 
     internal static Rs50HidppDisplayTransaction CreateLayoutG(
         byte runtimeIndex,
-        string firstText,
-        string secondText) =>
+        string leftText,
+        string rightText) =>
         CreateTwoTextLayout(
             runtimeIndex,
             layoutIndex: 6,
             Rs50HidppDisplayTransactionKind.SetLayoutG,
-            firstText,
+            leftText,
             firstMaximumLength: 1,
-            secondText,
+            rightText,
             secondMaximumLength: 3);
 
     internal static Rs50HidppDisplayTransaction CreateLayoutH(
         byte runtimeIndex,
-        string firstText,
-        string secondText) =>
+        string topText,
+        string bottomText) =>
         CreateTwoTextLayout(
             runtimeIndex,
             layoutIndex: 7,
             Rs50HidppDisplayTransactionKind.SetLayoutH,
-            firstText,
+            topText,
             firstMaximumLength: 21,
-            secondText,
+            bottomText,
             secondMaximumLength: 10);
 
     internal static Rs50HidppDisplayTransaction CreateLayoutI(

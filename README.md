@@ -43,8 +43,8 @@ screen on Logitech PRO Racing Wheel and RS50.
   the RS50 and named `DisplayGameData` inside G HUB and its embedded
   DirectInput/FFB driver. Firmware and driver analysis recovered ten typed,
   firmware-rendered layouts (A-J) and the exact normalized conversion from
-  game floats to gauge bytes; semantic assignment and physical OLED activation
-  still require a controlled runtime validation.
+  game floats to gauge bytes. Build K has now physically classified all ten
+  layouts, their gauges, alignments, and five built-in bitmap font sizes.
 - A guarded physical DirectInput support query now succeeds on the RS50:
   `SetDataFormat`, exclusive Acquire, outer command `4` / inner command `2`,
   and Unacquire all returned success. The device returned `Supported: 1`;
@@ -117,11 +117,14 @@ screen on Logitech PRO Racing Wheel and RS50.
   speed/gear for ten seconds, suppresses duplicates, caps changes at 5 Hz,
   and fails closed above 0.5 m/s or on missing/invalid telemetry. Its
   fake-only verifier passes and the dashboard does not reference this route.
-- Build K compiles a separate, not-yet-executed visual-capability gallery. It
-  shows the firmware's fixed Layouts A-J for three seconds each using only
-  source-fixed values and text. Its purpose is to photograph and classify
-  built-in bars, graphics, decoration, and layout-selected typography; it
-  does not probe unknown rim features or claim a framebuffer.
+- Build K's separately armed visual-capability gallery physically passed. The
+  OLED advanced through fixed Layouts A-J; video confirmed blank/Test,
+  solid/striped gauges, split numeric layouts, four-row layouts, and built-in
+  9/16/18/27/37 px bitmap fonts. USBPcap contained exactly one discovery and
+  ten setters with exact ACKs and no unrelated host operation. The operator
+  observed no movement, torque, resistance, LED change, input loss, or
+  disconnect. The confirmed interface does not expose arbitrary graphics,
+  fonts, positioning, Unicode, or color.
 
 Build the guarded native bridge and its non-hardware tests with:
 
@@ -165,7 +168,7 @@ Audit the unexecuted Build J stationary-telemetry surface with:
 .\scripts\Test-Rs50SharedHidppTelemetryTrialSurface.ps1
 ```
 
-Audit the unexecuted Build K A-J layout-gallery surface with:
+Audit the Build K A-J layout-gallery source surface with:
 
 ```powershell
 .\scripts\Test-Rs50SharedHidppLayoutGallerySurface.ps1

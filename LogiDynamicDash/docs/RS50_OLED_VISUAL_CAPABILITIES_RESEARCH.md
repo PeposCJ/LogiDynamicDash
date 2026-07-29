@@ -1,9 +1,10 @@
 # RS50/PRO OLED Visual Capabilities Research
 
-## Current Conclusion - Awaiting Physical A-J Gallery
+## Confirmed Conclusion
 
 The confirmed Dynamic protocol is a typed firmware renderer, not a host
-framebuffer.
+framebuffer. Firmware analysis, the recovered G HUB protocol, exact USB
+traffic, and the accepted physical A-J gallery now agree on that model.
 
 Public feature `0x8130` exposes exactly four functions:
 
@@ -24,26 +25,28 @@ Therefore:
 - the host cannot choose an arbitrary font, size, position, or graphic through
   the confirmed protocol.
 
-This is a strong protocol conclusion, but not yet proof that no separate,
-undocumented framebuffer feature exists anywhere in the wheel/rim firmware.
+This conclusion applies to the confirmed public Dynamic interface. It cannot
+mathematically prove that no separate undocumented interface exists anywhere,
+but no installed firmware, SDK, G HUB implementation, USB descriptor, startup
+capture, or physical K1 result exposes one.
 
 ## Recovered Visual Primitives
 
 Static analysis of RS50 firmware
 `U165.04_B0039-gf6375b51` identifies ten renderers:
 
-| Layout | Host-controlled fields | Static visual evidence |
+| Layout | Host-controlled fields | Physically observed composition |
 |---|---|---|
-| A | none | fixed/data-free renderer |
-| B | none | complex fixed renderer using internal wheel state |
-| C | one normalized byte | one firmware-drawn gauge/bar |
-| D | two normalized bytes, one text | two gauges/bars plus text |
-| E | two normalized bytes, two texts | two gauges/bars plus text |
-| F | 1-char and 3-char text | fixed large/specialized composition |
-| G | 1-char and 3-char text | different fixed composition |
-| H | 21-char and 10-char text | two text regions with distinct geometry |
-| I | four texts | centered/right-aligned text plus fixed decoration/glyphs |
-| J | four texts | four centered text rows, least prescriptive layout |
+| A | none | blank/black OLED; panel power state unknown |
+| B | none | firmware Test screen with vertical `C/B/G/H` bars |
+| C | one normalized byte | one horizontal solid/striped gauge |
+| D | two normalized bytes, one text | main gauge, thin indicator, text |
+| E | two normalized bytes, two texts | same indicators, split left/right text |
+| F | 1-char and 3-char text | medium left, separator, very large right |
+| G | 1-char and 3-char text | very large left, separator, medium right |
+| H | 21-char and 10-char text | small centered row, larger right-aligned row |
+| I | four texts | alternating small/large rows with mixed alignment |
+| J | four texts | alternating small/large centered rows |
 
 The numeric conversion is:
 
@@ -158,26 +161,48 @@ one of:
 - a named implementation or protocol description;
 - read-only metadata that establishes function semantics.
 
-## Physical Evidence Needed
+## Physical A-J Confirmation
 
-Build K will display the confirmed A-J catalog with fixed values and text for
-three seconds each. Video plus USBPcap will establish:
+Build K ran once on 2026-07-28 with video and USBPcap. The OLED visibly
+advanced through A-J, all ten setters received exact acknowledgements, and the
+operator observed no movement, torque, unexpected resistance, LED change,
+input loss, or disconnect.
 
-- actual bar/gauge geometry;
-- built-in icons and decoration;
-- relative font sizes/styles;
-- useful telemetry roles for each fixed layout;
-- whether A/B expose live internal state.
+The video confirmed the gauge geometry, fixed Test graphic, five font sizes,
+and alignment differences listed above. H/I's reserved left-side fields were
+blank in this stationary session, so they are not claimed as usable host
+graphics. Complete evidence is in
+[`evidence/RS50_BUILD_K_LAYOUT_GALLERY_SUCCESS_2026-07-28.md`](evidence/RS50_BUILD_K_LAYOUT_GALLERY_SUCCESS_2026-07-28.md).
 
-After K1, a smaller glyph test may be justified to map printable characters.
-It will not test arbitrary binary bytes or unknown subdevice functions.
+## Practical Mapping for LogiDynamicDash
+
+| Dashboard goal | Best layout | Trade-off |
+|---|---|---|
+| very large gear + 3-digit speed | F or G | no bar and no unit field |
+| gear/speed plus RPM and secondary bar | E | smaller 16 px text, but two split text fields and two indicators |
+| one label/value plus two indicators | D | one shared 11-character text field |
+| standalone RPM/progress display | C | no text |
+| two-row status or lap page | H | fixed 9/18 px hierarchy |
+| compact four-field telemetry page | I | mixed center/right alignment |
+| generic four-row telemetry page | J | no bars, but least semantic constraint |
+
+For a useful racing dashboard, Layout E is the strongest all-in-one candidate:
+its 7-character field appears on the left and can carry speed/unit, while its
+3-character field appears on the right and can carry gear. This visual order
+is the reverse of their order in the function-3 payload. The main gauge can
+carry normalized RPM and the thin lower indicator can carry a second
+normalized value. F/G are better when maximum gear/speed legibility matters
+more than an RPM bar. J remains the safest general-purpose text fallback.
 
 ## Decision Rule
 
 The project will claim arbitrary graphics or font control only if a bounded,
 documented command is found and independently observed in legitimate traffic
-or firmware. Until then, the production design should treat A-J as the entire
-supported visual vocabulary and map telemetry to the best firmware layout.
+or firmware. The production design must therefore treat A-J as the entire
+supported visual vocabulary unless future bounded evidence proves another
+interface. It may expose layout selection and semantic telemetry mapping, but
+must not advertise custom graphics, custom fonts, free positioning, Unicode,
+or color control.
 
 References:
 

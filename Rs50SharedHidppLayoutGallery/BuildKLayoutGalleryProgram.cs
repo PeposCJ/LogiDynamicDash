@@ -74,7 +74,7 @@ internal static class BuildKLayoutGalleryProgram
                 exchange,
                 Rs50HidppDisplayProtocol.CreateLayoutC(
                     runtimeIndex,
-                    value: 128),
+                    mainGaugeValue: 128),
                 output);
             delay.WaitThreeSeconds();
             Show(
@@ -82,8 +82,8 @@ internal static class BuildKLayoutGalleryProgram
                 exchange,
                 Rs50HidppDisplayProtocol.CreateLayoutD(
                     runtimeIndex,
-                    firstValue: 64,
-                    secondValue: 191,
+                    mainGaugeValue: 64,
+                    thinIndicatorValue: 191,
                     "LAYOUT D"),
                 output);
             delay.WaitThreeSeconds();
@@ -92,10 +92,10 @@ internal static class BuildKLayoutGalleryProgram
                 exchange,
                 Rs50HidppDisplayProtocol.CreateLayoutE(
                     runtimeIndex,
-                    firstValue: 64,
-                    secondValue: 191,
-                    "E1",
-                    "LAYOUTE"),
+                    mainGaugeValue: 64,
+                    thinIndicatorValue: 191,
+                    rightText: "E1",
+                    leftText: "LAYOUTE"),
                 output);
             delay.WaitThreeSeconds();
             Show(
