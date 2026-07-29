@@ -35,6 +35,9 @@ $source = (
     Get-ChildItem -LiteralPath $trialDirectory -Filter "*.cs" -File |
         Get-Content -Raw
 ) -join "`n"
+$transcriptPath =
+    Join-Path $trialDirectory "BuildJTransactionTranscript.cs"
+$transcriptSource = Get-Content -LiteralPath $transcriptPath -Raw
 $project = Get-Content -LiteralPath $trialProject -Raw
 $verificationSource = (
     Get-ChildItem -LiteralPath $verificationDirectory -Filter "*.cs" -File |
@@ -193,11 +196,35 @@ if ($publicTypeCount -ne 0) {
     throw "Build J must not expose a public type."
 }
 
+if ($transcriptSource -notmatch
+        "MaximumTransactions\s*=\s*52" -or
+    $transcriptSource -notmatch
+        '\.tmp/rs50-build-j-transcripts' -or
+    $transcriptSource -notmatch
+        "FileMode\.CreateNew" -or
+    $transcriptSource -notmatch
+        "FileOptions\.WriteThrough" -or
+    $transcriptSource -notmatch
+        "AutoFlush\s*=\s*true" -or
+    $transcriptSource -notmatch
+        'event_type\s*=\s*"request"' -or
+    $transcriptSource -notmatch
+        'event_type\s*=\s*"response"' -or
+    $transcriptSource -notmatch
+        'event_type\s*=\s*"failure"' -or
+    $transcriptSource -notmatch
+        "exception_type\s*=" -or
+    $transcriptSource -match
+        "exception\.Message|--transcript|Parse\s*\(\s*arguments") {
+    throw "Build J local transcript safety constraints changed."
+}
+
 Write-Output "RS50 shared HID++ Build J telemetry audit passed."
 Write-Output "  Arming: nine exact ordered stationary confirmations"
 Write-Output "  Telemetry: IsOnTrackCar, Gear, and Speed only"
 Write-Output "  Limits: 10 seconds, 5 Hz, deduplicated, stop above 0.5 m/s"
 Write-Output "  Operations: typed discovery and Layout J setter only"
 Write-Output "  DirectInput, FFB, LEDs, and raw HID: absent"
+Write-Output "  Transcript: fixed local JSONL, write-through, bounded to 52"
 Write-Output "  Fake verifier: no physical transport reference"
 Write-Output "  LogiDynamicDash application reference: absent"

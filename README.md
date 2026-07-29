@@ -119,7 +119,9 @@ screen on Logitech PRO Racing Wheel and RS50.
   retained only the `0x8130` discovery and not the setter/ACK pair. The
   physical result passed while strict USB evidence remains inconclusive, so
   moving-car and full-lap testing remain prohibited pending a reviewed
-  capture plan.
+  capture plan. A subsequent offline-only change adds a fixed local,
+  write-through JSONL transcript of exact Build J requests/responses and
+  latency; it is bounded, ignored, and has not yet been used on hardware.
 - Build K's separately armed visual-capability gallery physically passed. The
   OLED advanced through fixed Layouts A-J; video confirmed blank/Test,
   solid/striped gauges, split numeric layouts, four-row layouts, and built-in

@@ -41,6 +41,7 @@ bld/
 *_capture.zip
 rs50_passive_*.txt
 [Dd]iagnostic-[Cc]aptures/
+rs50-build-j-transcript-*.jsonl
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/

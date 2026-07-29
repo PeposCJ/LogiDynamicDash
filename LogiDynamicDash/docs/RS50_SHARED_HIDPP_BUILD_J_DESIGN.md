@@ -93,6 +93,31 @@ Windows Code Integrity policy
 `{0283ac0f-fff1-49ae-ada1-8a933130cad6}`; that policy must not be disabled or
 modified.
 
+## Local Transaction Transcript
+
+After J1's USBPcap failed to retain the physically successful setter/ACK
+exchange, Build J gained a local write-through JSONL transcript. This
+instrumentation has not yet been run against hardware.
+
+For a physically armed run, it creates an automatically named file under:
+
+```text
+.tmp/rs50-build-j-transcripts/
+```
+
+Each exchange writes and flushes a request event before transmission, then
+writes either the exact response and elapsed microseconds or only the
+exception type. It never records an exception message, device path, general
+telemetry stream, FFB, LED traffic, or unrelated HID reports. The path cannot
+be selected by a caller and the file is ignored by Git.
+
+The transcript is bounded to 52 transactions: one discovery plus the
+mathematical maximum of 51 telemetry frames in a ten-second trial whose first
+frame may be immediate and whose subsequent frames are limited to 5 Hz.
+Reaching the bound fails closed before another request is transmitted.
+Logging adds no device operation and does not replace independent USBPcap and
+video evidence.
+
 ## Executed Physical J1 Trial
 
 Use a fresh capture:

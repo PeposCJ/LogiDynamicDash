@@ -38,7 +38,9 @@ internal static class BuildJTelemetryTrialProgram
         return await RunAsync(
             arguments,
             new BuildJIRacingTelemetrySource(),
-            Rs50HidppDeviceExchange.Open,
+            () => BuildJRecordedExchange.OpenPhysical(
+                TimeProvider.System,
+                Console.Out),
             TimeProvider.System,
             cancellationSource.Token,
             Console.Out,

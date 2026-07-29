@@ -1,3 +1,4 @@
+using System.Text.Json;
 using LogiDynamicDash.Hidpp;
 using Rs50SharedHidppTelemetryTrial;
 
@@ -115,6 +116,125 @@ public sealed class Rs50SharedHidppTelemetryTrialTests
         Assert.Equal(2, exchange.Transactions.Count);
     }
 
+    [Fact]
+    public void RecordedExchange_WritesExactRequestAndResponseEvents()
+    {
+        using var transcriptOutput = new StringWriter();
+        using var transcript = new BuildJTransactionTranscript(
+            transcriptOutput,
+            ".tmp/test.jsonl");
+        var inner = new RecordingExchange();
+        using var exchange = new BuildJRecordedExchange(
+            inner,
+            transcript,
+            TimeProvider.System);
+
+        Rs50HidppDisplayTransaction discovery =
+            Rs50HidppDisplayProtocol.CreateDiscovery();
+        byte[] discoveryResponse = exchange.Exchange(discovery);
+        byte runtimeIndex =
+            Rs50HidppDisplayProtocol.ParseDiscoveryResponse(
+                discoveryResponse);
+        Rs50HidppDisplayTransaction layout =
+            Rs50HidppDisplayProtocol.CreateLayoutJ(
+                runtimeIndex,
+                "SPEED",
+                "0 KMH",
+                "GEAR",
+                "N");
+        exchange.Exchange(layout);
+
+        string[] lines = transcriptOutput
+            .ToString()
+            .Split(
+                Environment.NewLine,
+                StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal(4, lines.Length);
+
+        using JsonDocument discoveryRequest =
+            JsonDocument.Parse(lines[0]);
+        Assert.Equal(
+            "request",
+            discoveryRequest.RootElement
+                .GetProperty("event_type")
+                .GetString());
+        Assert.Equal(
+            Convert.ToHexString(discovery.Request.Span),
+            discoveryRequest.RootElement
+                .GetProperty("report_hex")
+                .GetString());
+
+        using JsonDocument layoutResponse =
+            JsonDocument.Parse(lines[3]);
+        Assert.Equal(
+            "response",
+            layoutResponse.RootElement
+                .GetProperty("event_type")
+                .GetString());
+        Assert.True(
+            layoutResponse.RootElement
+                .GetProperty("exact_header_match")
+                .GetBoolean());
+        Assert.Equal(
+            "SetLayoutJ",
+            layoutResponse.RootElement
+                .GetProperty("transaction")
+                .GetString());
+    }
+
+    [Fact]
+    public void Transcript_StopsBeforeExceedingBoundedCapacity()
+    {
+        using var transcriptOutput = new StringWriter();
+        using var transcript = new BuildJTransactionTranscript(
+            transcriptOutput,
+            ".tmp/test.jsonl");
+        Rs50HidppDisplayTransaction discovery =
+            Rs50HidppDisplayProtocol.CreateDiscovery();
+
+        for (int index = 0;
+             index < BuildJTransactionTranscript.MaximumTransactions;
+             index++)
+        {
+            transcript.RecordRequest(
+                discovery,
+                DateTimeOffset.UnixEpoch);
+        }
+
+        Assert.Throws<IOException>(
+            () => transcript.RecordRequest(
+                discovery,
+                DateTimeOffset.UnixEpoch));
+    }
+
+    [Fact]
+    public void RecordedExchange_LogsFailureTypeWithoutExceptionMessage()
+    {
+        using var transcriptOutput = new StringWriter();
+        using var transcript = new BuildJTransactionTranscript(
+            transcriptOutput,
+            ".tmp/test.jsonl");
+        using var exchange = new BuildJRecordedExchange(
+            new FailingExchange(),
+            transcript,
+            TimeProvider.System);
+
+        Assert.Throws<IOException>(
+            () => exchange.Exchange(
+                Rs50HidppDisplayProtocol.CreateDiscovery()));
+
+        string transcriptText = transcriptOutput.ToString();
+        Assert.Contains(
+            "\"event_type\":\"failure\"",
+            transcriptText);
+        Assert.Contains(
+            typeof(IOException).FullName!,
+            transcriptText);
+        Assert.DoesNotContain(
+            FailingExchange.SensitiveMessage,
+            transcriptText);
+    }
+
     private static string ReadText(
         byte[] report,
         int offset,
@@ -186,5 +306,19 @@ public sealed class Rs50SharedHidppTelemetryTrialTests
 
         public void Dispose() =>
             Disposed = true;
+    }
+
+    private sealed class FailingExchange : IRs50HidppDisplayExchange
+    {
+        internal const string SensitiveMessage =
+            "Do not copy a local device path into the transcript.";
+
+        public byte[] Exchange(
+            Rs50HidppDisplayTransaction transaction) =>
+            throw new IOException(SensitiveMessage);
+
+        public void Dispose()
+        {
+        }
     }
 }

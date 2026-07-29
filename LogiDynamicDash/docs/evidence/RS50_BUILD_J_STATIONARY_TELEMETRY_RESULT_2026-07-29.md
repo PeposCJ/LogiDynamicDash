@@ -93,3 +93,7 @@ run, add host-side timestamped request/response evidence and determine a
 capture method that can independently retain the known 64-byte transaction.
 Any repetition requires a new design review and a fresh operator
 authorization.
+
+The host-side bounded JSONL transcript was subsequently implemented and
+validated offline. It has not yet been used on hardware and does not change
+the J1 evidence classification above.
