@@ -30,8 +30,43 @@ public sealed class Rs50OledConfigurationFileTests
         Assert.Equal(300, configuration.GaugeMaximumSpeed);
     }
 
+    [Fact]
+    public void Parse_AcceptsVersionTwoPerModeLayouts()
+    {
+        const string json =
+            """
+            {
+              "schemaVersion": 2,
+              "layouts": {
+                "normal": "E",
+                "brakeBias": "H",
+                "lastLap": "J",
+                "connectionProblem": "A"
+              },
+              "speedUnit": "MPH",
+              "maximumRpm": 9000,
+              "gaugeMaximumSpeed": 200
+            }
+            """;
+
+        Rs50OledConfiguration configuration =
+            Rs50OledConfigurationFile.Parse(json);
+
+        Assert.Equal(Rs50OledLayout.E, configuration.Layout);
+        Assert.Equal(
+            Rs50OledLayout.H,
+            configuration.LayoutFor(DisplayMode.BrakeBias));
+        Assert.Equal(
+            Rs50OledLayout.J,
+            configuration.LayoutFor(DisplayMode.LastLap));
+        Assert.Equal(
+            Rs50OledLayout.A,
+            configuration.LayoutFor(DisplayMode.ConnectionProblem));
+    }
+
     [Theory]
     [InlineData("""{"schemaVersion":2,"layout":"E","speedUnit":"KMH","maximumRpm":8000,"gaugeMaximumSpeed":300}""")]
+    [InlineData("""{"schemaVersion":2,"layouts":{"normal":"E","brakeBias":"H","lastLap":"J"},"speedUnit":"KMH","maximumRpm":8000,"gaugeMaximumSpeed":300}""")]
     [InlineData("""{"schemaVersion":1,"layout":"e","speedUnit":"KMH","maximumRpm":8000,"gaugeMaximumSpeed":300}""")]
     [InlineData("""{"schemaVersion":1,"layout":"E","speedUnit":"kmh","maximumRpm":8000,"gaugeMaximumSpeed":300}""")]
     [InlineData("""{"schemaVersion":1,"layout":"E","speedUnit":"KMH","maximumRpm":999,"gaugeMaximumSpeed":300}""")]

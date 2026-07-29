@@ -3,12 +3,14 @@ namespace LogiDynamicDash.Offline;
 internal enum OfflineCommandKind
 {
     PreviewAll,
-    SimulateAll
+    SimulateAll,
+    Replay
 }
 
 internal sealed record OfflineCommand(
     OfflineCommandKind Kind,
-    string ConfigurationPath);
+    string ConfigurationPath,
+    string? TelemetryPath = null);
 
 internal static class OfflineCommandLine
 {
@@ -18,6 +20,20 @@ internal static class OfflineCommandLine
     {
         ArgumentNullException.ThrowIfNull(arguments);
         command = null;
+        if (arguments.Length == 5 &&
+            arguments[0] == "--replay" &&
+            arguments[1] == "--config" &&
+            !string.IsNullOrWhiteSpace(arguments[2]) &&
+            arguments[3] == "--telemetry" &&
+            !string.IsNullOrWhiteSpace(arguments[4]))
+        {
+            command = new OfflineCommand(
+                OfflineCommandKind.Replay,
+                arguments[2],
+                arguments[4]);
+            return true;
+        }
+
         if (arguments.Length != 3 ||
             arguments[1] != "--config" ||
             string.IsNullOrWhiteSpace(arguments[2]))
@@ -43,5 +59,7 @@ internal static class OfflineCommandLine
     internal static string Usage =>
         "Offline commands (never enumerate or open HID devices):\n" +
         "  LogiDynamicDash.exe --preview-all --config <json-path>\n" +
-        "  LogiDynamicDash.exe --simulate-all --config <json-path>";
+        "  LogiDynamicDash.exe --simulate-all --config <json-path>\n" +
+        "  LogiDynamicDash.exe --replay --config <json-path> " +
+        "--telemetry <json-path>";
 }

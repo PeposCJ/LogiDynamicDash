@@ -21,6 +21,26 @@ public sealed class OfflineCommandLineTests
         Assert.Equal("settings.json", command.ConfigurationPath);
     }
 
+    [Fact]
+    public void TryParse_AcceptsExactReplayCommand()
+    {
+        Assert.True(
+            OfflineCommandLine.TryParse(
+                [
+                    "--replay",
+                    "--config",
+                    "settings.json",
+                    "--telemetry",
+                    "scenario.json"
+                ],
+                out OfflineCommand? command));
+
+        Assert.NotNull(command);
+        Assert.Equal(OfflineCommandKind.Replay, command.Kind);
+        Assert.Equal("settings.json", command.ConfigurationPath);
+        Assert.Equal("scenario.json", command.TelemetryPath);
+    }
+
     [Theory]
     [InlineData("--preview")]
     [InlineData("--simulate")]

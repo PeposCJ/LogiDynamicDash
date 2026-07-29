@@ -1,7 +1,5 @@
-﻿using System.Diagnostics;
 using LogiDynamicDash.Configuration;
 using LogiDynamicDash.Controllers;
-using LogiDynamicDash.Displays;
 using LogiDynamicDash.Models;
 using LogiDynamicDash.Offline;
 using LogiDynamicDash.Services;
@@ -19,29 +17,13 @@ namespace LogiDynamicDash;
 ])]
 internal class Program
 {
-    private const int RefreshIntervalMilliseconds = 200;
-
-    private static readonly Stopwatch RefreshTimer =
-        Stopwatch.StartNew();
-
-    private static readonly TelemetrySnapshot Snapshot =
-        new();
-
-    private static IApplicationDisplay? dashboard;
-
-    private static readonly DisplayController Controller =
-        new();
-
-    private static readonly IRacingTelemetryService
-        TelemetryService = new();
-
     private static async Task<int> Main(string[] arguments)
     {
         if (OfflineCommandLine.TryParse(
                 arguments,
                 out OfflineCommand? offlineCommand))
         {
-            return RunOffline(offlineCommand!);
+            return await RunOfflineAsync(offlineCommand!);
         }
 
         ApplicationDisplaySelection? selection;
@@ -64,9 +46,7 @@ internal class Program
             return 2;
         }
 
-        using var cancellationSource =
-            new CancellationTokenSource();
-
+        using CancellationTokenSource cancellationSource = new();
         if (selection!.IsBoundedHardwareTrial)
         {
             cancellationSource.CancelAfter(
@@ -79,53 +59,24 @@ internal class Program
             cancellationSource.Cancel();
         };
 
-        dashboard = selection.Display;
-        bool initialized = false;
-        int exitCode = 0;
+        LogiDynamicDashApplication application = new(
+            new IRacingTelemetryService(),
+            selection.Display,
+            new DisplayController());
         try
         {
-            dashboard.Initialize();
-            initialized = true;
-            RenderCurrentDisplay(Snapshot);
-
-            await TelemetryService.MonitorAsync(
-                Snapshot,
-                HandleTelemetryUpdated,
-                HandleStatusChanged,
-                cancellationSource.Token);
-        }
-        catch (OperationCanceledException)
-        {
-            // Expected when the user presses Ctrl+C.
+            await application.RunAsync(cancellationSource.Token);
+            return 0;
         }
         catch (Exception exception)
         {
             Console.Error.WriteLine(
                 $"LogiDynamicDash stopped safely: {exception.Message}");
-            exitCode = 1;
+            return 1;
         }
-        finally
-        {
-            if (initialized)
-            {
-                try
-                {
-                    dashboard.Stop();
-                }
-                catch (Exception exception)
-                {
-                    Console.Error.WriteLine(
-                        "LogiDynamicDash could not close a display cleanly: " +
-                        exception.Message);
-                    exitCode = 1;
-                }
-            }
-        }
-
-        return exitCode;
     }
 
-    private static int RunOffline(OfflineCommand command)
+    private static async Task<int> RunOfflineAsync(OfflineCommand command)
     {
         try
         {
@@ -143,6 +94,12 @@ internal class Program
                         configuration,
                         Console.Out);
                     break;
+                case OfflineCommandKind.Replay:
+                    await Rs50TelemetryReplayRunner.RunAsync(
+                        configuration,
+                        command.TelemetryPath!,
+                        Console.Out);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(command));
             }
@@ -155,35 +112,5 @@ internal class Program
                 $"Offline command failed: {exception.Message}");
             return 1;
         }
-    }
-
-    private static void HandleTelemetryUpdated(
-        TelemetrySnapshot snapshot)
-    {
-        if (RefreshTimer.ElapsedMilliseconds <
-            RefreshIntervalMilliseconds)
-        {
-            return;
-        }
-
-        RenderCurrentDisplay(snapshot);
-        RefreshTimer.Restart();
-    }
-
-    private static void HandleStatusChanged(
-        TelemetrySnapshot snapshot)
-    {
-        RenderCurrentDisplay(snapshot);
-    }
-
-    private static void RenderCurrentDisplay(
-        TelemetrySnapshot snapshot)
-    {
-        DisplayMode mode =
-            Controller.SelectMode(snapshot);
-
-        dashboard!.Render(
-            snapshot,
-            mode);
     }
 }

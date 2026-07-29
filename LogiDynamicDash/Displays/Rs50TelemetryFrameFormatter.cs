@@ -16,7 +16,8 @@ internal sealed class Rs50TelemetryFrameFormatter(
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
-        return configuration.Layout switch
+        Rs50OledLayout layout = configuration.LayoutFor(mode);
+        return layout switch
         {
             Rs50OledLayout.A => new Rs50LayoutAFrame(),
             Rs50OledLayout.B => new Rs50LayoutBFrame(),
@@ -29,7 +30,7 @@ internal sealed class Rs50TelemetryFrameFormatter(
             Rs50OledLayout.I => FormatFourRows(snapshot, mode, layoutI: true),
             Rs50OledLayout.J => FormatFourRows(snapshot, mode, layoutI: false),
             _ => throw new ArgumentOutOfRangeException(
-                nameof(configuration),
+                nameof(mode),
                 "Unsupported RS50 OLED layout.")
         };
     }

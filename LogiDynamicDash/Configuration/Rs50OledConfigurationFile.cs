@@ -7,10 +7,9 @@ internal static class Rs50OledConfigurationFile
 {
     private const int MaximumFileBytes = 16 * 1024;
 
-    private static readonly string[] RequiredProperties =
+    private static readonly string[] CommonProperties =
     [
         "schemaVersion",
-        "layout",
         "speedUnit",
         "maximumRpm",
         "gaugeMaximumSpeed"
@@ -60,51 +59,38 @@ internal static class Rs50OledConfigurationFile
                 "The OLED configuration root must be an object.");
         }
 
-        Dictionary<string, JsonElement> properties =
-            new(StringComparer.Ordinal);
-        foreach (JsonProperty property in
-                 document.RootElement.EnumerateObject())
-        {
-            if (!RequiredProperties.Contains(
-                    property.Name,
-                    StringComparer.Ordinal))
-            {
-                throw new InvalidDataException(
-                    $"Unknown OLED configuration property '{property.Name}'.");
-            }
-
-            if (!properties.TryAdd(property.Name, property.Value))
-            {
-                throw new InvalidDataException(
-                    $"Duplicate OLED configuration property '{property.Name}'.");
-            }
-        }
-
-        if (properties.Count != RequiredProperties.Length ||
-            RequiredProperties.Any(name => !properties.ContainsKey(name)))
-        {
-            throw new InvalidDataException(
-                "The OLED configuration must contain every required property.");
-        }
-
-        if (!properties["schemaVersion"].TryGetInt32(
-                out int schemaVersion) ||
-            schemaVersion != 1)
+        Dictionary<string, JsonElement> properties = ReadUniqueProperties(
+            document.RootElement);
+        if (!properties.TryGetValue("schemaVersion", out JsonElement version) ||
+            !version.TryGetInt32(out int schemaVersion) ||
+            schemaVersion is not (1 or 2))
         {
             throw new InvalidDataException(
                 "Unsupported OLED configuration schema version.");
         }
 
-        string layoutText = RequireString(properties["layout"], "layout");
-        if (layoutText.Length != 1 ||
-            layoutText[0] is < 'A' or > 'J')
+        string layoutProperty = schemaVersion == 1 ? "layout" : "layouts";
+        string[] allowedProperties = [.. CommonProperties, layoutProperty];
+        string? unknownProperty = properties.Keys.FirstOrDefault(
+            name => !allowedProperties.Contains(name, StringComparer.Ordinal));
+        if (unknownProperty is not null)
         {
             throw new InvalidDataException(
-                "Layout must be one uppercase letter from A through J.");
+                $"Unknown OLED configuration property '{unknownProperty}'.");
         }
 
-        Rs50OledLayout layout =
-            (Rs50OledLayout)(layoutText[0] - 'A');
+        if (properties.Count != allowedProperties.Length ||
+            allowedProperties.Any(name => !properties.ContainsKey(name)))
+        {
+            throw new InvalidDataException(
+                "The OLED configuration must contain every required property.");
+        }
+
+        IReadOnlyDictionary<DisplayMode, Rs50OledLayout> layouts =
+            schemaVersion == 1
+                ? AllModes(ParseLayout(properties["layout"], "layout"))
+                : ParseLayouts(properties["layouts"]);
+
         string speedUnitText =
             RequireString(properties["speedUnit"], "speedUnit");
         SpeedUnit speedUnit = speedUnitText switch
@@ -134,11 +120,78 @@ internal static class Rs50OledConfigurationFile
         }
 
         return new Rs50OledConfiguration(
-            layout,
+            layouts,
             speedUnit,
             maximumRpm,
             gaugeMaximumSpeed);
     }
+
+    private static Dictionary<string, JsonElement> ReadUniqueProperties(
+        JsonElement element)
+    {
+        Dictionary<string, JsonElement> properties = new(StringComparer.Ordinal);
+        foreach (JsonProperty property in
+                 element.EnumerateObject())
+        {
+            if (!properties.TryAdd(property.Name, property.Value))
+            {
+                throw new InvalidDataException(
+                    $"Duplicate OLED configuration property '{property.Name}'.");
+            }
+        }
+
+        return properties;
+    }
+
+    private static Rs50OledLayout ParseLayout(
+        JsonElement element,
+        string propertyName)
+    {
+        string layoutText = RequireString(element, propertyName);
+        if (layoutText.Length != 1 ||
+            layoutText[0] is < 'A' or > 'J')
+        {
+            throw new InvalidDataException(
+                "Layout must be one uppercase letter from A through J.");
+        }
+
+        return (Rs50OledLayout)(layoutText[0] - 'A');
+    }
+
+    private static IReadOnlyDictionary<DisplayMode, Rs50OledLayout> ParseLayouts(
+        JsonElement element)
+    {
+        if (element.ValueKind != JsonValueKind.Object)
+        {
+            throw new InvalidDataException(
+                "OLED configuration property 'layouts' must be an object.");
+        }
+
+        Dictionary<string, JsonElement> values = ReadUniqueProperties(element);
+        Dictionary<string, DisplayMode> names = new(StringComparer.Ordinal)
+        {
+            ["normal"] = DisplayMode.Normal,
+            ["brakeBias"] = DisplayMode.BrakeBias,
+            ["lastLap"] = DisplayMode.LastLap,
+            ["connectionProblem"] = DisplayMode.ConnectionProblem
+        };
+        if (values.Count != names.Count ||
+            values.Keys.Any(name => !names.ContainsKey(name)) ||
+            names.Keys.Any(name => !values.ContainsKey(name)))
+        {
+            throw new InvalidDataException(
+                "Layouts must contain exactly normal, brakeBias, lastLap, " +
+                "and connectionProblem.");
+        }
+
+        return values.ToDictionary(
+            pair => names[pair.Key],
+            pair => ParseLayout(pair.Value, $"layouts.{pair.Key}"));
+    }
+
+    private static IReadOnlyDictionary<DisplayMode, Rs50OledLayout> AllModes(
+        Rs50OledLayout layout) =>
+        Enum.GetValues<DisplayMode>().ToDictionary(mode => mode, _ => layout);
 
     private static string RequireString(
         JsonElement element,
