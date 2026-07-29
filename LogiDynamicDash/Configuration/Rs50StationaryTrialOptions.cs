@@ -1,14 +1,11 @@
-using System.Globalization;
-using LogiDynamicDash.Models;
-
 namespace LogiDynamicDash.Configuration;
 
 internal sealed record Rs50StationaryTrialOptions(
-    Rs50OledConfiguration OledConfiguration)
+    string ConfigurationPath)
 {
     internal static readonly TimeSpan Duration = TimeSpan.FromSeconds(10);
 
-    private const int ArgumentCount = 16;
+    private const int ArgumentCount = 10;
 
     internal static bool TryParse(
         string[] arguments,
@@ -25,63 +22,14 @@ internal sealed record Rs50StationaryTrialOptions(
             arguments[4] != "--confirm-rs50-dynamic-selected" ||
             arguments[5] != "--confirm-10-second-limit" ||
             arguments[6] != "--acknowledge-no-moving-car-use" ||
-            arguments[7] != "--layout" ||
-            arguments[9] != "--speed-unit" ||
-            arguments[11] != "--maximum-rpm" ||
-            arguments[13] != "--gauge-maximum-speed" ||
-            arguments[15] != "--confirm-settings")
+            arguments[7] != "--config" ||
+            string.IsNullOrWhiteSpace(arguments[8]) ||
+            arguments[9] != "--confirm-settings")
         {
             return false;
         }
 
-        if (arguments[8].Length != 1 ||
-            arguments[8][0] is < 'A' or > 'J')
-        {
-            return false;
-        }
-
-        Rs50OledLayout layout =
-            (Rs50OledLayout)(arguments[8][0] - 'A');
-
-        SpeedUnit speedUnit = arguments[10] switch
-        {
-            "KMH" => SpeedUnit.KilometersPerHour,
-            "MPH" => SpeedUnit.MilesPerHour,
-            _ => (SpeedUnit)(-1)
-        };
-        if (!Enum.IsDefined(speedUnit))
-        {
-            return false;
-        }
-
-        if (!double.TryParse(
-                arguments[12],
-                NumberStyles.AllowDecimalPoint,
-                CultureInfo.InvariantCulture,
-                out double maximumRpm) ||
-            !double.IsFinite(maximumRpm) ||
-            maximumRpm is < 1000 or > 30000)
-        {
-            return false;
-        }
-
-        if (!double.TryParse(
-                arguments[14],
-                NumberStyles.AllowDecimalPoint,
-                CultureInfo.InvariantCulture,
-                out double maximumSpeed) ||
-            !double.IsFinite(maximumSpeed) ||
-            maximumSpeed is < 10 or > 500)
-        {
-            return false;
-        }
-
-        options = new Rs50StationaryTrialOptions(
-            new Rs50OledConfiguration(
-                layout,
-                speedUnit,
-                maximumRpm,
-                maximumSpeed));
+        options = new Rs50StationaryTrialOptions(arguments[8]);
         return true;
     }
 
@@ -96,9 +44,6 @@ internal sealed record Rs50StationaryTrialOptions(
         "--confirm-rs50-dynamic-selected " +
         "--confirm-10-second-limit " +
         "--acknowledge-no-moving-car-use " +
-        "--layout <A-J> " +
-        "--speed-unit <KMH|MPH> " +
-        "--maximum-rpm <1000-30000> " +
-        "--gauge-maximum-speed <10-500> " +
+        "--config <json-path> " +
         "--confirm-settings";
 }

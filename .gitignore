@@ -381,6 +381,7 @@ FodyWeavers.xsd
 
 # Local hardware-research artifacts
 .tmp/
+.logs/
 *.pcap
 *.pcapng
 *.mov

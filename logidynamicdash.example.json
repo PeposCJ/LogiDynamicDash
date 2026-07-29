@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "layout": "E",
+  "speedUnit": "KMH",
+  "maximumRpm": 8000,
+  "gaugeMaximumSpeed": 300
+}

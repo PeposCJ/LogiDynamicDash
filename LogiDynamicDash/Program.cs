@@ -3,6 +3,7 @@ using LogiDynamicDash.Configuration;
 using LogiDynamicDash.Controllers;
 using LogiDynamicDash.Displays;
 using LogiDynamicDash.Models;
+using LogiDynamicDash.Offline;
 using LogiDynamicDash.Services;
 using SVappsLAB.iRacingTelemetrySDK;
 
@@ -36,11 +37,30 @@ internal class Program
 
     private static async Task<int> Main(string[] arguments)
     {
-        if (!ApplicationDisplayFactory.TryCreate(
+        if (OfflineCommandLine.TryParse(
                 arguments,
-                out ApplicationDisplaySelection? selection))
+                out OfflineCommand? offlineCommand))
         {
-            Console.Error.WriteLine(Rs50StationaryTrialOptions.Usage);
+            return RunOffline(offlineCommand!);
+        }
+
+        ApplicationDisplaySelection? selection;
+        try
+        {
+            if (!ApplicationDisplayFactory.TryCreate(
+                    arguments,
+                    out selection))
+            {
+                Console.Error.WriteLine(OfflineCommandLine.Usage);
+                Console.Error.WriteLine();
+                Console.Error.WriteLine(Rs50StationaryTrialOptions.Usage);
+                return 2;
+            }
+        }
+        catch (Exception exception)
+        {
+            Console.Error.WriteLine(
+                $"Configuration rejected: {exception.Message}");
             return 2;
         }
 
@@ -103,6 +123,38 @@ internal class Program
         }
 
         return exitCode;
+    }
+
+    private static int RunOffline(OfflineCommand command)
+    {
+        try
+        {
+            Rs50OledConfiguration configuration =
+                Rs50OledConfigurationFile.Load(command.ConfigurationPath);
+            switch (command.Kind)
+            {
+                case OfflineCommandKind.PreviewAll:
+                    Rs50OledPreviewRunner.RunAll(
+                        configuration,
+                        Console.Out);
+                    break;
+                case OfflineCommandKind.SimulateAll:
+                    Rs50OledSimulationRunner.RunAll(
+                        configuration,
+                        Console.Out);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(command));
+            }
+
+            return 0;
+        }
+        catch (Exception exception)
+        {
+            Console.Error.WriteLine(
+                $"Offline command failed: {exception.Message}");
+            return 1;
+        }
     }
 
     private static void HandleTelemetryUpdated(

@@ -49,6 +49,7 @@ public sealed class ApplicationDisplayFactoryTests
     public void ValidArguments_DeferSessionConstructionUntilInitialization()
     {
         int sessionFactoryCalls = 0;
+        int configurationLoaderCalls = 0;
         FakeSession session = new();
         Assert.True(
             ApplicationDisplayFactory.TryCreate(
@@ -59,10 +60,16 @@ public sealed class ApplicationDisplayFactoryTests
                     return session;
                 },
                 () => new FakeDisplay(),
+                _ =>
+                {
+                    configurationLoaderCalls++;
+                    return new Rs50OledConfiguration(Rs50OledLayout.E);
+                },
                 out ApplicationDisplaySelection? selection));
 
         Assert.NotNull(selection);
         Assert.True(selection.IsBoundedHardwareTrial);
+        Assert.Equal(1, configurationLoaderCalls);
         Assert.Equal(0, sessionFactoryCalls);
 
         selection.Display.Initialize();
@@ -70,6 +77,26 @@ public sealed class ApplicationDisplayFactoryTests
         Assert.Equal(1, session.OpenCount);
         selection.Display.Stop();
         Assert.True(session.Disposed);
+    }
+
+    [Fact]
+    public void ConfigurationFailure_DoesNotConstructPhysicalSession()
+    {
+        int sessionFactoryCalls = 0;
+
+        Assert.Throws<InvalidDataException>(
+            () => ApplicationDisplayFactory.TryCreate(
+                Rs50StationaryTrialOptionsTests.ValidArguments(),
+                () =>
+                {
+                    sessionFactoryCalls++;
+                    return new FakeSession();
+                },
+                () => new FakeDisplay(),
+                _ => throw new InvalidDataException("invalid config"),
+                out _));
+
+        Assert.Equal(0, sessionFactoryCalls);
     }
 
     private sealed class FakeSession : IRs50OledSession
