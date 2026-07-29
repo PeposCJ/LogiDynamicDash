@@ -309,14 +309,19 @@ Values such as connection state and on-track state may remain visible in the con
 
 ## First implementation scope
 
-The first OLED implementation should aim for:
+The production formatter now implements:
 
-1. Normal gear and speed screen
-2. Temporary brake-bias screen
-3. Temporary last-lap screen
-4. ABS intervention indicator, if a reliable signal is confirmed
-5. Disconnection alert
+1. Normal gear and speed screens across layouts D-J
+2. RPM and speed gauges where the selected layout exposes them
+3. Temporary brake-bias screens
+4. Temporary last-lap screens
+5. Disconnection states
 6. Configurable km/h or mph
+7. Configurable RPM and speed gauge scales
+
+ABS intervention remains out of scope until a reliable telemetry signal is
+confirmed. The application must not infer or label ABS activity from
+unvalidated data.
 
 ## Remaining technical questions
 
