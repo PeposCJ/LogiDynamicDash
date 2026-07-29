@@ -30,6 +30,7 @@ internal sealed class Rs50OledSession(
 
     private readonly TimeProvider clock =
         timeProvider ?? TimeProvider.System;
+    private readonly object synchronization = new();
 
     private byte? runtimeIndex;
     private Rs50OledFrame? lastAcknowledgedFrame;
@@ -40,87 +41,96 @@ internal sealed class Rs50OledSession(
 
     public void Open()
     {
-        ThrowIfDisposed();
-        ThrowIfFaulted();
-        if (runtimeIndex is not null)
+        lock (synchronization)
         {
-            throw new InvalidOperationException(
-                "The RS50 OLED session is already open.");
-        }
+            ThrowIfDisposed();
+            ThrowIfFaulted();
+            if (runtimeIndex is not null)
+            {
+                throw new InvalidOperationException(
+                    "The RS50 OLED session is already open.");
+            }
 
-        try
-        {
-            byte[] response =
-                exchange.Exchange(Rs50OledProtocol.CreateDiscovery());
-            runtimeIndex =
-                Rs50OledProtocol.ParseDiscoveryResponse(response);
-        }
-        catch
-        {
-            faulted = true;
-            throw;
+            try
+            {
+                byte[] response =
+                    exchange.Exchange(Rs50OledProtocol.CreateDiscovery());
+                runtimeIndex =
+                    Rs50OledProtocol.ParseDiscoveryResponse(response);
+            }
+            catch
+            {
+                faulted = true;
+                throw;
+            }
         }
     }
 
     public Rs50OledSendResult Send(Rs50OledFrame frame)
     {
         ArgumentNullException.ThrowIfNull(frame);
-        ThrowIfDisposed();
-        ThrowIfFaulted();
-
-        if (runtimeIndex is not byte featureIndex)
+        lock (synchronization)
         {
-            throw new InvalidOperationException(
-                "The RS50 OLED session is not open.");
-        }
+            ThrowIfDisposed();
+            ThrowIfFaulted();
 
-        if (frame == lastAcknowledgedFrame)
-        {
-            return Rs50OledSendResult.Unchanged;
-        }
+            if (runtimeIndex is not byte featureIndex)
+            {
+                throw new InvalidOperationException(
+                    "The RS50 OLED session is not open.");
+            }
 
-        long timestamp = clock.GetTimestamp();
-        if (hasTransmitted &&
-            clock.GetElapsedTime(
-                lastTransmissionTimestamp,
-                timestamp) < MinimumTransmissionInterval)
-        {
-            return Rs50OledSendResult.RateLimited;
-        }
+            if (frame == lastAcknowledgedFrame)
+            {
+                return Rs50OledSendResult.Unchanged;
+            }
 
-        try
-        {
-            Rs50OledTransaction transaction =
-                Rs50OledProtocol.CreateLayout(featureIndex, frame);
-            byte[] response = exchange.Exchange(transaction);
-            Rs50OledProtocol.ParseLayoutAcknowledgement(
-                transaction,
-                response);
+            long timestamp = clock.GetTimestamp();
+            if (hasTransmitted &&
+                clock.GetElapsedTime(
+                    lastTransmissionTimestamp,
+                    timestamp) < MinimumTransmissionInterval)
+            {
+                return Rs50OledSendResult.RateLimited;
+            }
 
-            lastAcknowledgedFrame = frame;
-            lastTransmissionTimestamp = clock.GetTimestamp();
-            hasTransmitted = true;
-            return Rs50OledSendResult.Transmitted;
-        }
-        catch
-        {
-            faulted = true;
-            throw;
+            try
+            {
+                Rs50OledTransaction transaction =
+                    Rs50OledProtocol.CreateLayout(featureIndex, frame);
+                byte[] response = exchange.Exchange(transaction);
+                Rs50OledProtocol.ParseLayoutAcknowledgement(
+                    transaction,
+                    response);
+
+                lastAcknowledgedFrame = frame;
+                lastTransmissionTimestamp = clock.GetTimestamp();
+                hasTransmitted = true;
+                return Rs50OledSendResult.Transmitted;
+            }
+            catch
+            {
+                faulted = true;
+                throw;
+            }
         }
     }
 
     public void Dispose()
     {
-        if (disposed)
+        lock (synchronization)
         {
-            return;
-        }
+            if (disposed)
+            {
+                return;
+            }
 
-        disposed = true;
-        runtimeIndex = null;
-        lastAcknowledgedFrame = null;
-        hasTransmitted = false;
-        exchange.Dispose();
+            disposed = true;
+            runtimeIndex = null;
+            lastAcknowledgedFrame = null;
+            hasTransmitted = false;
+            exchange.Dispose();
+        }
     }
 
     private void ThrowIfFaulted()

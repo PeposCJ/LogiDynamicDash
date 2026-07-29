@@ -122,6 +122,12 @@ public sealed class Rs50TelemetryFrameFormatterTests
     public void Configuration_RejectsInvalidGaugeScales()
     {
         Assert.Throws<ArgumentOutOfRangeException>(
+            () => new Rs50OledConfiguration((Rs50OledLayout)10));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new Rs50OledConfiguration(
+                Rs50OledLayout.E,
+                (SpeedUnit)10));
+        Assert.Throws<ArgumentOutOfRangeException>(
             () => new Rs50OledConfiguration(
                 Rs50OledLayout.E,
                 maximumRpm: 0));

@@ -14,6 +14,19 @@ internal sealed record Rs50OledConfiguration
         double maximumRpm = 8000,
         double gaugeMaximumSpeed = 300)
     {
+        if (!Enum.IsDefined(layout))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(layout),
+                "Only confirmed layouts A-J are supported.");
+        }
+
+        if (!Enum.IsDefined(speedUnit))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(speedUnit));
+        }
+
         if (!double.IsFinite(maximumRpm) || maximumRpm <= 0)
         {
             throw new ArgumentOutOfRangeException(
