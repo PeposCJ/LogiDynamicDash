@@ -2,7 +2,7 @@
 
 namespace LogiDynamicDash.Displays;
 
-internal sealed class ConsoleDashboard
+internal sealed class ConsoleDashboard : IApplicationDisplay
 {
     private const int DashboardWidth = 44;
 

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using LogiDynamicDash.Configuration;
 using LogiDynamicDash.Controllers;
 using LogiDynamicDash.Displays;
 using LogiDynamicDash.Models;
@@ -17,14 +18,15 @@ namespace LogiDynamicDash;
 ])]
 internal class Program
 {
+    private const int RefreshIntervalMilliseconds = 200;
+
     private static readonly Stopwatch RefreshTimer =
         Stopwatch.StartNew();
 
     private static readonly TelemetrySnapshot Snapshot =
         new();
 
-    private static readonly ConsoleDashboard Dashboard =
-        new();
+    private static IApplicationDisplay? dashboard;
 
     private static readonly DisplayController Controller =
         new();
@@ -32,13 +34,24 @@ internal class Program
     private static readonly IRacingTelemetryService
         TelemetryService = new();
 
-    private static async Task Main()
+    private static async Task<int> Main(string[] arguments)
     {
-        Dashboard.Initialize();
-        RenderCurrentDisplay(Snapshot);
+        if (!ApplicationDisplayFactory.TryCreate(
+                arguments,
+                out ApplicationDisplaySelection? selection))
+        {
+            Console.Error.WriteLine(Rs50StationaryTrialOptions.Usage);
+            return 2;
+        }
 
         using var cancellationSource =
             new CancellationTokenSource();
+
+        if (selection!.IsBoundedHardwareTrial)
+        {
+            cancellationSource.CancelAfter(
+                Rs50StationaryTrialOptions.Duration);
+        }
 
         Console.CancelKeyPress += (_, eventArgs) =>
         {
@@ -46,8 +59,15 @@ internal class Program
             cancellationSource.Cancel();
         };
 
+        dashboard = selection.Display;
+        bool initialized = false;
+        int exitCode = 0;
         try
         {
+            dashboard.Initialize();
+            initialized = true;
+            RenderCurrentDisplay(Snapshot);
+
             await TelemetryService.MonitorAsync(
                 Snapshot,
                 HandleTelemetryUpdated,
@@ -58,16 +78,38 @@ internal class Program
         {
             // Expected when the user presses Ctrl+C.
         }
+        catch (Exception exception)
+        {
+            Console.Error.WriteLine(
+                $"LogiDynamicDash stopped safely: {exception.Message}");
+            exitCode = 1;
+        }
         finally
         {
-            Dashboard.Stop();
+            if (initialized)
+            {
+                try
+                {
+                    dashboard.Stop();
+                }
+                catch (Exception exception)
+                {
+                    Console.Error.WriteLine(
+                        "LogiDynamicDash could not close a display cleanly: " +
+                        exception.Message);
+                    exitCode = 1;
+                }
+            }
         }
+
+        return exitCode;
     }
 
     private static void HandleTelemetryUpdated(
         TelemetrySnapshot snapshot)
     {
-        if (RefreshTimer.ElapsedMilliseconds < 100)
+        if (RefreshTimer.ElapsedMilliseconds <
+            RefreshIntervalMilliseconds)
         {
             return;
         }
@@ -88,7 +130,7 @@ internal class Program
         DisplayMode mode =
             Controller.SelectMode(snapshot);
 
-        Dashboard.Render(
+        dashboard!.Render(
             snapshot,
             mode);
     }
