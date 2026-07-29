@@ -64,6 +64,29 @@ public sealed class Rs50OledConfigurationFileTests
             configuration.LayoutFor(DisplayMode.ConnectionProblem));
     }
 
+    [Fact]
+    public void Serialize_WritesStrictRoundTrippableVersionTwoConfiguration()
+    {
+        Rs50OledConfiguration original =
+            DisciplineProfileRecommendations.Create(
+                DrivingDiscipline.Oval,
+                SpeedUnit.MilesPerHour).Configuration;
+
+        string json = Rs50OledConfigurationFile.Serialize(original);
+        Rs50OledConfiguration parsed =
+            Rs50OledConfigurationFile.Parse(json);
+
+        Assert.Contains("\"schemaVersion\": 2", json);
+        Assert.Equal(
+            original.LayoutFor(DisplayMode.Normal),
+            parsed.LayoutFor(DisplayMode.Normal));
+        Assert.Equal(original.SpeedUnit, parsed.SpeedUnit);
+        Assert.Equal(original.MaximumRpm, parsed.MaximumRpm);
+        Assert.Equal(
+            original.GaugeMaximumSpeed,
+            parsed.GaugeMaximumSpeed);
+    }
+
     [Theory]
     [InlineData("""{"schemaVersion":2,"layout":"E","speedUnit":"KMH","maximumRpm":8000,"gaugeMaximumSpeed":300}""")]
     [InlineData("""{"schemaVersion":2,"layouts":{"normal":"E","brakeBias":"H","lastLap":"J"},"speedUnit":"KMH","maximumRpm":8000,"gaugeMaximumSpeed":300}""")]

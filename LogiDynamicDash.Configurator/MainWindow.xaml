@@ -1,0 +1,159 @@
+<Window x:Class="LogiDynamicDash.Configurator.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="LogiDynamicDash Configurator"
+        Width="1080"
+        Height="760"
+        MinWidth="900"
+        MinHeight="650"
+        Background="#0B0E12"
+        Foreground="#F2F5F7"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#F2F5F7" />
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Margin" Value="0,5,0,12" />
+            <Setter Property="Padding" Value="10,7" />
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Margin" Value="0,5,0,12" />
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="Background" Value="#171C23" />
+            <Setter Property="Foreground" Value="#F2F5F7" />
+            <Setter Property="BorderBrush" Value="#303946" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="16,9" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+            <Setter Property="Background" Value="#18A57A" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style x:Key="Panel" TargetType="Border">
+            <Setter Property="Background" Value="#12171D" />
+            <Setter Property="BorderBrush" Value="#26303A" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="22" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock Text="LOGIDYNAMICDASH"
+                       FontSize="28"
+                       FontWeight="Bold" />
+            <TextBlock Text="Hardware-free dashboard configuration"
+                       Foreground="#8EA0B2"
+                       FontSize="14" />
+        </StackPanel>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="0.95*" />
+                <ColumnDefinition Width="22" />
+                <ColumnDefinition Width="1.25*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Style="{StaticResource Panel}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="Profile"
+                                   FontSize="20"
+                                   FontWeight="SemiBold"
+                                   Margin="0,0,0,14" />
+                        <TextBlock Text="Discipline" />
+                        <ComboBox x:Name="DisciplineBox" />
+                        <TextBlock Text="Speed unit" />
+                        <ComboBox x:Name="SpeedUnitBox" />
+                        <TextBlock Text="Maximum RPM" />
+                        <TextBox x:Name="MaximumRpmBox" />
+                        <TextBlock Text="Gauge maximum speed" />
+                        <TextBox x:Name="GaugeSpeedBox" />
+                        <Button x:Name="ApplyRecommendationButton"
+                                Content="Apply recommended profile"
+                                HorizontalAlignment="Left"
+                                Click="ApplyRecommendation_Click" />
+                        <TextBlock x:Name="RecommendationText"
+                                   Margin="0,14,0,0"
+                                   TextWrapping="Wrap"
+                                   Foreground="#9DB0C2" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <Border Grid.Column="2" Style="{StaticResource Panel}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="Layouts by display mode"
+                                   FontSize="20"
+                                   FontWeight="SemiBold"
+                                   Margin="0,0,0,14" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                <TextBlock Text="Normal driving" />
+                                <ComboBox x:Name="NormalLayoutBox" />
+                                <TextBlock Text="Brake bias" />
+                                <ComboBox x:Name="BrakeBiasLayoutBox" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                <TextBlock Text="Last lap" />
+                                <ComboBox x:Name="LastLapLayoutBox" />
+                                <TextBlock Text="Connection problem" />
+                                <ComboBox x:Name="ConnectionLayoutBox" />
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="Typed OLED preview"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Margin="0,14,0,10" />
+                        <Border Background="#050708"
+                                BorderBrush="#394550"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="16">
+                            <TextBlock x:Name="PreviewText"
+                                       FontFamily="Consolas"
+                                       Foreground="#A7F3D0"
+                                       TextWrapping="Wrap" />
+                        </Border>
+                        <TextBlock Text="This configurator never enumerates or opens HID devices."
+                                   Foreground="#F6C85F"
+                                   Margin="0,14,0,0" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <Grid Grid.Row="2" Margin="0,20,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="StatusText"
+                       VerticalAlignment="Center"
+                       Foreground="#9DB0C2"
+                       Text="Ready." />
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="Open configuration"
+                        Background="#303946"
+                        Click="Open_Click" />
+                <Button Content="Save configuration"
+                        Click="Save_Click" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

@@ -126,6 +126,41 @@ internal static class Rs50OledConfigurationFile
             gaugeMaximumSpeed);
     }
 
+    internal static string Serialize(Rs50OledConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        string Unit() => configuration.SpeedUnit switch
+        {
+            SpeedUnit.KilometersPerHour => "KMH",
+            SpeedUnit.MilesPerHour => "MPH",
+            _ => throw new ArgumentOutOfRangeException(nameof(configuration))
+        };
+
+        string json = JsonSerializer.Serialize(
+            new
+            {
+                schemaVersion = 2,
+                layouts = new
+                {
+                    normal = configuration.LayoutFor(DisplayMode.Normal)
+                        .ToString(),
+                    brakeBias = configuration.LayoutFor(DisplayMode.BrakeBias)
+                        .ToString(),
+                    lastLap = configuration.LayoutFor(DisplayMode.LastLap)
+                        .ToString(),
+                    connectionProblem = configuration
+                        .LayoutFor(DisplayMode.ConnectionProblem)
+                        .ToString()
+                },
+                speedUnit = Unit(),
+                maximumRpm = configuration.MaximumRpm,
+                gaugeMaximumSpeed = configuration.GaugeMaximumSpeed
+            },
+            new JsonSerializerOptions { WriteIndented = true });
+        _ = Parse(json);
+        return json + Environment.NewLine;
+    }
+
     private static Dictionary<string, JsonElement> ReadUniqueProperties(
         JsonElement element)
     {
