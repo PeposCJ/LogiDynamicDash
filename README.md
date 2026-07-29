@@ -112,16 +112,16 @@ screen on Logitech PRO Racing Wheel and RS50.
   imports no telemetry SDK. Its high-buffer physical capture passed: OLED
   frames, centering, and rev LEDs all remained correct; TRUEFORCE endpoint
   traffic stayed continuous; and no `0x8123` reset lifecycle occurred.
-- Build J's separate stationary telemetry trial ran exactly once. Video
-  confirmed the live `SPEED / 0 KMH / GEAR / N` Layout J frame; centering,
-  RPM LEDs, inputs, and connection remained normal, with no movement, torque,
-  or unexpected resistance. The process acknowledged one frame, but USBPcap
-  retained only the `0x8130` discovery and not the setter/ACK pair. The
-  physical result passed while strict USB evidence remains inconclusive, so
-  moving-car and full-lap testing remain prohibited pending a reviewed
-  capture plan. A subsequent offline-only change adds a fixed local,
-  write-through JSONL transcript of exact Build J requests/responses and
-  latency; it is bounded, ignored, and has not yet been used on hardware.
+- Build J's separate stationary telemetry path is now fully confirmed. J1
+  physically rendered live `SPEED / 0 KMH / GEAR / N` with normal centering,
+  RPM LEDs, inputs, and connection, but its first PCAP omitted the setter/ACK.
+  J2 repeated the same bounded trial once with direct USBPcapCMD and the
+  bounded write-through transcript. The transcript and PCAP contain
+  byte-identical discovery and Layout J request/response pairs, with no
+  destructive `RESET_ALL -> SET_GLOBAL_GAINS -> RESET_ALL` lifecycle or
+  observed physical side effect. This completes the stationary telemetry
+  gate; moving-car operation still requires a separately reviewed bounded
+  stage before any full lap.
 - Build K's separately armed visual-capability gallery physically passed. The
   OLED advanced through fixed Layouts A-J; video confirmed blank/Test,
   solid/striped gauges, split numeric layouts, four-row layouts, and built-in

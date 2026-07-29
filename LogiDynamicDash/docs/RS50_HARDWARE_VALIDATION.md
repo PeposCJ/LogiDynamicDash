@@ -162,6 +162,7 @@ Use one row per controlled observation:
 | 7A | Open | Dynamic | All RS50 interfaces | Run a legitimate telemetry-capable producer; do not inject HID reports | Pending: look specifically for host calls to dev `0xFF`, runtime `0x12`, especially function `3` | Unknown |
 | 7B | Open | Dynamic | None | After a successful 7A, stop the legitimate producer and time the fallback | Static expectation: pending Dynamic data expires after approximately 240 seconds | Unknown |
 | J1 | Closed | Dynamic | MI_01 COL01/COL03 | One authorized 10-second stationary iRacing telemetry trial with video and USBPcap | Video: `SPEED / 0 KMH / GEAR / N`; centering, RPM LEDs, inputs, and connection normal; PCAP retained discovery but not setter/ACK | Physical confirmed; USB inconclusive |
+| J2 | Closed | Dynamic | MI_01 COL01/COL03 | One authorized repeat of the same bounded stationary trial with direct USBPcapCMD and host transcript | `SPEED / 0 KMH / GEAR / N`; transcript and PCAP contain byte-identical discovery/setter/ACK pairs; normal LEDs and FFB; no destructive reset/gain/reset lifecycle | Confirmed |
 | K1 | Closed | Dynamic | MI_01 COL01/COL03 | One separately authorized fixed A-J gallery with video and USBPcap | All layouts rendered in order; 1 discovery + 10 setters + 11 exact ACKs; no unrelated host operation or observed physical side effect | Confirmed |
 
 ## Phase 5: Legitimate Dynamic Producer Capture

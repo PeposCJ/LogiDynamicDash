@@ -3,10 +3,12 @@
 ## Status
 
 Build J compiles as a separate, offline-validated executable for the first
-shared-HID++ telemetry trial. J1 ran exactly once on 2026-07-29. The native
-process and physical/video observations passed, but the PCAP did not retain
-the Layout J setter/ACK pair, so its strict USB acceptance remains
-inconclusive.
+shared-HID++ telemetry trial. J1 ran exactly once on 2026-07-29. Its native
+process and physical/video observations passed, but its PCAP did not retain
+the Layout J setter/ACK pair. J2 repeated the same bounded stationary trial
+exactly once using the reviewed direct-capture method. Its local transcript
+and direct PCAP contain byte-identical discovery and Layout J request/response
+pairs, closing J1's evidence gap.
 
 The trial reads only iRacing `IsOnTrackCar`, `Gear`, and `Speed`. While iRacing
 reports the car on track and stationary, it renders:
@@ -96,8 +98,9 @@ modified.
 ## Local Transaction Transcript
 
 After J1's USBPcap failed to retain the physically successful setter/ACK
-exchange, Build J gained a local write-through JSONL transcript. This
-instrumentation has not yet been run against hardware.
+exchange, Build J gained a local write-through JSONL transcript. J2 exercised
+this instrumentation on hardware and independently matched every recorded
+request and response to the direct USB capture.
 
 For a physically armed run, it creates an automatically named file under:
 
@@ -193,10 +196,10 @@ decision boundary are recorded in
 Do not repeat J1 or advance to moving-car testing without a new reviewed
 capture plan and fresh authorization.
 
-## Proposed Physical J2 Evidence Trial
+## Executed Physical J2 Evidence Trial
 
-J2 may repeat the same stationary ten-second Build J execution only to close
-the evidence gap. It does not expand the allowed telemetry, duration, rate,
+J2 repeated the same stationary ten-second Build J execution only to close
+the evidence gap. It did not expand the allowed telemetry, duration, rate,
 layout, or physical state.
 
 J1 used a Wireshark-managed pcapng capture. This matches the previously
@@ -247,5 +250,23 @@ J2 acceptance additionally requires:
 - normal centering, RPM LEDs, inputs, and simulator connection afterward;
 - no `0x8123` reset/gain/reset lifecycle or adverse physical effect.
 
-Any mismatch remains a diagnostic result and does not authorize moving-car
-or full-lap testing.
+J2 met every additional acceptance condition:
+
+- the transcript contains exactly discovery and Layout J request/response
+  pairs, both marked as exact header matches;
+- the direct PCAP contains the same request and response bytes;
+- no display transaction is absent from the transcript;
+- the OLED displayed and retained `SPEED / 0 KMH / GEAR / N`;
+- the operator reported normal LEDs and FFB with no physical adverse effect;
+- the PCAP contains no `RESET_ALL -> SET_GLOBAL_GAINS -> RESET_ALL`
+  lifecycle.
+
+One matched `0x8123 RESET_ALL` from SW-ID `0xE` occurred 212.265 seconds
+after Build J's SW-ID-`0xA` setter. It was not accompanied by
+`SET_GLOBAL_GAINS` or a second reset and is not attributable to Build J.
+
+The accepted evidence, hashes, exact frames, timing, and capture-stop note are
+recorded in
+[`evidence/RS50_BUILD_J2_STATIONARY_TELEMETRY_SUCCESS_2026-07-29.md`](evidence/RS50_BUILD_J2_STATIONARY_TELEMETRY_SUCCESS_2026-07-29.md).
+The stationary telemetry gate is complete. A separately designed and
+authorized bounded moving-car stage is still required before a full lap.

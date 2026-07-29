@@ -95,5 +95,8 @@ Any repetition requires a new design review and a fresh operator
 authorization.
 
 The host-side bounded JSONL transcript was subsequently implemented and
-validated offline. It has not yet been used on hardware and does not change
-the J1 evidence classification above.
+validated offline. J2 subsequently used it on hardware and closed the missing
+USB evidence gap with a byte-identical direct capture. J1's classification
+above remains unchanged; see
+[`RS50_BUILD_J2_STATIONARY_TELEMETRY_SUCCESS_2026-07-29.md`](RS50_BUILD_J2_STATIONARY_TELEMETRY_SUCCESS_2026-07-29.md)
+for the accepted stationary-gate result.
