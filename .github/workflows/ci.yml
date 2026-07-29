@@ -70,13 +70,23 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Restore Windows runtime
-        run: >
-          dotnet restore .\LogiDynamicDash\LogiDynamicDash.csproj
-          -r win-x64
+        run: |
+          dotnet restore .\LogiDynamicDash\LogiDynamicDash.csproj -r win-x64
+          dotnet restore .\LogiDynamicDash.Configurator\LogiDynamicDash.Configurator.csproj -r win-x64
 
       - name: Publish framework-dependent Windows package
         run: >
           dotnet publish .\LogiDynamicDash\LogiDynamicDash.csproj
+          -c Release
+          -r win-x64
+          --self-contained false
+          --no-restore
+          -o .\artifacts\LogiDynamicDash-win-x64
+
+      - name: Publish framework-dependent configurator
+        run: >
+          dotnet publish
+          .\LogiDynamicDash.Configurator\LogiDynamicDash.Configurator.csproj
           -c Release
           -r win-x64
           --self-contained false
@@ -101,6 +111,16 @@ jobs:
       - name: Publish self-contained Windows package
         run: >
           dotnet publish .\LogiDynamicDash\LogiDynamicDash.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          --no-restore
+          -o .\artifacts\LogiDynamicDash-win-x64-self-contained
+
+      - name: Publish self-contained configurator
+        run: >
+          dotnet publish
+          .\LogiDynamicDash.Configurator\LogiDynamicDash.Configurator.csproj
           -c Release
           -r win-x64
           --self-contained true

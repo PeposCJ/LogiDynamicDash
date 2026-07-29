@@ -17,6 +17,9 @@ Completed offline components:
 - km/h and mph telemetry formatting for all layouts;
 - independent per-mode layout selection;
 - injectable application orchestration and deterministic telemetry replay;
+- copied telemetry snapshots and a 200 ms display heartbeat;
+- bounded hardware-free telemetry recording;
+- hardware-free Windows configuration GUI with Road/Oval recommendations;
 - explicit Disabled/Opening/Active/Faulted/Stopped lifecycle without reconnect;
 - console plus optional OLED display composition;
 - strict persistent JSON configuration;
@@ -32,7 +35,7 @@ No production executable from this branch has been run against hardware.
 
 The current production branch passes:
 
-- 104 unit and integration tests, including one million scheduler submissions;
+- 114 unit and integration tests, including one million scheduler submissions;
 - Release build with warnings treated as errors;
 - `dotnet format --verify-no-changes`;
 - `git diff --check`;
@@ -46,8 +49,8 @@ The current production branch passes:
 The deterministic 30-second simulation processes 601 updates for each layout.
 Static layouts A/B transmit once; the dynamic layouts transmit between 85 and
 132 acknowledged frames, remaining below the theoretical 151-frame 5 Hz
-ceiling. Separate stress tests cover 20,000 virtual changed frames and one
-million serialized scheduler submissions.
+ceiling. Separate stress tests cover 20,000 virtual changed frames, one
+million serialized scheduler submissions, and six virtual hours at 20 Hz.
 
 The same build, test, format, surface-audit, and vulnerability steps run in
 the Windows GitHub Actions workflow for pushes and pull requests. After those
@@ -128,7 +131,9 @@ The session:
 
 The scheduler retains the newest ordinary frame while the session is rate
 limited. A queued connection-problem frame cannot be overwritten by ordinary
-telemetry before it is acknowledged. All submissions remain serialized.
+telemetry before it is acknowledged. A 200 ms application heartbeat flushes
+pending frames even when no later telemetry callback arrives. All submissions
+remain serialized.
 
 ## Layout Mapping
 
@@ -187,10 +192,14 @@ without HID:
 --preview-all --config <json-path>
 --simulate-all --config <json-path>
 --replay --config <json-path> --telemetry <json-path>
+--record-telemetry --output <json-path> --duration-seconds <1-1800>
 ```
 
 Schema 1 remains accepted and maps its single layout to all four modes.
 Replay files are strict, bounded JSON and never construct a physical adapter.
+Recording samples copied telemetry at no more than 5 Hz and never constructs a
+physical adapter. The Windows configurator edits and previews the same strict
+configuration without a physical-session reference.
 The deterministic failure coverage is listed in
 `docs/OFFLINE_FAULT_MATRIX.md`.
 

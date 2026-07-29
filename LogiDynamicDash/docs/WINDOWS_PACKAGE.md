@@ -42,10 +42,17 @@ Then run:
 .\LogiDynamicDash.exe --simulate-all --config .\my-dashboard.json
 .\LogiDynamicDash.exe --replay --config .\my-dashboard.json `
   --telemetry .\replays\mode-transitions.json
+.\LogiDynamicDash.exe --record-telemetry --output .\my-session.json `
+  --duration-seconds 300
 ```
 
-These modes never enumerate or open HID devices. The package build executes
-all three as smoke tests before uploading either artifact.
+These routes never enumerate or open HID devices. Recording requires iRacing
+telemetry and writes at most 5 Hz for 1–1,800 seconds. Preview, simulation,
+and replay run as package smoke tests before either artifact is uploaded.
+
+`LogiDynamicDash.Configurator.exe` is the hardware-free graphical editor. It
+can apply Road/Oval recommendations, preview all four display modes, and
+open/save strict JSON configurations. It cannot arm or access the OLED.
 
 Running without arguments starts the console telemetry monitor:
 

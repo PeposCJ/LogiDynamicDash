@@ -105,6 +105,30 @@ foreach ($token in @(
     }
 }
 
+$configuratorRoot =
+    Join-Path $repositoryRoot "LogiDynamicDash.Configurator"
+$configuratorFiles = Get-ChildItem `
+    -LiteralPath $configuratorRoot `
+    -Recurse `
+    -Filter "*.cs" `
+    -File
+
+foreach ($token in @(
+        "HidSharp",
+        "DeviceList",
+        "Rs50OledDeviceExchange",
+        "Rs50OledSessionFactory",
+        "IRs50OledSession")) {
+    $match = $configuratorFiles |
+        Select-String -SimpleMatch -Pattern $token |
+        Select-Object -First 1
+
+    if ($match) {
+        throw "Configurator source references physical token '$token' in " +
+            "'$($match.Path)'."
+    }
+}
+
 $armingPath =
     Join-Path $productionRoot `
         "Configuration\Rs50StationaryTrialOptions.cs"
@@ -146,5 +170,6 @@ Write-Output (
     "RS50 OLED production surface audit passed: no DirectInput, FFB, " +
     "native-import, feature-report, or bootloader API was found; the " +
     "offline commands contain no physical adapter reference; and the " +
+    "hardware-free configurator is isolated from the physical session; the " +
     "physical route remains isolated behind the exact stationary arming " +
     "contract and 0.5 m/s guard.")

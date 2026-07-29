@@ -36,6 +36,8 @@ LogiDynamicDash.exe --preview-all --config .\my-dashboard.json
 LogiDynamicDash.exe --simulate-all --config .\my-dashboard.json
 LogiDynamicDash.exe --replay --config .\my-dashboard.json `
   --telemetry .\replays\mode-transitions.json
+LogiDynamicDash.exe --record-telemetry --output .\my-session.json `
+  --duration-seconds 300
 ```
 
 Preview prints the four application modes for every layout. Simulation runs
@@ -46,6 +48,12 @@ telemetry scenarios through the same application controller and formatter.
 Included scenarios cover acceleration, temporary pages, and disconnect/recovery.
 The offline safety and failure coverage is summarized in
 [`LogiDynamicDash/docs/OFFLINE_FAULT_MATRIX.md`](LogiDynamicDash/docs/OFFLINE_FAULT_MATRIX.md).
+
+`LogiDynamicDash.Configurator.exe` provides a hardware-free Windows editor for
+per-mode layouts, speed units, gauge scales, reviewed Road/Oval defaults, and
+typed previews. Product scope, discipline rationale, and Free/Pro planning are
+documented in
+[`LogiDynamicDash/docs/PRODUCT_AND_MONETIZATION_PLAN.md`](LogiDynamicDash/docs/PRODUCT_AND_MONETIZATION_PLAN.md).
 
 Do not run the stationary hardware route without a separately reviewed
 checklist, fresh authorization, and capture. Its complete arming contract is

@@ -43,6 +43,12 @@ Copy-Item `
             "LogiDynamicDash\docs\OFFLINE_FAULT_MATRIX.md") `
     -Destination $resolvedPackageRoot `
     -Force
+Copy-Item `
+    -LiteralPath (
+        Join-Path $repositoryRoot `
+            "LogiDynamicDash\docs\PRODUCT_AND_MONETIZATION_PLAN.md") `
+    -Destination $resolvedPackageRoot `
+    -Force
 $replayDestination = Join-Path $resolvedPackageRoot "replays"
 New-Item -ItemType Directory -Path $replayDestination -Force | Out-Null
 Copy-Item `
@@ -56,10 +62,16 @@ Copy-Item `
     -Version $Version
 
 $executable = Join-Path $resolvedPackageRoot "LogiDynamicDash.exe"
+$configurator =
+    Join-Path $resolvedPackageRoot "LogiDynamicDash.Configurator.exe"
 $configuration =
     Join-Path $resolvedPackageRoot "logidynamicdash.example.json"
 $replay =
     Join-Path $resolvedPackageRoot "replays\mode-transitions.json"
+
+if (-not (Test-Path -LiteralPath $configurator -PathType Leaf)) {
+    throw "The Windows package is missing LogiDynamicDash.Configurator.exe."
+}
 
 & $executable --preview-all --config $configuration | Out-Null
 if ($LASTEXITCODE -ne 0) {

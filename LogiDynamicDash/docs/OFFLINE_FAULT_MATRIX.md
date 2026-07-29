@@ -13,6 +13,8 @@ postponed physical validation stages.
 | Invalid layout acknowledgement | Permanently fault session | `Rs50OledSessionTests` |
 | Changed frame inside 200 ms | Queue latest ordinary frame | `Rs50OledFrameSchedulerTests` |
 | Disconnect frame inside 200 ms | Preserve critical frame ahead of ordinary telemetry | `Rs50OledFrameSchedulerTests` |
+| No telemetry after a rate-limited frame | Flush from independent 200 ms heartbeat | `LogiDynamicDashApplicationTests`, `Rs50OledFrameSchedulerTests` |
+| Heartbeat/display flush failure | Cancel telemetry source, fault, and dispose | `LogiDynamicDashApplicationTests` |
 | Moving, missing, negative, or non-finite on-track speed | Fault sink before OLED send | `Rs50OledDisplaySinkTests` |
 | Display send failure | Enter Faulted; reject retry and reopen | `Rs50OledDisplaySinkTests` |
 | Corrupt, duplicate, unknown, oversized, or out-of-range configuration | Reject before physical session construction | `Rs50OledConfigurationFileTests` |
@@ -20,7 +22,10 @@ postponed physical validation stages.
 | Diagnostic storage write failure | Propagate safe failure; never mask original transport failure | `SanitizedRs50OledDiagnosticsTests` |
 | Requested cancellation | Stop and dispose cleanly | `LogiDynamicDashApplicationTests` |
 | Concurrent telemetry/status callbacks | Serialize display rendering | `LogiDynamicDashApplicationTests` |
+| Concurrent mutable source state | Emit copied snapshots to consumers | `IRacingTelemetryService`, application tests |
 | One million virtual submissions | Remain single-consumer without a pending leak | `Rs50OledFrameSchedulerTests` |
+| Six virtual hours at 20 Hz | Preserve typed formatting without failure | `VirtualEnduranceTests` |
+| Accidental layout output change | Fail reviewed A-J golden output | `GoldenPreviewTests` |
 
 There is deliberately no automatic reopen or reconnect test because production
 does not implement either behavior. Recovery after a fault requires disposal
