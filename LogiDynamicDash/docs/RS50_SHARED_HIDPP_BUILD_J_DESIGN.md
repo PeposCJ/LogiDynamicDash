@@ -192,3 +192,60 @@ decision boundary are recorded in
 [`evidence/RS50_BUILD_J_STATIONARY_TELEMETRY_RESULT_2026-07-29.md`](evidence/RS50_BUILD_J_STATIONARY_TELEMETRY_RESULT_2026-07-29.md).
 Do not repeat J1 or advance to moving-car testing without a new reviewed
 capture plan and fresh authorization.
+
+## Proposed Physical J2 Evidence Trial
+
+J2 may repeat the same stationary ten-second Build J execution only to close
+the evidence gap. It does not expand the allowed telemetry, duration, rate,
+layout, or physical state.
+
+J1 used a Wireshark-managed pcapng capture. This matches the previously
+observed first Build I attempt, where dense TRUEFORCE traffic left
+multi-second capture gaps. Build I's accepted attempt used USBPcapCMD
+directly, a device-address filter, a 128 MiB buffer, and full snap length.
+J2 must reuse that independently successful method.
+
+As long as the wheel has not been reconnected, the current RS50 USB device
+address is `7` on `\\.\USBPcap1`. If it has been reconnected or Windows has
+renumbered it, stop and rediscover the address before capturing.
+
+From a separate elevated PowerShell window at the repository root, start the
+direct capture:
+
+```powershell
+& "C:\Program Files\USBPcap\USBPcapCMD.exe" `
+  -d "\\.\USBPcap1" `
+  --devices 7 `
+  --inject-descriptors `
+  -b 134217728 `
+  -s 65535 `
+  -o ".\2026-07-29_rs50_build_j2_stationary_telemetry_direct.pcap"
+```
+
+Do not route the capture through the Wireshark GUI. Leave the USBPcapCMD
+window running, record video, and collect at least ten seconds of stationary
+baseline. Then obtain a new explicit authorization and run the exact
+nine-argument Build J command once.
+
+The process must print the relative local transcript path under:
+
+```text
+.tmp/rs50-build-j-transcripts/
+```
+
+Continue the direct capture and video through the post-check, then stop
+USBPcapCMD with `Ctrl+C`. Do not open or resave the raw `.pcap` in Wireshark
+before offline analysis.
+
+J2 acceptance additionally requires:
+
+- transcript request/response pairs for discovery and Layout J;
+- transcript response headers marked as exact matches;
+- the direct PCAP contains the same request and response bytes;
+- the direct PCAP contains no display transaction absent from the transcript;
+- video again shows Test changing to `SPEED / 0 KMH / GEAR / N`;
+- normal centering, RPM LEDs, inputs, and simulator connection afterward;
+- no `0x8123` reset/gain/reset lifecycle or adverse physical effect.
+
+Any mismatch remains a diagnostic result and does not authorize moving-car
+or full-lap testing.
