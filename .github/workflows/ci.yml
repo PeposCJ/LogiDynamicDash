@@ -55,3 +55,53 @@ jobs:
           package
           --vulnerable
           --include-transitive
+
+  package-windows:
+    needs: build-and-test
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore Windows runtime
+        run: >
+          dotnet restore .\LogiDynamicDash\LogiDynamicDash.csproj
+          -r win-x64
+
+      - name: Publish framework-dependent Windows package
+        run: >
+          dotnet publish .\LogiDynamicDash\LogiDynamicDash.csproj
+          -c Release
+          -r win-x64
+          --self-contained false
+          --no-restore
+          -o .\artifacts\LogiDynamicDash-win-x64
+
+      - name: Add configuration and notices
+        shell: powershell
+        run: |
+          Copy-Item .\logidynamicdash.example.json .\artifacts\LogiDynamicDash-win-x64\
+          Copy-Item .\README.md .\artifacts\LogiDynamicDash-win-x64\
+          Copy-Item .\THIRD_PARTY_NOTICES.md .\artifacts\LogiDynamicDash-win-x64\
+          Copy-Item .\LogiDynamicDash\docs\WINDOWS_PACKAGE.md .\artifacts\LogiDynamicDash-win-x64\
+          Copy-Item .\LogiDynamicDash\docs\RS50_OLED_PRODUCTION_STATIONARY_CHECKLIST.md .\artifacts\LogiDynamicDash-win-x64\
+          Get-ChildItem .\artifacts\LogiDynamicDash-win-x64 -File |
+            Get-FileHash -Algorithm SHA256 |
+            ForEach-Object {
+              "$($_.Hash)  $(Split-Path $_.Path -Leaf)"
+            } |
+            Set-Content .\artifacts\LogiDynamicDash-win-x64\SHA256SUMS.txt
+
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: LogiDynamicDash-win-x64
+          path: artifacts/LogiDynamicDash-win-x64
+          if-no-files-found: error
+          retention-days: 14

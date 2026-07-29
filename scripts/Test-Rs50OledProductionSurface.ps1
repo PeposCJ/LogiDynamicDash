@@ -47,6 +47,19 @@ foreach ($token in @("HidSharp", "DeviceList", "Rs50OledDeviceExchange")) {
     }
 }
 
+$offlineCommandIndex = $programText.IndexOf(
+    "OfflineCommandLine.TryParse",
+    [StringComparison]::Ordinal)
+$displayFactoryIndex = $programText.IndexOf(
+    "ApplicationDisplayFactory.TryCreate",
+    [StringComparison]::Ordinal)
+
+if ($offlineCommandIndex -lt 0 -or
+    $displayFactoryIndex -lt 0 -or
+    $offlineCommandIndex -gt $displayFactoryIndex) {
+    throw "Offline commands must be routed before the display factory."
+}
+
 $factoryPath =
     Join-Path $productionRoot `
         "Configuration\ApplicationDisplayFactory.cs"
@@ -54,9 +67,42 @@ $factoryText =
     Get-Content -LiteralPath $factoryPath -Raw
 
 if ($factoryText.IndexOf(
-        "Rs50OledDeviceExchange.Open()",
+        "Rs50OledSessionFactory.OpenPhysicalWithLocalDiagnostics",
         [StringComparison]::Ordinal) -lt 0) {
     throw "The physical adapter is not isolated behind the display factory."
+}
+
+$physicalFactoryPath =
+    Join-Path $productionRoot `
+        "Diagnostics\Rs50OledSessionFactory.cs"
+$physicalFactoryText =
+    Get-Content -LiteralPath $physicalFactoryPath -Raw
+
+if ($physicalFactoryText.IndexOf(
+        "Rs50OledDeviceExchange.Open()",
+        [StringComparison]::Ordinal) -lt 0) {
+    throw "The typed physical exchange is missing from its isolated factory."
+}
+
+$offlineFiles = Get-ChildItem `
+    -LiteralPath (Join-Path $productionRoot "Offline") `
+    -Recurse `
+    -Filter "*.cs" `
+    -File
+
+foreach ($token in @(
+        "HidSharp",
+        "DeviceList",
+        "Rs50OledDeviceExchange",
+        "Rs50OledSessionFactory")) {
+    $match = $offlineFiles |
+        Select-String -SimpleMatch -Pattern $token |
+        Select-Object -First 1
+
+    if ($match) {
+        throw "Offline source references physical token '$token' in " +
+            "'$($match.Path)'."
+    }
 }
 
 $armingPath =
@@ -99,5 +145,6 @@ if ($sinkText.IndexOf(
 Write-Output (
     "RS50 OLED production surface audit passed: no DirectInput, FFB, " +
     "native-import, feature-report, or bootloader API was found; the " +
+    "offline commands contain no physical adapter reference; and the " +
     "physical route remains isolated behind the exact stationary arming " +
     "contract and 0.5 m/s guard.")
