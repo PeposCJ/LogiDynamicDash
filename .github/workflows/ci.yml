@@ -83,25 +83,41 @@ jobs:
           --no-restore
           -o .\artifacts\LogiDynamicDash-win-x64
 
-      - name: Add configuration and notices
+      - name: Complete and smoke-test framework-dependent package
         shell: powershell
-        run: |
-          Copy-Item .\logidynamicdash.example.json .\artifacts\LogiDynamicDash-win-x64\
-          Copy-Item .\README.md .\artifacts\LogiDynamicDash-win-x64\
-          Copy-Item .\THIRD_PARTY_NOTICES.md .\artifacts\LogiDynamicDash-win-x64\
-          Copy-Item .\LogiDynamicDash\docs\WINDOWS_PACKAGE.md .\artifacts\LogiDynamicDash-win-x64\
-          Copy-Item .\LogiDynamicDash\docs\RS50_OLED_PRODUCTION_STATIONARY_CHECKLIST.md .\artifacts\LogiDynamicDash-win-x64\
-          Get-ChildItem .\artifacts\LogiDynamicDash-win-x64 -File |
-            Get-FileHash -Algorithm SHA256 |
-            ForEach-Object {
-              "$($_.Hash)  $(Split-Path $_.Path -Leaf)"
-            } |
-            Set-Content .\artifacts\LogiDynamicDash-win-x64\SHA256SUMS.txt
+        run: >
+          .\scripts\Complete-WindowsPackage.ps1
+          -PackageRoot .\artifacts\LogiDynamicDash-win-x64
+          -Version 0.2.0
 
       - name: Upload Windows package
         uses: actions/upload-artifact@v4
         with:
           name: LogiDynamicDash-win-x64
           path: artifacts/LogiDynamicDash-win-x64
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish self-contained Windows package
+        run: >
+          dotnet publish .\LogiDynamicDash\LogiDynamicDash.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          --no-restore
+          -o .\artifacts\LogiDynamicDash-win-x64-self-contained
+
+      - name: Complete and smoke-test self-contained package
+        shell: powershell
+        run: >
+          .\scripts\Complete-WindowsPackage.ps1
+          -PackageRoot .\artifacts\LogiDynamicDash-win-x64-self-contained
+          -Version 0.2.0
+
+      - name: Upload self-contained Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: LogiDynamicDash-win-x64-self-contained
+          path: artifacts/LogiDynamicDash-win-x64-self-contained
           if-no-files-found: error
           retention-days: 14

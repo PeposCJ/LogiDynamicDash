@@ -13,8 +13,11 @@ Completed offline components:
 - exact request and acknowledgement validation;
 - strict RS50 MI_01 COL01/COL03 collection selection;
 - fail-closed session lifecycle;
-- identical-frame suppression and 5 Hz change limit;
+- identical-frame suppression, 5 Hz change limit, and latest-frame scheduler;
 - km/h and mph telemetry formatting for all layouts;
+- independent per-mode layout selection;
+- injectable application orchestration and deterministic telemetry replay;
+- explicit Disabled/Opening/Active/Faulted/Stopped lifecycle without reconnect;
 - console plus optional OLED display composition;
 - strict persistent JSON configuration;
 - offline A-J preview and end-to-end virtual telemetry simulation;
@@ -29,7 +32,7 @@ No production executable from this branch has been run against hardware.
 
 The current production branch passes:
 
-- 85 unit and integration tests, including 20,000 virtual updates;
+- 104 unit and integration tests, including one million scheduler submissions;
 - Release build with warnings treated as errors;
 - `dotnet format --verify-no-changes`;
 - `git diff --check`;
@@ -43,14 +46,15 @@ The current production branch passes:
 The deterministic 30-second simulation processes 601 updates for each layout.
 Static layouts A/B transmit once; the dynamic layouts transmit between 85 and
 132 acknowledged frames, remaining below the theoretical 151-frame 5 Hz
-ceiling. A separate stress test processes 20,000 virtual changed frames while
-preserving the same bound.
+ceiling. Separate stress tests cover 20,000 virtual changed frames and one
+million serialized scheduler submissions.
 
 The same build, test, format, surface-audit, and vulnerability steps run in
 the Windows GitHub Actions workflow for pushes and pull requests. After those
-checks pass, CI publishes a framework-dependent `win-x64` artifact with the
-example configuration, notices, and SHA-256 manifest. CI does not sign or
-release the artifact.
+checks pass, CI publishes framework-dependent and self-contained `win-x64`
+artifacts. Each includes example configuration, replay scenarios, notices,
+an SPDX 2.3 SBOM, SHA-256 manifest, and successful packaged-executable smoke
+tests. CI does not sign or release either artifact.
 
 ## Data Flow
 
@@ -58,10 +62,16 @@ release the artifact.
 iRacing telemetry
       |
       v
+ITelemetrySource -> application lifecycle and 200 ms refresh coordinator
+      |
+      v
 DisplayController (normal / brake bias / last lap / connection)
       |
       v
 Rs50TelemetryFrameFormatter (typed Layout A-J frame)
+      |
+      v
+Rs50OledFrameScheduler (single consumer / latest pending / critical priority)
       |
       v
 Rs50OledSession (deduplicate / 5 Hz / fail closed)
@@ -97,6 +107,10 @@ find the exact matching response or matching HID++ error. It does not retry a
 write, acquire DirectInput, invoke feature `0x8123`, or interact with FFB,
 TRUEFORCE, LEDs, profiles, or firmware.
 
+The identity is isolated behind a confirmed-device descriptor. That boundary
+allows a future PRO descriptor only after its VID/PID and complete collection
+contract are physically confirmed; production contains no guessed PRO ID.
+
 ## Session Boundary
 
 The session:
@@ -111,6 +125,10 @@ The session:
   failure;
 - requires disposal and explicit process restart after a failure;
 - never reconnects or retries silently.
+
+The scheduler retains the newest ordinary frame while the session is rate
+limited. A queued connection-problem frame cannot be overwritten by ordinary
+telemetry before it is acknowledged. All submissions remain serialized.
 
 ## Layout Mapping
 
@@ -148,8 +166,13 @@ The configuration file is a strict schema-versioned JSON object:
 
 ```json
 {
-  "schemaVersion": 1,
-  "layout": "E",
+  "schemaVersion": 2,
+  "layouts": {
+    "normal": "E",
+    "brakeBias": "H",
+    "lastLap": "J",
+    "connectionProblem": "H"
+  },
   "speedUnit": "KMH",
   "maximumRpm": 8000,
   "gaugeMaximumSpeed": 300
@@ -163,7 +186,13 @@ without HID:
 ```text
 --preview-all --config <json-path>
 --simulate-all --config <json-path>
+--replay --config <json-path> --telemetry <json-path>
 ```
+
+Schema 1 remains accepted and maps its single layout to all four modes.
+Replay files are strict, bounded JSON and never construct a physical adapter.
+The deterministic failure coverage is listed in
+`docs/OFFLINE_FAULT_MATRIX.md`.
 
 The compiled hardware route requires these ten arguments in this exact order:
 

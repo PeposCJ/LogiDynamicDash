@@ -2,9 +2,10 @@
 
 ## Artifact
 
-GitHub Actions produces a framework-dependent `LogiDynamicDash-win-x64`
-artifact after build, tests, formatting, safety audit, and dependency audit
-all pass.
+GitHub Actions produces framework-dependent `LogiDynamicDash-win-x64` and
+self-contained `LogiDynamicDash-win-x64-self-contained` artifacts after
+build, tests, formatting, safety audit, dependency audit, and package smoke
+tests all pass.
 
 The artifact is unsigned and is not a release. It is retained temporarily for
 review and offline preview. It must not be presented as an official Logitech
@@ -13,7 +14,7 @@ product.
 ## Requirements
 
 - 64-bit Windows
-- Microsoft .NET 10 Runtime, x64
+- Microsoft .NET 10 Runtime, x64, only for the framework-dependent artifact
 - iRacing only for live console monitoring or a separately authorized
   stationary OLED test
 - G HUB is not required for preview or simulation
@@ -28,6 +29,8 @@ Get-FileHash -Algorithm SHA256 .\LogiDynamicDash.exe
 ```
 
 Compare the reported hash with the matching manifest line before use.
+`sbom.spdx.json` records the application and direct runtime dependencies in
+SPDX 2.3 format.
 
 ## Hardware-Free Use
 
@@ -37,9 +40,12 @@ Then run:
 ```powershell
 .\LogiDynamicDash.exe --preview-all --config .\my-dashboard.json
 .\LogiDynamicDash.exe --simulate-all --config .\my-dashboard.json
+.\LogiDynamicDash.exe --replay --config .\my-dashboard.json `
+  --telemetry .\replays\mode-transitions.json
 ```
 
-These modes never enumerate or open HID devices.
+These modes never enumerate or open HID devices. The package build executes
+all three as smoke tests before uploading either artifact.
 
 Running without arguments starts the console telemetry monitor:
 
