@@ -157,6 +157,121 @@ Use one row per controlled observation:
 | 4B-COL02 | Closed | Settings/HomeScreen | MI_01 COL02 | Three Settings-button presses | Zero reports; unlike G HUB-open captures, Settings closes caused no `0`, `2`, `1` groups | Confirmed |
 | 5A | Starting | Settings | MI_01 COL02 | Start G HUB normally | 167 reports; dev `0x01` FeatureSet catalog observed on `0x11` | Confirmed |
 | 6A | Starting | HomeScreen | All RS50 interfaces | Start G HUB normally under device-scoped USB capture | G HUB enumerated `0x18A2`, `0x8091`, and `0x8093` but did not invoke their runtime indices; no 64-byte host output or sustained display stream appeared | Confirmed |
+| 6B | Starting | HomeScreen | All RS50 interfaces | Re-analyze 6A with FeatureSet reconstruction | Base runtime `0x12` maps to public feature `0x8130`; G HUB static name is `DisplayGameData`; zero operational calls during startup | Confirmed |
+| 6C | Open | Unknown | All RS50 interfaces | Capture a game/G HUB session with visibly changing RPM LEDs | Runtime `0x0B` (`RPM Indicator`) streamed states 0-10; runtime `0x12` (`DisplayGameData`) received zero host reports | Confirmed negative evidence |
+| 7A | Open | Dynamic | All RS50 interfaces | Run a legitimate telemetry-capable producer; do not inject HID reports | Pending: look specifically for host calls to dev `0xFF`, runtime `0x12`, especially function `3` | Unknown |
+| 7B | Open | Dynamic | None | After a successful 7A, stop the legitimate producer and time the fallback | Static expectation: pending Dynamic data expires after approximately 240 seconds | Unknown |
+| J1 | Closed | Dynamic | MI_01 COL01/COL03 | One authorized 10-second stationary iRacing telemetry trial with video and USBPcap | Video: `SPEED / 0 KMH / GEAR / N`; centering, RPM LEDs, inputs, and connection normal; PCAP retained discovery but not setter/ACK | Physical confirmed; USB inconclusive |
+| J2 | Closed | Dynamic | MI_01 COL01/COL03 | One authorized repeat of the same bounded stationary trial with direct USBPcapCMD and host transcript | `SPEED / 0 KMH / GEAR / N`; transcript and PCAP contain byte-identical discovery/setter/ACK pairs; normal LEDs and FFB; no destructive reset/gain/reset lifecycle | Confirmed |
+| K1 | Closed | Dynamic | MI_01 COL01/COL03 | One separately authorized fixed A-J gallery with video and USBPcap | All layouts rendered in order; 1 discovery + 10 setters + 11 exact ACKs; no unrelated host operation or observed physical side effect | Confirmed |
+
+## Phase 5: Legitimate Dynamic Producer Capture
+
+Feature `0x8130` is now the primary target. This phase must observe software
+that legitimately activates the feature; it must not imitate the statically
+inferred function-`3` writes.
+
+### Test 7A: Activation Capture
+
+1. Put the wheel on the Dynamic HomeScreen and verify the Test fallback.
+2. Start a USB capture scoped to the physical RS50 address.
+3. Start G HUB normally, then start exactly one candidate game or official
+   telemetry producer.
+4. Generate a short, controlled sequence: neutral, first gear, one speed
+   change, then stop.
+5. Stop the producer and capture without changing wheel settings.
+6. Analyze host reports to device `0xFF`, runtime index `0x12`.
+
+Decisive evidence would be function-`3` updates whose payload changes correlate
+with the controlled gear or speed sequence. Optional function-`0`/`1`
+capability reads may precede them, but static firmware analysis shows they are
+not a required setter handshake. If no `0x12` calls appear, record the candidate
+as a negative result; do not broaden the capture or replay unrelated reports.
+
+### Test 7B: Passive Expiry Timing
+
+Run this only after Test 7A has legitimately populated the OLED:
+
+1. Stop the producer immediately after a visible, stable Dynamic update.
+2. Do not close G HUB, change screens, press wheel controls, or send traffic.
+3. Measure elapsed wall-clock time until the OLED leaves the received layout
+   or returns to its fallback.
+4. Record the observed duration and resulting screen.
+
+Static firmware analysis predicts approximately 240 seconds because function
+`3` loads `240000` and the counter is decremented by the 1 ms SysTick-driven
+display task. This passive observation tests that prediction without replaying
+or injecting a report.
+
+## Phase 6: Future DirectInput Support Probe
+
+This phase is **not** part of the read-only session above. Run it only after
+the user explicitly approves transmitting documented support-query commands.
+Do not combine it with a layout setter.
+
+Static analysis of both installed x86 and x64 force-feedback drivers shows
+that outer DirectInput Escape command `4` accepts version `1` and these
+non-setter inner commands:
+
+| Inner command | Query | Minimum input | Minimum output |
+|---:|---|---:|---:|
+| 2 | General display support | 12 | 1 |
+| 3-5 | Layout A-C support | 12 | 1 |
+| 6 | Layout D support | 12 | 4 |
+| 7-10 | Layout E-H support | 12 | 6 |
+| 11-12 | Layout I-J support | 12 | 10 |
+
+The driver writes the boolean support result only to output byte zero. Prefill
+the complete buffer with a sentinel and require all trailing bytes to remain
+unchanged. Build A created a process-owned top-level window, requested
+nonexclusive background cooperation, and sent command `2` exactly once.
+DirectInput returned `DIERR_NOTEXCLUSIVEACQUIRED` and left the sentinel
+unchanged. Build A2 used a visible foreground window plus bounded exclusive
+acquisition, but `Acquire` returned `DIERR_INVALIDPARAM` because no data format
+had been set; its capture contained no HOST HID++ report. Build A3 first calls
+`SetDataFormat(&c_dfDIJoystick2)`, then retains the same bounded acquisition and
+release. Record cooperative, data-format, Acquire, Escape, and Unacquire
+results, returned bytes, and scoped USB traffic, then stop. Do not proceed to
+layout queries in the same run unless the command is confirmed non-mutating
+and the user approves the next step.
+Setter commands `1` and `13-22` remain out of scope.
+
+Static tracing confirms that command `2` is not merely a cached capability
+check: the driver submits an asynchronous feature request and waits up to
+200 ms for its result. Treat it as transmitted device traffic and capture it;
+do not describe this phase as passive or read-only USB monitoring.
+
+Build A3 physically completed this phase on 2026-07-27. All DirectInput
+HRESULTs were successful, output byte zero was `1`, and the operator observed
+no physical change. USBPcap matched 15 HOST requests to 15 DEVICE responses,
+including Root discovery of public feature `0x8130` at runtime `0x12`; there
+were zero operational requests to that runtime. See
+[`evidence/RS50_DIRECTINPUT_QUERY_BUILD_A3_SUCCESS_2026-07-27.md`](evidence/RS50_DIRECTINPUT_QUERY_BUILD_A3_SUCCESS_2026-07-27.md).
+
+The first later A-J layout query has a larger expected footprint. It lazily
+sends feature function `0` once, then function `1` for every reported layout
+and caches the descriptors. The RS50's known count of ten predicts eleven
+transactions in that first layout-query capture and no equivalent refresh for
+the remaining layout queries in the same feature-object lifetime.
+Because the driver marks this cache initialized before the exchange, any
+timeout or partial result requires closing and recreating the DirectInput
+device before a retry.
+
+Use Layout J query `12` with its exact ten-byte output as that first query.
+Never test a null or undersized output: Layout A query `3` contains an unsafe
+malformed-buffer path in the installed driver. Boundary fuzzing is explicitly
+out of scope.
+
+Build B executed that single Layout J query on 2026-07-27. All DirectInput
+HRESULTs succeeded, output byte zero was `1`, and bytes 1-9 retained sentinel
+`0xA5`. USBPcap reconstructed exactly the predicted eleven operational
+`0x8130` exchanges: one layout-count query and ten descriptor queries. The
+RS50 reported Layout J ID `10` with capacities `19/10/19/10`. The operator's
+explicit physical observation confirmed no OLED, LED, torque, or
+wheel-position change. This permits Build C to be compiled and audited, but
+its physical execution still requires separate approval and capture.
+See
+[`evidence/RS50_LAYOUT_J_QUERY_SUCCESS_2026-07-27.md`](evidence/RS50_LAYOUT_J_QUERY_SUCCESS_2026-07-27.md).
 
 ## Evidence Levels
 
@@ -164,6 +279,13 @@ Use one row per controlled observation:
 - **Likely:** supported by multiple observations but not independently proven.
 - **Unknown:** insufficient or conflicting evidence.
 
-No result from this plan confirms OLED write support. A separate, explicitly
-approved phase will be required before the project sends any report to the
-RS50.
+At the end of the query phase, no result yet confirmed OLED write support; a
+separate, explicitly approved setter phase was required.
+
+Build C subsequently completed that separately approved phase. One fixed
+Layout J setter produced a matched `0x8130` function-`3` exchange and visible
+OLED text. The capture decoded `RS50 / LOGIDYNAMI / TEST 1 / OLED LINK`,
+exactly matching the supplied photograph. The operator observed no torque,
+LED, or wheel-movement change. Static output is therefore confirmed; live or
+repeated telemetry remains a separate gate. See
+[`evidence/RS50_STATIC_LAYOUT_J_SUCCESS_2026-07-27.md`](evidence/RS50_STATIC_LAYOUT_J_SUCCESS_2026-07-27.md).

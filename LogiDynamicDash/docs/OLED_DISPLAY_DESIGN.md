@@ -4,6 +4,11 @@ This document defines the intended behavior of the Dynamic OLED display in LogiD
 
 The goal is not to show every available telemetry value. The display should present only information that can be understood with a quick glance while driving.
 
+Protocol research has replaced the original framebuffer assumption. The first
+implementation targets firmware-rendered Layout J: four centered text fields
+with maximum lengths `19/10/19/10`. The application now produces those exact
+four presentation lines offline; physical output is still unverified.
+
 ## Design principles
 
 - Keep the normal driving screen simple.
@@ -14,7 +19,7 @@ The goal is not to show every available telemetry value. The display should pres
 - Use overlays for brief driving-assistance interventions.
 - Use full-screen alerts only for important conditions.
 - Do not depend on color because the OLED is monochrome.
-- Do not assume the display resolution until it has been verified.
+- Respect the recovered Layout J text limits rather than assuming pixel access.
 - Allow users to disable optional alerts and overlays.
 
 ## Normal driving screen
@@ -22,8 +27,10 @@ The goal is not to show every available telemetry value. The display should pres
 The first universal layout should display:
 
 ```text
-       4
-   186 km/h
+SPEED
+186 KMH
+GEAR
+4
 ```
 
 Primary value:
@@ -34,7 +41,8 @@ Secondary value:
 
 - Speed
 
-The user should be able to choose between km/h and mph. Both units should not be shown at the same time.
+The initial formatter uses km/h. A later setting may select mph, but both units
+must never be shown at the same time.
 
 Numeric RPM should not be displayed permanently because the wheel LEDs can already represent engine speed more effectively.
 
@@ -45,8 +53,10 @@ When the driver changes an adjustable setting, the OLED should temporarily repla
 Example:
 
 ```text
- BRAKE BIAS
-    52.3%
+BRAKE BIAS
+52.3%
+
+
 ```
 
 Initial behavior:
@@ -74,8 +84,10 @@ When the driver completes a lap, show the last lap time temporarily.
 Example:
 
 ```text
- LAST LAP
-  1:32.481
+LAST LAP
+1:32.481
+
+
 ```
 
 Initial behavior:
@@ -127,14 +139,10 @@ These indicators should describe active intervention, not merely that the system
 
 ### Visual behavior
 
-Because the OLED is monochrome, an intervention may be represented by:
-
-- Flashing the indicator text
-- Inverting a small area
-- Showing and hiding a border
-- Alternating between normal and inverted text
-
-Only a small area should flash. The complete display should not flash continuously.
+The recovered game-data protocol selects typed firmware layouts; it does not
+expose a pixel framebuffer or partial-region inversion. The first version may
+show a bounded text label in Layout J. Flashing, borders, and inverted regions
+remain unsupported ideas unless another verified layout provides them.
 
 ### Minimum visibility time
 
@@ -261,11 +269,9 @@ The development console and the OLED have different purposes.
 
 ### Development console
 
-- Diagnostic information
-- Connection state
-- Raw or formatted telemetry
-- Multiple values at the same time
-- Debugging unavailable telemetry
+- Exact Layout J four-line preview
+- Diagnostic framing around that preview
+- Connection state and unavailable telemetry represented with bounded text
 
 ### OLED
 
@@ -284,24 +290,22 @@ The first OLED implementation should aim for:
 1. Normal gear and speed screen
 2. Temporary brake-bias screen
 3. Temporary last-lap screen
-4. ABS intervention indicator, if a reliable signal is confirmed
-5. Disconnection alert
-6. Configurable km/h or mph
+4. Connection/waiting alert
+5. ABS intervention indicator, only if a reliable signal is confirmed
+6. Configurable km/h or mph after physical text output is stable
 
 ## Open technical questions
 
-The following must be verified before implementing pixel-perfect layouts:
+The following still require controlled validation:
 
-- Exact OLED resolution
-- Supported image or text format
-- Display refresh rate
-- Maximum safe update frequency
-- Whether partial screen updates are supported
-- Whether G HUB must be running
-- How Dynamic mode receives display data
-- Whether Logitech provides a public or partner SDK
-- Differences between Logitech PRO and RS50
-- Behavior when another game or application controls the display
-- Whether the display supports inverted regions or only complete frames
+- Whether the physically confirmed DirectInput command remains stable during
+  a bounded 5 Hz telemetry stream
+- Whether ten seconds of updates receive clean matched responses without
+  display artifacts or acquisition loss
+- The Logitech PRO Wheel VID/PID, capability response, and compatibility
+- Behavior when another game or application owns the display
+- Visible font sizing and readability for all four Layout J rows
+- The semantic intent of Logitech's other typed layouts C-I
+- Four-minute fallback timing after the last successful update
 
 These questions should be answered through official documentation, SDK access, controlled testing, or protocol research.

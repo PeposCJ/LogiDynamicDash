@@ -2,22 +2,30 @@
 
 namespace LogiDynamicDash.Displays;
 
-internal sealed class ConsoleDashboard
+internal sealed class ConsoleDashboard : IDisplaySink
 {
     private const int DashboardWidth = 44;
+    private readonly bool _isInteractive =
+        !Console.IsOutputRedirected;
 
     public void Initialize()
     {
         Console.Title = "LogiDynamicDash";
-        Console.CursorVisible = false;
-        Console.Clear();
+
+        if (_isInteractive)
+        {
+            Console.CursorVisible = false;
+            Console.Clear();
+        }
     }
 
-    public void Render(
-        TelemetrySnapshot snapshot,
-        DisplayMode mode)
+    public void Render(LayoutJFrame frame)
     {
-        Console.SetCursorPosition(0, 0);
+        ArgumentNullException.ThrowIfNull(frame);
+        if (_isInteractive)
+        {
+            Console.SetCursorPosition(0, 0);
+        }
 
         WriteDashboardLine(
             new string('=', DashboardWidth));
@@ -30,24 +38,10 @@ internal sealed class ConsoleDashboard
 
         WriteDashboardLine();
 
-        switch (mode)
-        {
-            case DisplayMode.BrakeBias:
-                RenderBrakeBias(snapshot);
-                break;
-
-            case DisplayMode.LastLap:
-                RenderLastLap(snapshot);
-                break;
-
-            case DisplayMode.ConnectionProblem:
-                RenderConnectionProblem(snapshot);
-                break;
-
-            default:
-                RenderNormal(snapshot);
-                break;
-        }
+        WriteCentered(frame.Line1);
+        WriteCentered(frame.Line2);
+        WriteCentered(frame.Line3);
+        WriteCentered(frame.Line4);
 
         WriteDashboardLine(
             new string('-', DashboardWidth));
@@ -58,109 +52,14 @@ internal sealed class ConsoleDashboard
 
     public void Stop()
     {
-        Console.CursorVisible = true;
-        Console.Clear();
+        if (_isInteractive)
+        {
+            Console.CursorVisible = true;
+            Console.Clear();
+        }
 
         Console.WriteLine(
             "Telemetry monitoring stopped.");
-    }
-
-    private static void RenderNormal(
-        TelemetrySnapshot snapshot)
-    {
-        string gear =
-            FormatGear(snapshot.Gear);
-
-        string speed =
-            snapshot.SpeedMetersPerSecond is float metersPerSecond
-                ? $"{metersPerSecond * 3.6f:F0} km/h"
-                : "N/A";
-
-        WriteCentered($"GEAR {gear}");
-        WriteCentered(speed);
-        WriteDashboardLine();
-        WriteDashboardLine();
-    }
-
-    private static void RenderBrakeBias(
-        TelemetrySnapshot snapshot)
-    {
-        string brakeBias =
-            snapshot.BrakeBiasPercent is float bias
-                ? $"{bias:F1}%"
-                : "N/A";
-
-        WriteDashboardLine();
-        WriteCentered("BRAKE BIAS");
-        WriteCentered(brakeBias);
-        WriteDashboardLine();
-    }
-
-    private static void RenderLastLap(
-        TelemetrySnapshot snapshot)
-    {
-        string lastLap =
-            FormatLapTime(
-                snapshot.LastLapTimeSeconds);
-
-        WriteDashboardLine();
-        WriteCentered("LAST LAP");
-        WriteCentered(lastLap);
-        WriteDashboardLine();
-    }
-
-    private static void RenderConnectionProblem(
-        TelemetrySnapshot snapshot)
-    {
-        string message =
-            snapshot.ConnectionState switch
-            {
-                "WAITING" =>
-                    "WAITING FOR IRACING",
-
-                "ERROR" =>
-                    "TELEMETRY ERROR",
-
-                _ =>
-                    snapshot.ConnectionState
-            };
-
-        WriteDashboardLine();
-        WriteCentered("IRACING");
-        WriteCentered(message);
-        WriteDashboardLine();
-    }
-
-    private static string FormatLapTime(
-        float? totalSeconds)
-    {
-        if (totalSeconds is null ||
-            totalSeconds <= 0)
-        {
-            return "N/A";
-        }
-
-        TimeSpan time =
-            TimeSpan.FromSeconds(
-                totalSeconds.Value);
-
-        int minutes =
-            (int)time.TotalMinutes;
-
-        return
-            $"{minutes}:{time.Seconds:00}.{time.Milliseconds:000}";
-    }
-
-    private static string FormatGear(
-        int? gear)
-    {
-        return gear switch
-        {
-            -1 => "R",
-            0 => "N",
-            int value => value.ToString(),
-            null => "N/A"
-        };
     }
 
     private static void WriteCentered(

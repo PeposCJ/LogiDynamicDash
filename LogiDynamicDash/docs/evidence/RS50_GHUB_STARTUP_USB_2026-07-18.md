@@ -56,6 +56,27 @@ After enumeration, G HUB sent no request to device `0x01` runtime index
 `0x09`, `0x0E`, or `0x0F`. Its subsequent device `0x01` requests used only
 runtime indices `0x02`, `0x03`, and `0x05`.
 
+## Base Device Display Game Data Enumeration
+
+The same capture contains a stronger candidate on base device index `0xFF`:
+
+| Runtime index | Feature ID | Flags | Version | Operational host calls |
+|---|---|---:|---:|---:|
+| `0x12` | `0x8130` | `0x00` | 0 | 0 |
+
+The matched sanitized transaction is:
+
+```text
+HOST   10 FF 01 1B 12 00 00
+DEVICE 12 FF 01 1B 81 30 00 00 ...
+```
+
+Later static inspection of the installed G HUB agent identified the exact
+class name `Feature8130DisplayGameData`. That evidence was not available when
+this capture was first summarized; it moves `0x8130` ahead of the device
+`0x01` candidates. Complete details are in
+[`RS50_FEATURE_8130_DISPLAY_GAME_DATA_2026-07-22.md`](RS50_FEATURE_8130_DISPLAY_GAME_DATA_2026-07-22.md).
+
 ## Interpretation
 
 This capture distinguishes feature discovery from feature use. G HUB learned
@@ -88,6 +109,10 @@ The grouped host headers independently reproduced the earlier device `0x01`
 result: runtime feature indices `0x00`, `0x01`, `0x02`, `0x03`, and `0x05`
 were present, while `0x09`, `0x0E`, and `0x0F` were absent. This confirms that
 the enumerated display candidates were not invoked during the startup session.
+
+After its FeatureSet reconstruction was added, the analyzer also reproduced
+the base mapping `runtime 0x12 -> feature 0x8130` and counted zero operational
+host requests to it.
 
 The analyzer found 171 device reports with an exact preceding host header
 match. Another 210 host HID++ requests had no exact match under the conservative

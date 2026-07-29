@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Rs50DirectInputBridge/Rs50DirectInputBridge.vcxproj" />
+  <Project Path="Rs50DirectInputBridge.Tests/Rs50DirectInputBridge.Tests.vcxproj" />
+  <Project Path="Rs50DirectInputQuery/Rs50DirectInputQuery.vcxproj" />
+</Solution>

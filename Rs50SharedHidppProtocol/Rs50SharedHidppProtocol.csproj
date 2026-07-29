@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="LogiDynamicDash" />
+    <InternalsVisibleTo Include="LogiDynamicDash.Tests" />
+    <InternalsVisibleTo Include="Rs50SharedHidppTransport" />
+    <InternalsVisibleTo Include="Rs50SharedHidppOneShot" />
+    <InternalsVisibleTo Include="Rs50SharedHidppBoundedStream" />
+    <InternalsVisibleTo Include="Rs50SharedHidppCoexistence" />
+    <InternalsVisibleTo Include="Rs50SharedHidppCoexistence.Verification" />
+    <InternalsVisibleTo Include="Rs50SharedHidppTelemetryTrial" />
+    <InternalsVisibleTo Include="Rs50SharedHidppTelemetryTrial.Verification" />
+    <InternalsVisibleTo Include="Rs50SharedHidppLayoutGallery" />
+  </ItemGroup>
+
+</Project>

@@ -34,6 +34,11 @@ if (options.ShowHelp)
         "      Summarizes saved HOST/DEVICE report lines without HID access.");
     Console.WriteLine();
     Console.WriteLine(
+        "  LogiDynamicExplorer --compare-reports BASELINE CANDIDATE");
+    Console.WriteLine(
+        "      Compares two saved report batches without HID access.");
+    Console.WriteLine();
+    Console.WriteLine(
         "  LogiDynamicExplorer --monitor COLLECTION --duration SECONDS");
     Console.WriteLine(
         "      Passively reads one collection for 1 to 300 seconds.");
@@ -76,6 +81,27 @@ if (options.AnalyzeReportFile is not null)
             : File.ReadLines(options.AnalyzeReportFile);
 
         foreach (string line in HidReportBatchAnalyzer.Analyze(lines))
+        {
+            Console.WriteLine(line);
+        }
+    }
+    catch (Exception exception) when (
+        exception is IOException or UnauthorizedAccessException)
+    {
+        Console.WriteLine($"Error: {exception.Message}");
+    }
+
+    return;
+}
+
+if (options.CompareBaselineFile is not null &&
+    options.CompareCandidateFile is not null)
+{
+    try
+    {
+        foreach (string line in HidReportBatchComparer.Compare(
+                     File.ReadLines(options.CompareBaselineFile),
+                     File.ReadLines(options.CompareCandidateFile)))
         {
             Console.WriteLine(line);
         }

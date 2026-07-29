@@ -1,5 +1,15 @@
 <Solution>
   <Project Path="LogiDynamicDash/LogiDynamicDash.csproj" />
+  <Project Path="LogiDynamicDash.Tests/LogiDynamicDash.Tests.csproj" />
   <Project Path="LogiDynamicExplorer/LogiDynamicExplorer.csproj" Id="51784d52-7917-48eb-93f4-86c98ce3c112" />
   <Project Path="LogiDynamicExplorer.Tests/LogiDynamicExplorer.Tests.csproj" />
+  <Project Path="Rs50SharedHidppProtocol/Rs50SharedHidppProtocol.csproj" />
+  <Project Path="Rs50SharedHidppTransport/Rs50SharedHidppTransport.csproj" />
+  <Project Path="Rs50SharedHidppOneShot/Rs50SharedHidppOneShot.csproj" />
+  <Project Path="Rs50SharedHidppBoundedStream/Rs50SharedHidppBoundedStream.csproj" />
+  <Project Path="Rs50SharedHidppCoexistence/Rs50SharedHidppCoexistence.csproj" />
+  <Project Path="Rs50SharedHidppCoexistence.Verification/Rs50SharedHidppCoexistence.Verification.csproj" />
+  <Project Path="Rs50SharedHidppTelemetryTrial/Rs50SharedHidppTelemetryTrial.csproj" />
+  <Project Path="Rs50SharedHidppTelemetryTrial.Verification/Rs50SharedHidppTelemetryTrial.Verification.csproj" />
+  <Project Path="Rs50SharedHidppLayoutGallery/Rs50SharedHidppLayoutGallery.csproj" />
 </Solution>

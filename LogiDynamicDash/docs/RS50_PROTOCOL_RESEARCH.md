@@ -38,7 +38,9 @@ evidence to assign them names or complete semantics:
 
 ## Dynamic OLED Status
 
-No public Dynamic OLED API has been identified.
+No public Dynamic OLED API has been identified. However, HID++ feature
+`0x8130` is now a strongly identified internal **Display Game Data** transport
+candidate.
 
 Passive HID monitoring and G HUB USB captures did not reveal a
 framebuffer, text stream, or documented OLED feature.
@@ -46,16 +48,177 @@ framebuffer, text stream, or documented OLED feature.
 The Dynamic screen currently falls back to the Test screen because no
 known application is supplying Dynamic display data.
 
-### Working Hypothesis: Firmware-Rendered Settings UI
+This fallback matches Logitech's own PRO Racing Wheel setup guide. It describes
+Dynamic as an extension point for potential future screen updates and states
+that it defaults to Test. That official wording sharply narrows the producer
+search: the firmware and current DirectInput driver contain the implementation,
+but a public game-facing release was not guaranteed. It also makes a missing
+legitimate producer an expected result rather than evidence that the recovered
+feature is unrelated.
+
+### Strongest Candidate: Feature 0x8130 Display Game Data
+
+The complete G HUB startup capture showed the base device (`0xFF`) advertising
+public feature `0x8130` at runtime index `0x12`, flags `0x00`, version 0. Static
+inspection of the installed G HUB agent independently found the exact class
+name `devio::Feature8130DisplayGameData` and its two associated interfaces.
+
+Static analysis of the official RS50 base firmware then confirmed the feature
+registry entry and all four handlers. Function `0` returns ten layouts;
+function `1` returns one six-byte descriptor for layout A through J; function
+`2` clears pending Dynamic data; and function `3` installs bounded byte/text
+fields for the selected layout. G HUB's DirectInput/FFB manager independently
+names layouts C through J.
+
+Function `1` takes a zero-based layout index and returns six bytes:
+`[zero-based index, one-based layout ID, four capability bytes]`. The driver's
+one-time capability loader dispatches on the one-based ID, stores the
+descriptor, and sets a separate validity flag. DirectInput's layout-support
+boolean is that validity flag, not response byte `0`.
+
+The largest layouts contain four text fields with maxima 19, 10, 19, and 10
+bytes. Firmware uppercases printable ASCII, replaces invalid characters, and
+NUL-terminates fields. This confirms a typed, firmware-rendered telemetry
+layout protocol rather than a raw framebuffer.
+
+The firmware draw routines consume the two numeric state bytes as normalized
+8-bit values: each is converted to floating point and scaled by `118 / 255`
+before being passed to a display primitive. Thus the wire bytes represent
+0-255 gauge/progress extents across a 118-pixel span, not decimal text values.
+Which game telemetry concepts occupy those gauges remains unassigned.
+
+The render-dispatch table maps all ten layout indices to concrete firmware
+routines. Layout J is especially useful for a first text-only dashboard: it
+draws its four independent fields as centered rows at vertical positions 2,
+12, 35, and 45. Layout I uses the same four stored fields but adds left-side
+decoration and right-aligns fields two and four. This makes J a strong
+engineering candidate for labels such as speed/unit and gear/value without
+claiming that Logitech assigned those semantics. Physical output remains
+unverified.
+
+Normal G HUB startup enumerated `0x8130` but sent zero operational requests to
+runtime index `0x12`. The field-to-screen meanings and activation/session rules
+are therefore still unknown, and no function-`3` payload is yet approved for
+physical transmission. Full sanitized evidence, exact layout bounds, firmware
+hash, and inference boundaries are recorded in
+[`evidence/RS50_FEATURE_8130_DISPLAY_GAME_DATA_2026-07-22.md`](evidence/RS50_FEATURE_8130_DISPLAY_GAME_DATA_2026-07-22.md).
+
+A guarded DirectInput general-support query later reproduced that discovery
+with G HUB closed. The RS50 returned support byte `1`, USBPcap assigned
+`0x8130` to runtime `0x12`, and the OLED did not change. The capture contained
+no operational request to runtime `0x12`, confirming that support discovery is
+not itself a layout update. See
+[`evidence/RS50_DIRECTINPUT_QUERY_BUILD_A3_SUCCESS_2026-07-27.md`](evidence/RS50_DIRECTINPUT_QUERY_BUILD_A3_SUCCESS_2026-07-27.md).
+
+The subsequent single Layout J capability query also matched the recovered
+model. DirectInput returned support byte `1` with an intact ten-byte sentinel
+contract, while USBPcap captured one layout-count request plus ten descriptor
+requests to runtime `0x12`. The physical RS50 reported Layout J ID `10` and
+four string capacities `19/10/19/10`. Explicit operator confirmation of the
+physical observation recorded no OLED, LED, torque, or wheel-position change.
+This closes the query gate but does not itself demonstrate display output. See
+[`evidence/RS50_LAYOUT_J_QUERY_SUCCESS_2026-07-27.md`](evidence/RS50_LAYOUT_J_QUERY_SUCCESS_2026-07-27.md).
+
+Build C then confirmed display output. One DirectInput Layout J setter yielded
+one matched feature-`0x8130` function-`3` request/response and visibly replaced
+the Test fallback. The captured wire strings and photographed rows were
+`RS50 / LOGIDYNAMI / TEST 1 / OLED LINK`. Comparing them with the four
+game-facing inputs proves the driver's pairwise permutation `2/1/4/3`; the
+ten-character second row also physically confirms the recovered capacity. No
+torque, LED, or wheel-movement change was observed.
+See
+[`evidence/RS50_STATIC_LAYOUT_J_SUCCESS_2026-07-27.md`](evidence/RS50_STATIC_LAYOUT_J_SUCCESS_2026-07-27.md).
+
+The feature name occurs in the installed G HUB depot only inside the agent and
+DirectInput/FFB manager binaries, not the Electron front-end archive. The
+manager does contain internal `Display::Message::SetLayout` commands, so the
+transport sits below the visible G HUB UI. It remains outside the exported
+legacy Wheel SDK and TRUEFORCE API surface inspected earlier.
+
+The manager embeds separate 32-bit and 64-bit DirectInput force-feedback
+drivers. Static extraction of the 64-bit `hidpp_forcefeedback` DLL confirmed
+the complete game-to-device path: typed `EscapeCommands::Wheel::LayoutC`
+through `LayoutJ` callbacks create internal messages 29 through 36, and the
+driver's `Feature8130DisplayGameData` implementation serializes them as
+function-`3` HID++ payloads. At the game-facing layer, C contains one 32-bit
+floating value; D contains two 32-bit values plus one string; E contains two
+32-bit values plus two strings; F/G/H contain two strings; and I/J contain
+four strings. Before USB transmission, each numeric value is clamped to
+`0.0..1.0`, multiplied by `255.0`, rounded, and reduced to the byte expected
+by firmware. This is an internal DirectInput Escape surface, not an exported
+function in the installed public Wheel SDK.
+
+The Layout C callback at virtual address `0x18001BF30` forwards the incoming
+32-bit value unchanged to the message constructor at `0x1800115D0`. That
+constructor creates message ID `29` and copies the original float bits into
+the message object at offset `0x14`. The message-29 dispatch case then calls
+the Layout C adapter at `0x180015A20`, which implements
+`round(clamp(value, 0, 1) * 255)`. The Layout D and E adapters apply the same
+formula independently to both of their numeric values. Thus the official
+game-facing range is normalized `0.0..1.0`, while the firmware wire range is
+`0..255`.
+
+`LogiDynamicExplorer.Protocol.Rs50DisplayGameDataPayloadEncoder` implements
+that recovered conversion and the A-J field bounds as an offline-only
+artifact. It returns only function-`3` parameter bytes. It deliberately does
+not construct a HID++ report header, select a device, resolve a runtime feature
+index, open a HID handle, or call a write API. Text is restricted to the
+firmware's safe ASCII domain, lower-case ASCII is uppercased, unsupported
+characters become `?`, embedded NUL is rejected, and oversized fields fail
+instead of being silently truncated.
+
+The exact DirectInput envelope is also statically recovered. The driver's
+`IDirectInputEffectDriver::Escape` accepts outer `DIEFFESCAPE.dwCommand = 4`.
+Its input buffer uses version `1` at offset 4 and an inner command byte at
+offset 8. Inner commands 13/14 select data-free layouts A/B; commands 15-22
+select layouts C-J. Their minimum input sizes are respectively 12, 12, 16,
+52, 84, 76, 76, 76, 140, and 140 bytes. Text-bearing buffers contain MSVC
+`std::string` objects, not a portable packed-wire format. This proves the
+internal producer ABI, but it is not yet a safe or public integration surface.
+The x86 driver independently reproduces the same outer mapping: its entry `4`
+calls a version-1, 22-command display dispatcher, while entry `5` handles the
+distinct subtype-and-double family. This eliminates architecture-specific
+table interpretation as a source of the earlier off-by-one error.
+
+The complete inner command family is coherent: command `1` is `SetIdle`,
+command `2` queries general display support, commands `3` through `12` query
+support for layouts A through J, and commands `13` through `22` set layouts A
+through J. On the firmware side, function `3` immediately marks Dynamic data
+pending, stores the selected layout, and reloads an expiry counter with
+`240000` (`0x0003A980`). It does not require a preceding function-`0` or
+function-`1` handshake. The decrement routine runs once per main-loop wakeup
+from a flag set by the firmware's `SysTick` handler. That handler also calls
+the matching STM32 HAL tick increment routine; ST documents its default time
+base as 1 ms. The nominal Dynamic expiry is therefore `240000 ms`, or 240
+seconds (four minutes). A physical elapsed-time observation can independently
+confirm that static result.
+
+The installed RS50 joystick registration selects force-feedback CLSID
+`{62B43F0E-E7DB-4329-8C13-A966D84A289F}`. Its 64-bit COM server is
+`Direct Input Force Feedback\1_1_13\hidpp_forcefeedback_x64.dll`; its hash is
+identical to the DLL extracted from `di_ffb_manager.exe`. DirectInput can
+therefore reach the recovered Escape dispatcher through the RS50's normal
+`guidFFDriver`, without a separate RS50 kernel filter.
+
+A later game/RPM capture provided useful negative evidence: G HUB sent live
+updates only to runtime `0x0B`, which the startup catalog maps to feature
+`0x807A` (RPM Indicator). Its changing value covered all 11 states from 0 to
+10, while runtime `0x12` (`0x8130`) received zero host reports. Details are in
+[`evidence/RS50_RPM_LIVE_FEED_2026-07-22.md`](evidence/RS50_RPM_LIVE_FEED_2026-07-22.md).
+
+### Firmware-Rendered Settings UI
 
 The current evidence is consistent with the OLED settings screens being
 rendered by the wheel firmware. Under this hypothesis, G HUB sends individual
 configuration values, and the firmware presents those values using its own
 menus and graphics.
 
-This hypothesis is not yet confirmed. It is supported by the configuration
-reports observed on MI_01 COL03 and by the absence of an observed framebuffer,
-text stream, or sustained display update stream during passive monitoring.
+The official base firmware contains the `TORQUE`, `PROFILE`, `TEST`, and
+`DYNAMIC` HomeScreen strings, a four-entry pointer table for them, and code
+that selects and draws those entries. Together with the physical G HUB-open /
+G HUB-closed observations, this confirms that the HomeScreen/settings UI is
+firmware-side. The base may still relay drawing operations to the rim module;
+the result does not imply that OLED pixels originate in G HUB.
 
 The Dynamic display mode may use a separate producer or protocol. No game or
 public application is currently known to supply live Dynamic OLED data.
@@ -175,6 +338,11 @@ assigning runtime indices `0x09`, `0x0E`, and `0x0F`. It did not send any
 operational request to those runtime indices after enumeration. Subsequent
 device `0x01` requests used only runtime indices `0x02`, `0x03`, and `0x05`.
 
+The same capture also enumerated `0x8130` on the base device (`0xFF`) at
+runtime index `0x12`. Later static analysis identified its G HUB class as
+`Feature8130DisplayGameData`. G HUB made zero operational calls to that runtime
+index during startup.
+
 The startup traffic contained 378 short 7-byte host HID++ requests and three
 isolated 20-byte host HID++ requests. It contained no 64-byte host output and
 no sustained large-payload stream consistent with a framebuffer update.
@@ -189,6 +357,16 @@ The sanitized evidence is preserved in
 The complete PCAP remains local and must not be committed.
 
 ### Installed Wheel SDK Boundary
+
+Logitech's downloadable Steering Wheel SDK 8.75.30 adds a useful historical
+control. Its official standalone C++ sample implements live RPM LEDs by
+constructing `DIEFFESCAPE` and calling `IDirectInputDevice8::Escape` directly.
+The manual documents that this DInput helper can work without initializing the
+SDK. This validates DirectInput Escape as an established Logitech producer
+boundary, while the absence of OLED/layout functions confirms that the
+Display Game Data extension is not part of that public 2018 API. Reproducible
+details are in
+[`evidence/RS50_OFFICIAL_WHEEL_SDK_DIRECTINPUT_2026-07-22.md`](evidence/RS50_OFFICIAL_WHEEL_SDK_DIRECTINPUT_2026-07-22.md).
 
 An offline inspection of the G HUB depot found a separately installed
 `wheel_sdk` package at version `9.1.1.0`. Its manager installs the legacy
@@ -233,9 +411,26 @@ LogiDynamicExplorer --analyze-reports reports.tsv
 
 Each non-comment line may contain only hexadecimal bytes, or tab-separated
 `HOST`/`DEVICE`, optional metadata columns, and hexadecimal bytes in the final
-column. The summary groups HID++ reports by header and counts distinct parameter
-signatures. Request/response matches require the same device, runtime feature,
-function, and software ID; they are structural correlations only.
+column. The summary groups HID++ reports by header, counts distinct parameter
+signatures, reconstructs FeatureSet ordinal-to-feature mappings from matched
+requests and responses (including long `0x12` responses), and reports the
+number of later host requests to each runtime index. Request/response matches
+require the same device, runtime feature, function, and software ID; they are
+structural correlations only.
+
+On Windows, a USBPcap/Wireshark capture can be exported and analyzed without
+creating an intermediate report file. The physical USB address is mandatory
+so unrelated devices are excluded:
+
+```powershell
+scripts\Export-Rs50HidReports.ps1 `
+  -PcapPath C:\captures\rs50.pcapng `
+  -DeviceAddress 4 |
+  dotnet run --project LogiDynamicExplorer -- --analyze-reports -
+```
+
+The extractor reads an existing capture only. It does not open the RS50 or
+transmit HID reports.
 
 Safe validation steps include:
 
@@ -244,6 +439,57 @@ Safe validation steps include:
 3. Inventory every RS50 HID report descriptor without sending reports.
 4. Keep firmware-rendered settings traffic separate from any future Dynamic
    display evidence.
+
+### iRacing Rev-Light Protocol Validation — 2026-07-27
+
+Four controlled USB captures were recorded with iRacing to validate the RS50
+rev-light protocol and improve the methodology used for the ongoing Dynamic
+OLED investigation.
+
+The sanitized findings are preserved in:
+
+[`evidence/RS50_IRACING_REV_LIGHT_2026-07-27.md`](evidence/RS50_IRACING_REV_LIGHT_2026-07-27.md)
+
+The captures confirmed that feature `0x807A` is used for the live RPM strip and
+that the steady-state feed runs at approximately 60 Hz.
+
+A startup capture taken before launching iRacing exposed the one-time arm
+sequence:
+
+```text
+10ff0b0c000000   fn0
+10ff0b1c000000   fn1
+10ff0b2c000000   fn2
+10ff0b0c000000   fn0
+11ff0b6c...      then the fn2 + fn6 live stream
+This first-party evidence showed that an extra fn3 command previously used by
+an external Linux driver implementation was not part of the normal arm
+sequence. That command was identified as SET_EFFECT and could overwrite the
+user's active LIGHTSYNC effect. The incorrect command and its associated
+lighting restore workaround were subsequently removed from that implementation.
+A dedicated request/response capture also confirmed a 0x12 device response
+for every tested host write in the rev-light stream.
+The redline capture confirmed that no special flash command is used. Redline is
+represented by the normal live level reaching:
+LL = 10
+The iRacing pit-limiter capture showed that the full-strip flash is implemented
+using the same live level mechanism, alternating:
+LL = 10
+LL = 0
+at approximately 1.2 Hz.
+These findings do not identify the Dynamic OLED transport. Their main value to
+LogiDynamicDash is methodological: they demonstrate a repeatable workflow for
+proprietary RS50 feature research:
+feature discovery
+→ runtime feature index
+→ one-time initialization
+→ live command stream
+→ device responses
+→ controlled physical-state comparison
+Future Dynamic OLED work should use the same structure while remaining
+read-only until the relevant feature and command semantics are understood.
+
+
 
 ## Safety
 
