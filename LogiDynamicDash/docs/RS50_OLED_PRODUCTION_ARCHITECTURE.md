@@ -37,6 +37,9 @@ The current production branch passes:
 - invalid-command smoke test, which exits with code 2 before constructing a
   session.
 
+The same build, test, format, surface-audit, and vulnerability steps run in
+the Windows GitHub Actions workflow for pushes and pull requests.
+
 ## Data Flow
 
 ```text

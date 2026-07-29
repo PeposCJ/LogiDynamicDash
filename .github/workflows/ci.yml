@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - codex/rs50-oled-production
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore .\LogiDynamicDash.slnx
+
+      - name: Build with warnings as errors
+        run: >
+          dotnet build .\LogiDynamicDash.slnx
+          -c Release
+          --no-restore
+          -warnaserror
+
+      - name: Test
+        run: >
+          dotnet test .\LogiDynamicDash.slnx
+          -c Release
+          --no-build
+
+      - name: Verify formatting
+        run: >
+          dotnet format .\LogiDynamicDash.slnx
+          --verify-no-changes
+          --no-restore
+
+      - name: Audit RS50 production surface
+        shell: powershell
+        run: .\scripts\Test-Rs50OledProductionSurface.ps1
+
+      - name: Audit vulnerable packages
+        run: >
+          dotnet list .\LogiDynamicDash.slnx
+          package
+          --vulnerable
+          --include-transitive
