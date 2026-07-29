@@ -4,6 +4,36 @@ This document defines the intended behavior of the Dynamic OLED display in LogiD
 
 The goal is not to show every available telemetry value. The display should present only information that can be understood with a quick glance while driving.
 
+## Confirmed hardware contract
+
+Controlled RS50 interoperability research established that Dynamic mode uses
+public HID++ feature `0x8130`, discovered through the Root feature at runtime.
+The feature is a firmware renderer with ten fixed layouts A-J, not a host
+framebuffer.
+
+The production encoder supports only the confirmed layout fields:
+
+| Layout | Host-controlled fields | Intended production use |
+|---|---|---|
+| A | None | Blank frame |
+| B | None | Firmware Test graphic |
+| C | One normalized gauge | RPM or progress |
+| D | Two normalized indicators and one 11-character text | Label/value plus indicators |
+| E | Two normalized indicators, 7-character left text, 3-character right text | Speed, gear, RPM, and secondary indicator |
+| F | 1-character left and 3-character right text | Large right-side value |
+| G | 1-character left and 3-character right text | Large left-side value |
+| H | 21-character top and 10-character bottom text | Two-row status page |
+| I | Text limits 19/10/19/10 | Four-row mixed-alignment page |
+| J | Text limits 19/10/19/10 | Four-row centered page |
+
+Layout E's visual text order is the reverse of its wire-field order. The
+production model names the fields by their visual positions and performs that
+permutation internally.
+
+The confirmed interface does not provide arbitrary pixels, custom fonts, font
+sizes, coordinates, images, Unicode, color, or partial updates. Layout
+selection determines the built-in graphics, typography, and alignment.
+
 ## Design principles
 
 - Keep the normal driving screen simple.
@@ -288,20 +318,16 @@ The first OLED implementation should aim for:
 5. Disconnection alert
 6. Configurable km/h or mph
 
-## Open technical questions
+## Remaining technical questions
 
-The following must be verified before implementing pixel-perfect layouts:
+The following remain open for production integration:
 
-- Exact OLED resolution
-- Supported image or text format
-- Display refresh rate
-- Maximum safe update frequency
-- Whether partial screen updates are supported
-- Whether G HUB must be running
-- How Dynamic mode receives display data
-- Whether Logitech provides a public or partner SDK
-- Differences between Logitech PRO and RS50
-- Behavior when another game or application controls the display
-- Whether the display supports inverted regions or only complete frames
+- Differences between Logitech PRO and RS50 behavior
+- Safe ownership and reconnect behavior across sleep or USB renumbering
+- User configuration for choosing layouts and telemetry mappings
+- Long-duration coexistence while driving
+- Fallback behavior when another application controls Dynamic mode
 
-These questions should be answered through official documentation, SDK access, controlled testing, or protocol research.
+The 5 Hz shared-HID++ stationary telemetry path has been independently
+validated with normal FFB and LEDs. Moving-car validation is postponed and
+must use a separately reviewed bounded stage before any full-lap claim.
