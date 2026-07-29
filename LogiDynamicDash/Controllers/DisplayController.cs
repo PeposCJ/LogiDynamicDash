@@ -2,8 +2,10 @@
 
 namespace LogiDynamicDash.Controllers;
 
-internal sealed class DisplayController
+internal sealed class DisplayController(TimeProvider? timeProvider = null)
 {
+    private readonly TimeProvider clock = timeProvider ?? TimeProvider.System;
+
     private static readonly TimeSpan BrakeBiasDuration =
         TimeSpan.FromSeconds(2);
 
@@ -15,16 +17,16 @@ internal sealed class DisplayController
 
     private bool _lastLapInitialized;
 
-    private DateTime _brakeBiasExpiresAt =
-        DateTime.MinValue;
+    private DateTimeOffset _brakeBiasExpiresAt =
+        DateTimeOffset.MinValue;
 
-    private DateTime _lastLapExpiresAt =
-        DateTime.MinValue;
+    private DateTimeOffset _lastLapExpiresAt =
+        DateTimeOffset.MinValue;
 
     public DisplayMode SelectMode(
         TelemetrySnapshot snapshot)
     {
-        DateTime now = DateTime.UtcNow;
+        DateTimeOffset now = clock.GetUtcNow();
 
         DetectCompletedLap(snapshot, now);
         DetectBrakeBiasChange(snapshot, now);
@@ -49,7 +51,7 @@ internal sealed class DisplayController
 
     private void DetectBrakeBiasChange(
         TelemetrySnapshot snapshot,
-        DateTime now)
+        DateTimeOffset now)
     {
         if (snapshot.BrakeBiasPercent is not float currentBrakeBias)
         {
@@ -81,7 +83,7 @@ internal sealed class DisplayController
 
     private void DetectCompletedLap(
         TelemetrySnapshot snapshot,
-        DateTime now)
+        DateTimeOffset now)
     {
         if (!_lastLapInitialized)
         {
@@ -99,17 +101,20 @@ internal sealed class DisplayController
             return;
         }
 
-        if (_previousLastLapTimeSeconds is float previousLastLap)
+        if (_previousLastLapTimeSeconds is not float previousLastLap)
         {
-            float difference =
-                MathF.Abs(
-                    currentLastLap -
-                    previousLastLap);
+            _previousLastLapTimeSeconds = currentLastLap;
+            return;
+        }
 
-            if (difference < 0.001f)
-            {
-                return;
-            }
+        float difference =
+            MathF.Abs(
+                currentLastLap -
+                previousLastLap);
+
+        if (difference < 0.001f)
+        {
+            return;
         }
 
         _previousLastLapTimeSeconds =

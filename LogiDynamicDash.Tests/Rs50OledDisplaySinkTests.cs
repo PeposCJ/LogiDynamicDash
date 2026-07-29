@@ -15,8 +15,10 @@ public sealed class Rs50OledDisplaySinkTests
         sink.Initialize();
 
         Assert.Equal(1, session.OpenCount);
+        Assert.Equal(OledDeviceState.Active, sink.State);
         sink.Stop();
         Assert.True(session.Disposed);
+        Assert.Equal(OledDeviceState.Stopped, sink.State);
     }
 
     [Fact]
@@ -30,6 +32,7 @@ public sealed class Rs50OledDisplaySinkTests
 
         Assert.Throws<IOException>(() => sink.Initialize());
         Assert.True(session.Disposed);
+        Assert.Equal(OledDeviceState.Faulted, sink.State);
     }
 
     [Fact]
@@ -64,6 +67,26 @@ public sealed class Rs50OledDisplaySinkTests
         Assert.Throws<InvalidOperationException>(
             () => sink.Render(snapshot, DisplayMode.Normal));
         Assert.Empty(session.Frames);
+        Assert.Equal(OledDeviceState.Faulted, sink.State);
+    }
+
+    [Fact]
+    public void RenderFailure_FaultsAndDoesNotReopenOrRetry()
+    {
+        FakeSession session = new()
+        {
+            SendException = new IOException("injected")
+        };
+        Rs50OledDisplaySink sink = CreateSink(session);
+        sink.Initialize();
+
+        Assert.Throws<IOException>(
+            () => sink.Render(ConnectedSnapshot(), DisplayMode.Normal));
+        Assert.Equal(OledDeviceState.Faulted, sink.State);
+        Assert.Throws<InvalidOperationException>(
+            () => sink.Render(ConnectedSnapshot(), DisplayMode.Normal));
+        Assert.Throws<InvalidOperationException>(() => sink.Initialize());
+        Assert.Single(session.Frames);
     }
 
     [Fact]
@@ -102,6 +125,7 @@ public sealed class Rs50OledDisplaySinkTests
         public List<Rs50OledFrame> Frames { get; } = [];
 
         public Exception? OpenException { get; set; }
+        public Exception? SendException { get; set; }
 
         public int OpenCount { get; private set; }
 
@@ -121,6 +145,11 @@ public sealed class Rs50OledDisplaySinkTests
         public Rs50OledSendResult Send(Rs50OledFrame frame)
         {
             Frames.Add(frame);
+            if (SendException is not null)
+            {
+                throw SendException;
+            }
+
             return Rs50OledSendResult.Transmitted;
         }
 

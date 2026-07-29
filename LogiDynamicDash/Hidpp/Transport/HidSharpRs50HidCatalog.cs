@@ -2,14 +2,12 @@ using HidSharp;
 
 namespace LogiDynamicDash.Hidpp.Transport;
 
-internal sealed class HidSharpRs50HidCatalog : IRs50HidCatalog
+internal sealed class HidSharpRs50HidCatalog(
+    ConfirmedOledDeviceIdentity identity) : IRs50HidCatalog
 {
-    private const int LogitechVendorId = 0x046D;
-    private const int Rs50ProductId = 0xC276;
-
     public IReadOnlyList<IRs50HidCollection> Enumerate() =>
         DeviceList.Local
-            .GetHidDevices(LogitechVendorId, Rs50ProductId)
+            .GetHidDevices(identity.VendorId, identity.ProductId)
             .OrderBy(
                 device => device.DevicePath,
                 StringComparer.OrdinalIgnoreCase)

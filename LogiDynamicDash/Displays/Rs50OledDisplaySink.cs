@@ -3,6 +3,15 @@ using LogiDynamicDash.Models;
 
 namespace LogiDynamicDash.Displays;
 
+internal enum OledDeviceState
+{
+    Disabled,
+    Opening,
+    Active,
+    Faulted,
+    Stopped
+}
+
 /// <summary>
 /// Bounded stationary-validation sink. Moving telemetry fails closed before
 /// a frame is formatted or transmitted.
@@ -15,27 +24,35 @@ internal sealed class Rs50OledDisplaySink(
 
     private readonly object synchronization = new();
     private IRs50OledSession? session;
-    private bool stopped;
+    private Rs50OledFrameScheduler? scheduler;
+
+    internal OledDeviceState State { get; private set; } =
+        OledDeviceState.Disabled;
 
     public void Initialize()
     {
         lock (synchronization)
         {
-            if (session is not null || stopped)
+            if (State != OledDeviceState.Disabled)
             {
                 throw new InvalidOperationException(
                     "The RS50 OLED display sink cannot be initialized again.");
             }
 
-            IRs50OledSession created = sessionFactory();
+            State = OledDeviceState.Opening;
+            IRs50OledSession? created = null;
             try
             {
+                created = sessionFactory();
                 created.Open();
                 session = created;
+                scheduler = new Rs50OledFrameScheduler(created);
+                State = OledDeviceState.Active;
             }
             catch
             {
-                created.Dispose();
+                State = OledDeviceState.Faulted;
+                created?.Dispose();
                 throw;
             }
         }
@@ -46,15 +63,25 @@ internal sealed class Rs50OledDisplaySink(
         ArgumentNullException.ThrowIfNull(snapshot);
         lock (synchronization)
         {
-            if (session is null || stopped)
+            if (State != OledDeviceState.Active || scheduler is null)
             {
                 throw new InvalidOperationException(
                     "The RS50 OLED display sink is not initialized.");
             }
 
-            RequireStationary(snapshot);
-            Rs50OledFrame frame = formatter.Format(snapshot, mode);
-            session.Send(frame);
+            try
+            {
+                RequireStationary(snapshot);
+                Rs50OledFrame frame = formatter.Format(snapshot, mode);
+                scheduler.Submit(
+                    frame,
+                    mode == DisplayMode.ConnectionProblem);
+            }
+            catch
+            {
+                State = OledDeviceState.Faulted;
+                throw;
+            }
         }
     }
 
@@ -62,14 +89,15 @@ internal sealed class Rs50OledDisplaySink(
     {
         lock (synchronization)
         {
-            if (stopped)
+            if (State == OledDeviceState.Stopped)
             {
                 return;
             }
 
-            stopped = true;
+            State = OledDeviceState.Stopped;
             session?.Dispose();
             session = null;
+            scheduler = null;
         }
     }
 

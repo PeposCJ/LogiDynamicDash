@@ -85,6 +85,36 @@ public sealed class SanitizedRs50OledDiagnosticsTests
         Assert.DoesNotContain("serial-private", text);
     }
 
+    [Fact]
+    public void DiagnosticWriteFailure_PropagatesAndOriginalFailureIsNotMasked()
+    {
+        ManualTimeProvider clock = new();
+        DiagnosticRs50OledSession writeFailure = new(
+            new FakeSession(clock),
+            new SanitizedRs50OledDiagnostics(new ThrowingWriter(), clock),
+            clock);
+
+        Assert.Throws<IOException>(() => writeFailure.Open());
+        Assert.Throws<IOException>(() => writeFailure.Dispose());
+
+        FakeSession failingInner = new(clock)
+        {
+            SendException = new InvalidOperationException("original")
+        };
+        DiagnosticRs50OledSession operationFailure = new(
+            failingInner,
+            new SanitizedRs50OledDiagnostics(
+                new ThrowAfterWritesWriter(1),
+                clock),
+            clock);
+        operationFailure.Open();
+        InvalidOperationException exception =
+            Assert.Throws<InvalidOperationException>(
+                () => operationFailure.Send(new Rs50LayoutAFrame()));
+        Assert.Equal("original", exception.Message);
+        Assert.Throws<IOException>(() => operationFailure.Dispose());
+    }
+
     private sealed class FakeSession(ManualTimeProvider clock)
         : IRs50OledSession
     {
@@ -124,5 +154,31 @@ public sealed class SanitizedRs50OledDiagnosticsTests
 
         internal void Advance(TimeSpan duration) =>
             timestamp += duration.Ticks;
+    }
+
+    private sealed class ThrowingWriter : TextWriter
+    {
+        public override System.Text.Encoding Encoding =>
+            System.Text.Encoding.UTF8;
+
+        public override void WriteLine(string? value) =>
+            throw new IOException("injected disk failure");
+    }
+
+    private sealed class ThrowAfterWritesWriter(int writesBeforeFailure)
+        : TextWriter
+    {
+        private int writes;
+
+        public override System.Text.Encoding Encoding =>
+            System.Text.Encoding.UTF8;
+
+        public override void WriteLine(string? value)
+        {
+            if (writes++ >= writesBeforeFailure)
+            {
+                throw new IOException("injected disk failure");
+            }
+        }
     }
 }

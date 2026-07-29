@@ -4,7 +4,7 @@ using SVappsLAB.iRacingTelemetrySDK;
 
 namespace LogiDynamicDash.Services;
 
-internal sealed class IRacingTelemetryService
+internal sealed class IRacingTelemetryService : ITelemetrySource
 {
     public async Task MonitorAsync(
         TelemetrySnapshot snapshot,

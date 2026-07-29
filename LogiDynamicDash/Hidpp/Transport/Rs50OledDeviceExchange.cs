@@ -6,8 +6,6 @@ namespace LogiDynamicDash.Hidpp.Transport;
 /// </summary>
 internal sealed class Rs50OledDeviceExchange : IRs50OledExchange
 {
-    private const int LogitechVendorId = 0x046D;
-    private const int Rs50ProductId = 0xC276;
     private const uint ShortCollectionUsage = 0xFF430701;
     private const uint VeryLongCollectionUsage = 0xFF430704;
     private const int MaximumReportsPerExchange = 16;
@@ -26,9 +24,17 @@ internal sealed class Rs50OledDeviceExchange : IRs50OledExchange
     }
 
     internal static Rs50OledDeviceExchange Open() =>
-        Open(new HidSharpRs50HidCatalog());
+        Open(
+            new HidSharpRs50HidCatalog(
+                ConfirmedOledDeviceIdentity.Rs50),
+            ConfirmedOledDeviceIdentity.Rs50);
 
     internal static Rs50OledDeviceExchange Open(IRs50HidCatalog catalog)
+        => Open(catalog, ConfirmedOledDeviceIdentity.Rs50);
+
+    private static Rs50OledDeviceExchange Open(
+        IRs50HidCatalog catalog,
+        ConfirmedOledDeviceIdentity identity)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         IReadOnlyList<IRs50HidCollection> collections =
@@ -36,11 +42,13 @@ internal sealed class Rs50OledDeviceExchange : IRs50OledExchange
 
         IRs50HidCollection shortCollection = SelectUniqueCollection(
             collections,
+            identity,
             pathMarker: "mi_01&col01",
             ShortCollectionUsage,
             expectedReportLength: Rs50OledProtocol.ShortReportLength);
         IRs50HidCollection veryLongCollection = SelectUniqueCollection(
             collections,
+            identity,
             pathMarker: "mi_01&col03",
             VeryLongCollectionUsage,
             expectedReportLength: Rs50OledProtocol.VeryLongReportLength);
@@ -193,14 +201,15 @@ internal sealed class Rs50OledDeviceExchange : IRs50OledExchange
 
     private static IRs50HidCollection SelectUniqueCollection(
         IReadOnlyList<IRs50HidCollection> collections,
+        ConfirmedOledDeviceIdentity identity,
         string pathMarker,
         uint usage,
         int expectedReportLength)
     {
         IRs50HidCollection[] matches = collections
             .Where(collection =>
-                collection.VendorId == LogitechVendorId &&
-                collection.ProductId == Rs50ProductId &&
+                collection.VendorId == identity.VendorId &&
+                collection.ProductId == identity.ProductId &&
                 collection.DevicePath.Contains(
                     pathMarker,
                     StringComparison.OrdinalIgnoreCase) &&
@@ -215,7 +224,8 @@ internal sealed class Rs50OledDeviceExchange : IRs50OledExchange
         if (matches.Length != 1)
         {
             throw new InvalidOperationException(
-                $"Expected exactly one validated RS50 {pathMarker} " +
+                $"Expected exactly one validated {identity.Model} " +
+                $"{pathMarker} " +
                 $"collection, found {matches.Length}.");
         }
 
