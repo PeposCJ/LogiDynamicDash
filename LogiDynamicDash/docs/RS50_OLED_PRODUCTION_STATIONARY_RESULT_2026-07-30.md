@@ -61,3 +61,43 @@ safe OLED shutdown. The correction is covered offline.
 Any physical retry requires a fresh capture, baseline, and explicit
 authorization. The prior authorization was consumed. The PR remains draft,
 and moving-car testing remains prohibited.
+
+## Corrected-build retry (`ed96f3a`)
+
+A second, separately authorized stationary execution completed its bounded
+10-second window with exit code 0. The RS50 displayed:
+
+```text
+IRACING
+WAITING
+```
+
+The local sanitized OLED log records a successful discovery/open, one
+acknowledged Layout H frame, and a clean close:
+
+```text
+C:\Users\Dr. Con\AppData\Local\LogiDynamicDash\logs\
+rs50-oled-20260730-065303-0149395.jsonl
+```
+
+The physical post-check confirmed normal FFB, RPM LEDs, steering, pedals,
+buttons, and connection, with no unexpected motion, torque, resistance, or
+disconnect. This passes the production transport, acknowledgement, shutdown,
+and coexistence portions of the stationary gate.
+
+The Wireshark GUI capture was saved locally and remains ignored:
+
+```text
+2026-07-30_rs50_production_stationary_retry.pcapng
+bytes: 141302412
+sha256: 32B09261A4C25EEA717C93E41A2ED5E757CAA69A3B27B66663FE33936252DC7B
+```
+
+The full telemetry-rendering portion remains open because the OLED did not
+advance from `WAITING` to stationary speed and gear. A subsequent
+hardware-free recording proved that the iRacing SDK can connect and identify
+the active session, but that recording also contained moving-car telemetry
+and is not stationary-gate evidence. The next bounded build adds a separate
+sanitized application log that records each accepted render trigger, state,
+mode, speed, and gear so one run can distinguish missing telemetry callbacks
+from a display scheduling or formatting fault.

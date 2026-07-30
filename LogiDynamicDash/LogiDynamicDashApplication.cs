@@ -1,4 +1,5 @@
 using LogiDynamicDash.Controllers;
+using LogiDynamicDash.Diagnostics;
 using LogiDynamicDash.Displays;
 using LogiDynamicDash.Models;
 using LogiDynamicDash.Services;
@@ -19,7 +20,8 @@ internal sealed class LogiDynamicDashApplication(
     ITelemetrySource telemetrySource,
     IApplicationDisplay display,
     DisplayController controller,
-    TimeProvider? timeProvider = null)
+    TimeProvider? timeProvider = null,
+    IApplicationRuntimeDiagnostics? diagnostics = null)
 {
     private static readonly TimeSpan RefreshInterval =
         TimeSpan.FromMilliseconds(200);
@@ -47,7 +49,7 @@ internal sealed class LogiDynamicDashApplication(
             display.Initialize();
             initialized = true;
             State = ApplicationLifecycleState.Active;
-            Render(new TelemetrySnapshot());
+            Render(new TelemetrySnapshot(), "initial");
 
             await MonitorWithHeartbeatAsync(cancellationToken);
         }
@@ -79,6 +81,8 @@ internal sealed class LogiDynamicDashApplication(
             {
                 State = ApplicationLifecycleState.Stopped;
             }
+
+            diagnostics?.RecordStop(State);
         }
     }
 
@@ -167,7 +171,7 @@ internal sealed class LogiDynamicDashApplication(
                 return;
             }
 
-            RenderCore(current);
+            RenderCore(current, "telemetry");
         }
     }
 
@@ -175,21 +179,23 @@ internal sealed class LogiDynamicDashApplication(
     {
         lock (renderSynchronization)
         {
-            RenderCore(current);
+            RenderCore(current, "status");
         }
     }
 
-    private void Render(TelemetrySnapshot current)
+    private void Render(TelemetrySnapshot current, string trigger)
     {
         lock (renderSynchronization)
         {
-            RenderCore(current);
+            RenderCore(current, trigger);
         }
     }
 
-    private void RenderCore(TelemetrySnapshot current)
+    private void RenderCore(TelemetrySnapshot current, string trigger)
     {
-        display.Render(current, controller.SelectMode(current));
+        DisplayMode mode = controller.SelectMode(current);
+        diagnostics?.RecordRender(trigger, current, mode);
+        display.Render(current, mode);
         lastRefreshTimestamp = clock.GetTimestamp();
         hasRefreshed = true;
     }

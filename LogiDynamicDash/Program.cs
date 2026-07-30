@@ -1,5 +1,6 @@
 using LogiDynamicDash.Configuration;
 using LogiDynamicDash.Controllers;
+using LogiDynamicDash.Diagnostics;
 using LogiDynamicDash.Models;
 using LogiDynamicDash.Offline;
 using LogiDynamicDash.Services;
@@ -59,10 +60,15 @@ internal class Program
             cancellationSource.Cancel();
         };
 
+        using IApplicationRuntimeDiagnostics? diagnostics =
+            selection.IsBoundedHardwareTrial
+                ? SanitizedApplicationRuntimeDiagnostics.CreateLocal()
+                : null;
         LogiDynamicDashApplication application = new(
             new IRacingTelemetryService(),
             selection.Display,
-            new DisplayController());
+            new DisplayController(),
+            diagnostics: diagnostics);
         try
         {
             await application.RunAsync(cancellationSource.Token);
