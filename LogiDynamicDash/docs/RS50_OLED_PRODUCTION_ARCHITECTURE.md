@@ -12,6 +12,7 @@ Completed offline components:
 - Root discovery of public HID++ feature `0x8130`;
 - exact request and acknowledgement validation;
 - strict RS50 MI_01 COL01/COL03 collection selection;
+- bounded multiplexed-ACK scanning without request retries;
 - fail-closed session lifecycle;
 - identical-frame suppression, 5 Hz change limit, and latest-frame scheduler;
 - km/h and mph telemetry formatting for all layouts;

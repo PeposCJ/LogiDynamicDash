@@ -104,3 +104,35 @@ After the host session closes, the OLED retains the last acknowledged frame.
 The operator observed that the firmware returns to its Dynamic `Test` fallback
 on its own several minutes later. The host currently sends no explicit clear
 frame on shutdown.
+
+## ACK-window correction and validation
+
+The failed pedal-sweep run showed that 16 unrelated HID reports could arrive
+in approximately 56 ms before the matching OLED acknowledgement. The adapter
+was corrected to scan within two simultaneous bounds: at most 256 reports and
+at most 500 ms. It still writes each request exactly once and fails closed if
+no matching response arrives.
+
+One attempted validation was safely rejected before mobile telemetry could be
+sent because a different active simulator session reported second gear and
+approximately 65.25 km/h. After closing that session, one separately
+authorized stationary retry completed the full 10 seconds:
+
+```text
+telemetry renders: 45
+maximum speed: 0.002 km/h
+gear: N
+OLED frames: 49
+acknowledged: 38
+rate-limited: 3
+unchanged: 8
+failures: 0
+close events: 1
+final state: Stopped
+```
+
+The operator again observed only the main RPM bar moving during accelerator
+pulses; the thin indicator did not appear to move at zero speed. FFB and LEDs
+remained normal. This validates the corrected multiplexed-ACK window on
+physical hardware and provides repeat evidence against a firmware-generated
+accelerator indicator.
