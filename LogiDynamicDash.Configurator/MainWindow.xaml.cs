@@ -14,6 +14,7 @@ public partial class MainWindow : Window
 {
     private readonly ComboBox[] layoutBoxes;
     private bool updating;
+    private IRacingSessionIdentity? detectedIdentity;
 
     public MainWindow()
     {
@@ -76,7 +77,102 @@ public partial class MainWindow : Window
 
         RecommendationText.Text =
             DisciplineProfileRecommendations.Create(discipline, unit).Summary;
+        UpdateDetectedIdentity();
         UpdatePreview();
+    }
+
+    private void InspectReplay_Click(object sender, RoutedEventArgs e)
+    {
+        OpenFileDialog dialog = new()
+        {
+            Filter = "LogiDynamicDash telemetry replay (*.json)|*.json",
+            CheckFileExists = true
+        };
+        if (dialog.ShowDialog(this) != true)
+        {
+            return;
+        }
+
+        try
+        {
+            IReadOnlyList<TelemetryReplayEvent> events =
+                TelemetryReplayFile.Load(dialog.FileName);
+            detectedIdentity = events
+                .Select(replayEvent => replayEvent.SessionIdentity)
+                .LastOrDefault(identity => identity is not null);
+            if (detectedIdentity is null)
+            {
+                throw new InvalidDataException(
+                    "This replay contains no schema 2 session identity.");
+            }
+
+            UpdateDetectedIdentity();
+            StatusText.Text =
+                $"Inspected {Path.GetFileName(dialog.FileName)}.";
+        }
+        catch (Exception exception)
+        {
+            detectedIdentity = null;
+            UpdateDetectedIdentity();
+            MessageBox.Show(
+                this,
+                exception.Message,
+                "Replay identity unavailable",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+    }
+
+    private void ApplyDetected_Click(object sender, RoutedEventArgs e)
+    {
+        if (detectedIdentity is null ||
+            SpeedUnitBox.SelectedItem is not SpeedUnit unit)
+        {
+            return;
+        }
+
+        SessionProfileResolution resolution =
+            SessionProfileResolver.Resolve(detectedIdentity, unit);
+        if (resolution.Recommendation is null)
+        {
+            return;
+        }
+
+        DisciplineBox.SelectedItem = detectedIdentity.Discipline;
+        ApplyRecommendation(detectedIdentity.Discipline);
+        StatusText.Text =
+            $"Applied {IRacingDisciplineDisplay.Name(
+                detectedIdentity.Discipline)} for CarID " +
+            $"{resolution.CarKey!.CarId}.";
+    }
+
+    private void UpdateDetectedIdentity()
+    {
+        if (detectedIdentity is null ||
+            SpeedUnitBox.SelectedItem is not SpeedUnit unit)
+        {
+            DetectedIdentityText.Text = "No session identity loaded.";
+            ApplyDetectedButton.IsEnabled = false;
+            return;
+        }
+
+        SessionProfileResolution resolution =
+            SessionProfileResolver.Resolve(detectedIdentity, unit);
+        CarIdentity? car = detectedIdentity.Car;
+        string carName = !string.IsNullOrWhiteSpace(car?.DisplayName)
+            ? car.DisplayName
+            : "Unknown car";
+        string carId = car?.CarId?.ToString(CultureInfo.InvariantCulture)
+            ?? "missing";
+        DetectedIdentityText.Text =
+            $"Car: {carName} (CarID {carId}){Environment.NewLine}" +
+            $"Class: {car?.CarClassShortName ?? "Unknown"}{Environment.NewLine}" +
+            $"Category: " +
+            $"{IRacingDisciplineDisplay.Name(detectedIdentity.Discipline)}" +
+            $"{Environment.NewLine}Track type: " +
+            $"{detectedIdentity.TrackType}{Environment.NewLine}" +
+            $"Decision: {resolution.Explanation}";
+        ApplyDetectedButton.IsEnabled = resolution.CanApply;
     }
 
     private void LoadConfiguration(Rs50OledConfiguration configuration)
@@ -103,6 +199,7 @@ public partial class MainWindow : Window
             updating = false;
         }
 
+        UpdateDetectedIdentity();
         UpdatePreview();
     }
 

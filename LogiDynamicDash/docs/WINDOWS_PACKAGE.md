@@ -53,7 +53,11 @@ and replay run as package smoke tests before either artifact is uploaded.
 `LogiDynamicDash.Configurator.exe` is the hardware-free graphical editor. It
 can apply Sports Car, Formula Car, Oval, Dirt Oval, and Dirt Road
 recommendations, preview all four display modes, and open/save strict JSON
-configurations. It cannot arm or access the OLED.
+configurations. Its **Inspect telemetry replay** action displays the exact car,
+category, track context, and profile decision from a schema 2 replay. Applying
+that recommendation remains a separate explicit action. The included
+`replays\session-identity.json` is a hardware-free example. The configurator
+cannot arm or access the OLED.
 
 Running without arguments starts the console telemetry monitor:
 

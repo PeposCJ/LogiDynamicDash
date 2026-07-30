@@ -86,6 +86,28 @@
                                    Margin="0,14,0,0"
                                    TextWrapping="Wrap"
                                    Foreground="#9DB0C2" />
+                        <Separator Margin="0,20,0,18"
+                                   Background="#303946" />
+                        <TextBlock Text="Detected session"
+                                   FontSize="18"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="Inspect a schema 2 telemetry replay without opening HID."
+                                   Margin="0,5,0,10"
+                                   TextWrapping="Wrap"
+                                   Foreground="#9DB0C2" />
+                        <Button Content="Inspect telemetry replay"
+                                HorizontalAlignment="Left"
+                                Click="InspectReplay_Click" />
+                        <TextBlock x:Name="DetectedIdentityText"
+                                   Margin="0,12,0,10"
+                                   Text="No session identity loaded."
+                                   TextWrapping="Wrap"
+                                   Foreground="#A7F3D0" />
+                        <Button x:Name="ApplyDetectedButton"
+                                Content="Apply detected recommendation"
+                                HorizontalAlignment="Left"
+                                IsEnabled="False"
+                                Click="ApplyDetected_Click" />
                     </StackPanel>
                 </ScrollViewer>
             </Border>

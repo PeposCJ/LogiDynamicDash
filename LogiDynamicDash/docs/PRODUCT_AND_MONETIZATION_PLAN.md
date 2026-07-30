@@ -25,6 +25,10 @@ The `LogiDynamicDash.Configurator` Windows application is hardware-free. It:
 - selects a layout for Normal, Brake Bias, Last Lap, and Connection Problem;
 - edits speed unit, maximum RPM, and gauge maximum speed;
 - renders a typed semantic preview;
+- inspects schema 2 telemetry replays and displays the detected car, class,
+  category, track context, and profile decision;
+- enables a recommendation only when both current category and exact `CarID`
+  are present, then requires an explicit apply action;
 - opens strict schema v1/v2 files and saves schema v2;
 - never enumerates or opens HID devices.
 

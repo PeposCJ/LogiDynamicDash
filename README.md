@@ -54,8 +54,11 @@ per-mode layouts, speed units, gauge scales, reviewed Sports Car, Formula Car,
 Oval, Dirt Oval, and Dirt Road defaults, and typed previews. Live iRacing
 session metadata records the official event category and exact driver car
 identity (`CarID`, path, names, class, and electric flag) without guessing from
-track or driving behavior. Product scope, discipline rationale, and Free/Pro
-planning are documented in
+track or driving behavior. The configurator can inspect a schema 2 telemetry
+replay, show car → category → recommendation, and apply the recommendation
+only after an explicit click. Try `replays/session-identity.json` without
+hardware. Product scope, discipline rationale, and Free/Pro planning are
+documented in
 [`LogiDynamicDash/docs/PRODUCT_AND_MONETIZATION_PLAN.md`](LogiDynamicDash/docs/PRODUCT_AND_MONETIZATION_PLAN.md).
 
 Do not run the stationary hardware route without a separately reviewed

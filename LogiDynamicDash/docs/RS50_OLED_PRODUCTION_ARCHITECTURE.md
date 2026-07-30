@@ -37,7 +37,7 @@ No production executable from this branch has been run against hardware.
 
 The current production branch passes:
 
-- 135 unit and integration tests, including one million scheduler submissions;
+- 144 unit and integration tests, including one million scheduler submissions;
 - Release build with warnings treated as errors;
 - `dotnet format --verify-no-changes`;
 - `git diff --check`;
@@ -202,8 +202,10 @@ Replay files are strict, bounded JSON and never construct a physical adapter.
 Recording samples copied telemetry at no more than 5 Hz and never constructs a
 physical adapter. New recordings use replay schema 2 to retain session
 category and car identity; replay schema 1 remains accepted. The Windows
-configurator edits and previews the same strict configuration without a
-physical-session reference.
+configurator edits and previews the same strict configuration and can inspect
+schema 2 identity offline. It enables a recommended profile only for a current
+official category with an exact `CarID`; applying it requires a separate user
+click. None of these paths holds a physical-session reference.
 The deterministic failure coverage is listed in
 `docs/OFFLINE_FAULT_MATRIX.md`.
 
