@@ -42,7 +42,7 @@ normal. The complete result is documented in
 
 The current production branch passes:
 
-- 155 unit and integration tests, including one million scheduler submissions;
+- 156 unit and integration tests, including one million scheduler submissions;
 - Release build with warnings treated as errors;
 - `dotnet format --verify-no-changes`;
 - `git diff --check`;

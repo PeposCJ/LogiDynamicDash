@@ -80,5 +80,27 @@ resistance, movement, or disconnect.
 **Final result: the complete Build L low-speed safety gate passed.**
 
 This result does not authorize a full lap or unrestricted moving-car mode.
-The firmware-derived accelerator-indicator hypothesis remains separate and
-can be tested while stationary.
+
+## Stationary pedal-sweep follow-up
+
+A later, separately authorized stationary run kept the car in neutral at
+effectively zero speed while the accelerator was pressed and released. The
+operator observed the main RPM bar moving and did not observe the small
+indicator moving. This favors the implemented interpretation:
+
+- the main gauge follows the normalized RPM byte;
+- the thin indicator follows the normalized speed byte;
+- there is no current evidence that firmware overlays an autonomous
+  accelerator indicator.
+
+The run stopped safely after approximately four seconds because one Layout E
+write did not receive a matching acknowledgement within the configured
+16-report scan. Multiple changing Layout E frames had been acknowledged before
+that failure. The local diagnostic recorded the typed `IOException`, faulted
+state, and clean close; the operator found FFB, LEDs, controls, and connection
+normal afterward. No retry was performed.
+
+After the host session closes, the OLED retains the last acknowledged frame.
+The operator observed that the firmware returns to its Dynamic `Test` fallback
+on its own several minutes later. The host currently sends no explicit clear
+frame on shutdown.

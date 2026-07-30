@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace LogiDynamicDash.Hidpp.Transport;
 
 /// <summary>
@@ -8,7 +10,9 @@ internal sealed class Rs50OledDeviceExchange : IRs50OledExchange
 {
     private const uint ShortCollectionUsage = 0xFF430701;
     private const uint VeryLongCollectionUsage = 0xFF430704;
-    private const int MaximumReportsPerExchange = 16;
+    private const int MaximumReportsPerExchange = 256;
+    private static readonly TimeSpan MaximumResponseWait =
+        TimeSpan.FromMilliseconds(500);
 
     private readonly IRs50HidStream shortStream;
     private readonly IRs50HidStream veryLongStream;
@@ -115,11 +119,14 @@ internal sealed class Rs50OledDeviceExchange : IRs50OledExchange
         Rs50OledTransactionKind kind,
         byte[] request)
     {
+        long started = Stopwatch.GetTimestamp();
+        int reportsRead = 0;
         for (int index = 0; index < MaximumReportsPerExchange; index++)
         {
             byte[] response =
                 new byte[Rs50OledProtocol.VeryLongReportLength];
             int bytesRead = veryLongStream.Read(response);
+            reportsRead++;
             if (bytesRead != response.Length)
             {
                 throw new IOException(
@@ -131,11 +138,16 @@ internal sealed class Rs50OledDeviceExchange : IRs50OledExchange
             {
                 return response;
             }
+
+            if (Stopwatch.GetElapsedTime(started) >= MaximumResponseWait)
+            {
+                break;
+            }
         }
 
         throw new IOException(
             "No matching Display Game Data response was received within " +
-            $"{MaximumReportsPerExchange} reports.");
+            $"{reportsRead} reports and the bounded response window.");
     }
 
     private static bool Matches(

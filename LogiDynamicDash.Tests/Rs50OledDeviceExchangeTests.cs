@@ -102,11 +102,32 @@ public sealed class Rs50OledDeviceExchangeTests
     }
 
     [Fact]
-    public void Exchange_FailsAfterSixteenUnrelatedReportsWithoutRetryingWrite()
+    public void Exchange_AcceptsResponseAfterMoreThanSixteenReports()
     {
         FakeCollection shortCollection = ShortCollection();
         FakeCollection longCollection = LongCollection();
-        for (int index = 0; index < 16; index++)
+        for (int index = 0; index < 32; index++)
+        {
+            longCollection.Stream.Enqueue(UnrelatedResponse());
+        }
+        longCollection.Stream.Enqueue(DiscoveryResponse());
+
+        using Rs50OledDeviceExchange exchange =
+            Rs50OledDeviceExchange.Open(
+                new FakeCatalog(shortCollection, longCollection));
+
+        exchange.Exchange(Rs50OledProtocol.CreateDiscovery());
+
+        Assert.Single(shortCollection.Stream.Writes);
+        Assert.Equal(33, longCollection.Stream.ReadCount);
+    }
+
+    [Fact]
+    public void Exchange_FailsAfterBoundedReportsWithoutRetryingWrite()
+    {
+        FakeCollection shortCollection = ShortCollection();
+        FakeCollection longCollection = LongCollection();
+        for (int index = 0; index < 256; index++)
         {
             longCollection.Stream.Enqueue(UnrelatedResponse());
         }
@@ -118,7 +139,7 @@ public sealed class Rs50OledDeviceExchangeTests
         Assert.Throws<IOException>(
             () => exchange.Exchange(Rs50OledProtocol.CreateDiscovery()));
         Assert.Single(shortCollection.Stream.Writes);
-        Assert.Equal(16, longCollection.Stream.ReadCount);
+        Assert.Equal(256, longCollection.Stream.ReadCount);
     }
 
     [Fact]
