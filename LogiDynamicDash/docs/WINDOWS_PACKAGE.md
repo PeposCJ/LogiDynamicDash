@@ -67,10 +67,11 @@ Running without arguments starts the console telemetry monitor:
 
 ## Hardware Route
 
-The package contains separately armed stationary and 15-second Build L
-low-speed validation routes, but their presence is not authorization to run
-them. Follow the matching checklist from the repository and obtain fresh
-authorization first.
+The package contains separately armed stationary, 15-second Build L, and
+manually stopped continuous-driving validation routes, but their presence is
+not authorization to run them. Follow the matching checklist from the
+repository and obtain fresh authorization first.
 
-Build L fails closed above 20 km/h. No full-lap or unrestricted moving-car
-mode is enabled in this package.
+Build L fails closed above 20 km/h. The continuous-driving route has no speed
+or duration ceiling and requires `Ctrl+C` for normal shutdown, while retaining
+fail-closed invalid-telemetry, transport, and protocol behavior.

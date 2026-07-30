@@ -13,7 +13,9 @@ The stationary production gate has passed on physical RS50 hardware. The
 compiled hardware routes remain disabled behind exact command-line arming:
 the approved ten-second stationary route and a separate 15-second Build L
 route that fails closed above 20 km/h. Both gates have passed on physical
-RS50 hardware; full-lap and unrestricted moving modes are not enabled.
+RS50 hardware. A third manually stopped continuous-driving route has no speed
+or duration ceiling but retains fail-closed transport/protocol handling; it
+requires its own physical validation.
 
 Build and run the safe console-only mode:
 
@@ -63,7 +65,7 @@ hardware. Product scope, discipline rationale, and Free/Pro planning are
 documented in
 [`LogiDynamicDash/docs/PRODUCT_AND_MONETIZATION_PLAN.md`](LogiDynamicDash/docs/PRODUCT_AND_MONETIZATION_PLAN.md).
 
-Do not run either hardware route without its reviewed checklist and fresh
-authorization. The stationary result, Build L procedure, and complete arming
-contracts are documented in
+Do not run a hardware route without its reviewed checklist and fresh
+authorization. The stationary result, Build L procedure, continuous-driving
+procedure, and complete arming contracts are documented in
 [`LogiDynamicDash/docs`](LogiDynamicDash/docs).

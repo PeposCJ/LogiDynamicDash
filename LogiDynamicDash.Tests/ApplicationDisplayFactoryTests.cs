@@ -23,8 +23,42 @@ public sealed class ApplicationDisplayFactoryTests
 
         Assert.True(accepted);
         Assert.NotNull(selection);
+        Assert.False(selection.UsesPhysicalHardware);
         Assert.False(selection.IsBoundedHardwareTrial);
         Assert.Equal(0, sessionFactoryCalls);
+    }
+
+    [Fact]
+    public void DrivingArguments_SelectUnboundedPhysicalSafetyEnvelope()
+    {
+        FakeSession session = new();
+        Assert.True(
+            ApplicationDisplayFactory.TryCreate(
+                Rs50DrivingTrialOptionsTests.ValidArguments(),
+                () => session,
+                () => new FakeDisplay(),
+                _ => new Rs50OledConfiguration(Rs50OledLayout.E),
+                out ApplicationDisplaySelection? selection));
+
+        Assert.NotNull(selection);
+        Assert.True(selection.UsesPhysicalHardware);
+        Assert.False(selection.IsBoundedHardwareTrial);
+        Assert.Null(selection.HardwareTrialDuration);
+        selection.Display.Initialize();
+
+        selection.Display.Render(
+            new TelemetrySnapshot
+            {
+                ConnectionState = "CONNECTED",
+                IsOnTrack = true,
+                SpeedMetersPerSecond = 120,
+                Gear = 6,
+                Rpm = 7000
+            },
+            DisplayMode.Normal);
+
+        selection.Display.Stop();
+        Assert.True(session.Disposed);
     }
 
     [Fact]

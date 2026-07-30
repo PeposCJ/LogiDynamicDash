@@ -43,7 +43,7 @@ normal. The complete result is documented in
 
 The current production branch passes:
 
-- 156 unit and integration tests, including one million scheduler submissions;
+- 161 unit and integration tests, including one million scheduler submissions;
 - Release build with warnings treated as errors;
 - `dotnet format --verify-no-changes`;
 - `git diff --check`;
@@ -248,8 +248,9 @@ Before the draft production PR can be enabled for general driving:
 
 1. preserve the successful Build L evidence in
    `RS50_OLED_LOW_SPEED_RESULT_2026-07-30.md`;
-2. design a separately bounded higher-speed/full-lap stage;
-3. validate that stage before enabling unrestricted moving use;
+2. execute the separately armed, manually stopped continuous-driving
+   checklist;
+3. validate one complete driving session before enabling general moving use;
 4. design reconnection and long-duration ownership only after the relevant
    physical stages pass.
 

@@ -19,14 +19,14 @@ internal enum OledDeviceState
 internal sealed class Rs50OledDisplaySink(
     Func<IRs50OledSession> sessionFactory,
     Rs50TelemetryFrameFormatter formatter,
-    float maximumPermittedSpeedMetersPerSecond =
+    float? maximumPermittedSpeedMetersPerSecond =
         Rs50OledDisplaySink.MaximumStationarySpeedMetersPerSecond)
     : IApplicationDisplay
 {
     internal const float MaximumStationarySpeedMetersPerSecond = 0.5f;
 
     private readonly object synchronization = new();
-    private readonly float maximumSpeedMetersPerSecond =
+    private readonly float? maximumSpeedMetersPerSecond =
         ValidateMaximumSpeed(maximumPermittedSpeedMetersPerSecond);
     private IRs50OledSession? session;
     private Rs50OledFrameScheduler? scheduler;
@@ -137,8 +137,15 @@ internal sealed class Rs50OledDisplaySink(
 
         if (snapshot.SpeedMetersPerSecond is not float speed ||
             !float.IsFinite(speed) ||
-            speed < 0 ||
-            speed > maximumSpeedMetersPerSecond)
+            speed < 0)
+        {
+            throw new InvalidOperationException(
+                "RS50 OLED output stopped because on-track speed telemetry " +
+                "was missing or invalid.");
+        }
+
+        if (maximumSpeedMetersPerSecond is float maximumSpeed &&
+            speed > maximumSpeed)
         {
             throw new InvalidOperationException(
                 "RS50 OLED output stopped because moving-car telemetry was " +
@@ -146,9 +153,10 @@ internal sealed class Rs50OledDisplaySink(
         }
     }
 
-    private static float ValidateMaximumSpeed(float maximumSpeed)
+    private static float? ValidateMaximumSpeed(float? maximumSpeed)
     {
-        if (!float.IsFinite(maximumSpeed) || maximumSpeed <= 0)
+        if (maximumSpeed is float value &&
+            (!float.IsFinite(value) || value <= 0))
         {
             throw new ArgumentOutOfRangeException(
                 nameof(maximumPermittedSpeedMetersPerSecond));

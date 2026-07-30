@@ -107,6 +107,26 @@ public sealed class Rs50OledDisplaySinkTests
     }
 
     [Fact]
+    public void NoSpeedLimit_AcceptsFiniteMovingTelemetry()
+    {
+        FakeSession session = new();
+        Rs50OledDisplaySink sink = new(
+            () => session,
+            new Rs50TelemetryFrameFormatter(
+                new Rs50OledConfiguration(Rs50OledLayout.E)),
+            maximumPermittedSpeedMetersPerSecond: null);
+        sink.Initialize();
+        TelemetrySnapshot snapshot = ConnectedSnapshot();
+        snapshot.SpeedMetersPerSecond = 120;
+
+        sink.Render(snapshot, DisplayMode.Normal);
+
+        Assert.Single(session.Frames);
+        Assert.Equal(OledDeviceState.Active, sink.State);
+        sink.Stop();
+    }
+
+    [Fact]
     public void RenderFailure_FaultsAndDoesNotReopenOrRetry()
     {
         FakeSession session = new()

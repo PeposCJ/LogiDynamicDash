@@ -39,6 +39,8 @@ internal class Program
                 Console.Error.WriteLine(Rs50StationaryTrialOptions.Usage);
                 Console.Error.WriteLine();
                 Console.Error.WriteLine(Rs50LowSpeedTrialOptions.Usage);
+                Console.Error.WriteLine();
+                Console.Error.WriteLine(Rs50DrivingTrialOptions.Usage);
                 return 2;
             }
         }
@@ -62,7 +64,7 @@ internal class Program
         };
 
         using IApplicationRuntimeDiagnostics? diagnostics =
-            selection.IsBoundedHardwareTrial
+            selection.UsesPhysicalHardware
                 ? SanitizedApplicationRuntimeDiagnostics.CreateLocal()
                 : null;
         LogiDynamicDashApplication application = new(

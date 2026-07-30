@@ -7,10 +7,11 @@ namespace LogiDynamicDash.Configuration;
 
 internal sealed record ApplicationDisplaySelection(
     IApplicationDisplay Display,
+    bool UsesPhysicalHardware,
     TimeSpan? HardwareTrialDuration)
 {
     internal bool IsBoundedHardwareTrial =>
-        HardwareTrialDuration is not null;
+        UsesPhysicalHardware && HardwareTrialDuration is not null;
 }
 
 internal static class ApplicationDisplayFactory
@@ -50,13 +51,14 @@ internal static class ApplicationDisplayFactory
         {
             selection = new(
                 consoleFactory(),
+                UsesPhysicalHardware: false,
                 HardwareTrialDuration: null);
             return true;
         }
 
         string configurationPath;
-        TimeSpan duration;
-        float maximumSpeedMetersPerSecond;
+        TimeSpan? duration;
+        float? maximumSpeedMetersPerSecond;
         if (Rs50StationaryTrialOptions.TryParse(
                 arguments,
                 out Rs50StationaryTrialOptions? stationary))
@@ -75,6 +77,14 @@ internal static class ApplicationDisplayFactory
             maximumSpeedMetersPerSecond =
                 Rs50LowSpeedTrialOptions.MaximumSpeedMetersPerSecond;
         }
+        else if (Rs50DrivingTrialOptions.TryParse(
+                     arguments,
+                     out Rs50DrivingTrialOptions? driving))
+        {
+            configurationPath = driving!.ConfigurationPath;
+            duration = null;
+            maximumSpeedMetersPerSecond = null;
+        }
         else
         {
             selection = null;
@@ -90,6 +100,7 @@ internal static class ApplicationDisplayFactory
                     sessionFactory,
                     formatter,
                     maximumSpeedMetersPerSecond)),
+            UsesPhysicalHardware: true,
             HardwareTrialDuration: duration);
         return true;
     }

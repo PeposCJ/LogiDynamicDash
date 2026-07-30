@@ -181,6 +181,31 @@ foreach ($token in $requiredLowSpeedTokens) {
     }
 }
 
+$drivingArmingPath =
+    Join-Path $productionRoot `
+        "Configuration\Rs50DrivingTrialOptions.cs"
+$drivingArmingText =
+    Get-Content -LiteralPath $drivingArmingPath -Raw
+
+$requiredDrivingTokens = @(
+    "--enable-rs50-oled-driving-trial",
+    "--confirm-ghub-closed",
+    "--confirm-iracing-running",
+    "--confirm-controlled-driving-session",
+    "--confirm-rs50-dynamic-selected",
+    "--acknowledge-no-speed-limit",
+    "--acknowledge-manual-stop-required",
+    "--confirm-settings"
+)
+
+foreach ($token in $requiredDrivingTokens) {
+    if ($drivingArmingText.IndexOf(
+            $token,
+            [StringComparison]::Ordinal) -lt 0) {
+        throw "The continuous-driving arming contract is missing '$token'."
+    }
+}
+
 $sinkPath =
     Join-Path $productionRoot `
         "Displays\Rs50OledDisplaySink.cs"
@@ -198,5 +223,6 @@ Write-Output (
     "native-import, feature-report, or bootloader API was found; the " +
     "offline commands contain no physical adapter reference; and the " +
     "hardware-free configurator is isolated from the physical session; the " +
-    "physical routes remain isolated behind exact stationary and Build L " +
-    "arming contracts with 0.5 m/s and 20 km/h guards.")
+    "physical routes remain isolated behind exact stationary, Build L, and " +
+    "continuous-driving arming contracts; bounded routes retain 0.5 m/s and " +
+    "20 km/h guards.")
