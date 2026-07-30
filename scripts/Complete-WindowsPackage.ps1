@@ -23,6 +23,10 @@ Copy-Item `
     -Destination $resolvedPackageRoot `
     -Force
 Copy-Item `
+    -LiteralPath (Join-Path $repositoryRoot "LICENSE") `
+    -Destination $resolvedPackageRoot `
+    -Force
+Copy-Item `
     -LiteralPath (Join-Path $repositoryRoot "THIRD_PARTY_NOTICES.md") `
     -Destination $resolvedPackageRoot `
     -Force
@@ -31,12 +35,17 @@ Copy-Item `
         Join-Path $repositoryRoot "LogiDynamicDash\docs\WINDOWS_PACKAGE.md") `
     -Destination $resolvedPackageRoot `
     -Force
-Copy-Item `
-    -LiteralPath (
-        Join-Path $repositoryRoot `
-            "LogiDynamicDash\docs\RS50_OLED_PRODUCTION_STATIONARY_CHECKLIST.md") `
-    -Destination $resolvedPackageRoot `
-    -Force
+foreach ($checklist in @(
+    "RS50_OLED_PRODUCTION_STATIONARY_CHECKLIST.md",
+    "RS50_OLED_LOW_SPEED_CHECKLIST.md",
+    "RS50_OLED_UNRESTRICTED_DRIVING_CHECKLIST.md"
+)) {
+    Copy-Item `
+        -LiteralPath (
+            Join-Path $repositoryRoot "LogiDynamicDash\docs\$checklist") `
+        -Destination $resolvedPackageRoot `
+        -Force
+}
 Copy-Item `
     -LiteralPath (
         Join-Path $repositoryRoot `
