@@ -2,15 +2,17 @@
 
 namespace LogiDynamicDash.Controllers;
 
-internal sealed class DisplayController(TimeProvider? timeProvider = null)
+internal sealed class DisplayController(
+    TimeProvider? timeProvider = null,
+    TimeSpan? lastLapDuration = null)
 {
     private readonly TimeProvider clock = timeProvider ?? TimeProvider.System;
 
     private static readonly TimeSpan BrakeBiasDuration =
         TimeSpan.FromSeconds(2);
 
-    private static readonly TimeSpan LastLapDuration =
-        TimeSpan.FromSeconds(3);
+    private readonly TimeSpan lastLapDisplayDuration =
+        ValidateLastLapDuration(lastLapDuration ?? TimeSpan.FromSeconds(5));
 
     private float? _previousBrakeBiasPercent;
     private float? _previousLastLapTimeSeconds;
@@ -121,7 +123,7 @@ internal sealed class DisplayController(TimeProvider? timeProvider = null)
             currentLastLap;
 
         _lastLapExpiresAt =
-            now.Add(LastLapDuration);
+            now.Add(lastLapDisplayDuration);
     }
 
     private static bool IsConnected(
@@ -131,5 +133,17 @@ internal sealed class DisplayController(TimeProvider? timeProvider = null)
             snapshot.ConnectionState,
             "CONNECTED",
             StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static TimeSpan ValidateLastLapDuration(TimeSpan duration)
+    {
+        if (duration < TimeSpan.FromSeconds(1) ||
+            duration > TimeSpan.FromSeconds(15))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(lastLapDuration));
+        }
+
+        return duration;
     }
 }

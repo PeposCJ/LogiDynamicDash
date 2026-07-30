@@ -8,9 +8,9 @@ namespace LogiDynamicDash.Displays;
 /// confirmed RS50 OLED layouts. It does not encode or transmit HID data.
 /// </summary>
 internal sealed class Rs50TelemetryFrameFormatter(
-    Rs50OledConfiguration configuration)
+    Rs50OledConfiguration configuration) : IRs50TelemetryFrameFormatter
 {
-    internal Rs50OledFrame Format(
+    public Rs50OledFrame Format(
         TelemetrySnapshot snapshot,
         DisplayMode mode)
     {

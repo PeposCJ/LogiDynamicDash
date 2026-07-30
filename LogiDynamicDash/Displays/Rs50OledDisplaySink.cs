@@ -18,7 +18,7 @@ internal enum OledDeviceState
 /// </summary>
 internal sealed class Rs50OledDisplaySink(
     Func<IRs50OledSession> sessionFactory,
-    Rs50TelemetryFrameFormatter formatter,
+    IRs50TelemetryFrameFormatter formatter,
     float? maximumPermittedSpeedMetersPerSecond =
         Rs50OledDisplaySink.MaximumStationarySpeedMetersPerSecond)
     : IApplicationDisplay

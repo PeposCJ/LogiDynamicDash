@@ -37,6 +37,11 @@ Copy-Item `
     -Force
 Copy-Item `
     -LiteralPath (
+        Join-Path $repositoryRoot "LogiDynamicDash\docs\GETTING_STARTED.md") `
+    -Destination $resolvedPackageRoot `
+    -Force
+Copy-Item `
+    -LiteralPath (
         Join-Path $repositoryRoot `
             "LogiDynamicDash\docs\OFFLINE_FAULT_MATRIX.md") `
     -Destination $resolvedPackageRoot `

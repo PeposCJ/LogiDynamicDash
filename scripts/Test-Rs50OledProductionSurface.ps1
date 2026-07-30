@@ -84,6 +84,40 @@ if ($physicalFactoryText.IndexOf(
     throw "The typed physical exchange is missing from its isolated factory."
 }
 
+$runtimePath =
+    Join-Path $productionRoot "Runtime\DashboardRuntime.cs"
+$runtimeText =
+    Get-Content -LiteralPath $runtimePath -Raw
+
+foreach ($token in @(
+        "RecoveringRs50OledDisplaySink",
+        "Rs50OledSessionFactory.OpenPhysicalWithLocalDiagnostics",
+        "AutomaticRs50TelemetryFrameFormatter")) {
+    if ($runtimeText.IndexOf(
+            $token,
+            [StringComparison]::Ordinal) -lt 0) {
+        throw "The production dashboard runtime is missing '$token'."
+    }
+}
+
+$productionOptionsPath =
+    Join-Path $productionRoot `
+        "Configuration\Rs50ProductionRunOptions.cs"
+$productionOptionsText =
+    Get-Content -LiteralPath $productionOptionsPath -Raw
+
+foreach ($token in @(
+        "--run-rs50-oled",
+        "--config",
+        "--manual-profile",
+        "--last-lap-seconds")) {
+    if ($productionOptionsText.IndexOf(
+            $token,
+            [StringComparison]::Ordinal) -lt 0) {
+        throw "The production runtime contract is missing '$token'."
+    }
+}
+
 $offlineFiles = Get-ChildItem `
     -LiteralPath (Join-Path $productionRoot "Offline") `
     -Recurse `
@@ -221,8 +255,10 @@ if ($sinkText.IndexOf(
 Write-Output (
     "RS50 OLED production surface audit passed: no DirectInput, FFB, " +
     "native-import, feature-report, or bootloader API was found; the " +
-    "offline commands contain no physical adapter reference; and the " +
-    "hardware-free configurator is isolated from the physical session; the " +
+    "offline commands contain no physical adapter reference; the GUI only " +
+    "reaches the exact physical adapter through the explicit production " +
+    "runtime; the runtime has bounded reconnect behavior and automatic " +
+    "profile selection; the " +
     "physical routes remain isolated behind exact stationary, Build L, and " +
     "continuous-driving arming contracts; bounded routes retain 0.5 m/s and " +
     "20 km/h guards.")

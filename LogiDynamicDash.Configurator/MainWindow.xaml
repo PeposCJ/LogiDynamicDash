@@ -51,9 +51,37 @@
             <TextBlock Text="LOGIDYNAMICDASH"
                        FontSize="28"
                        FontWeight="Bold" />
-            <TextBlock Text="Hardware-free dashboard configuration"
+            <TextBlock Text="RS50 OLED dashboard"
                        Foreground="#8EA0B2"
                        FontSize="14" />
+            <Border Style="{StaticResource Panel}" Margin="0,16,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock x:Name="RuntimeStateText"
+                                   Text="Dashboard stopped"
+                                   FontSize="18"
+                                   FontWeight="SemiBold" />
+                        <TextBlock x:Name="RuntimeDetailText"
+                                   Text="OLED: stopped · iRacing: waiting · Car: unknown"
+                                   Foreground="#9DB0C2"
+                                   Margin="0,5,0,0" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button x:Name="StartDashboardButton"
+                                Content="Start dashboard"
+                                Click="StartDashboard_Click" />
+                        <Button x:Name="StopDashboardButton"
+                                Content="Stop"
+                                Background="#A33B3B"
+                                IsEnabled="False"
+                                Click="StopDashboard_Click" />
+                    </StackPanel>
+                </Grid>
+            </Border>
         </StackPanel>
 
         <Grid Grid.Row="1">
@@ -78,6 +106,13 @@
                         <TextBox x:Name="MaximumRpmBox" />
                         <TextBlock Text="Gauge maximum speed" />
                         <TextBox x:Name="GaugeSpeedBox" />
+                        <CheckBox x:Name="AutomaticProfilesBox"
+                                  Content="Automatically select profile from car and category"
+                                  IsChecked="True"
+                                  Margin="0,4,0,12" />
+                        <TextBlock Text="Last-lap display duration (seconds)" />
+                        <TextBox x:Name="LastLapSecondsBox"
+                                 Text="5" />
                         <Button x:Name="ApplyRecommendationButton"
                                 Content="Apply recommended profile"
                                 HorizontalAlignment="Left"
@@ -108,6 +143,16 @@
                                 HorizontalAlignment="Left"
                                 IsEnabled="False"
                                 Click="ApplyDetected_Click" />
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="0,12,0,0">
+                            <Button Content="Save for category"
+                                    Background="#303946"
+                                    Click="SaveCategoryProfile_Click" />
+                            <Button x:Name="SaveCarProfileButton"
+                                    Content="Save for this car"
+                                    IsEnabled="False"
+                                    Click="SaveCarProfile_Click" />
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
             </Border>
@@ -152,7 +197,7 @@
                                        Foreground="#A7F3D0"
                                        TextWrapping="Wrap" />
                         </Border>
-                        <TextBlock Text="This configurator never enumerates or opens HID devices."
+                        <TextBlock Text="HID access occurs only while the dashboard is explicitly running."
                                    Foreground="#F6C85F"
                                    Margin="0,14,0,0" />
                     </StackPanel>

@@ -3,6 +3,7 @@ using LogiDynamicDash.Controllers;
 using LogiDynamicDash.Diagnostics;
 using LogiDynamicDash.Models;
 using LogiDynamicDash.Offline;
+using LogiDynamicDash.Runtime;
 using LogiDynamicDash.Services;
 using SVappsLAB.iRacingTelemetrySDK;
 
@@ -20,6 +21,13 @@ internal class Program
 {
     private static async Task<int> Main(string[] arguments)
     {
+        if (Rs50ProductionRunOptions.TryParse(
+                arguments,
+                out Rs50ProductionRunOptions? production))
+        {
+            return await RunProductionAsync(production!);
+        }
+
         if (OfflineCommandLine.TryParse(
                 arguments,
                 out OfflineCommand? offlineCommand))
@@ -41,6 +49,8 @@ internal class Program
                 Console.Error.WriteLine(Rs50LowSpeedTrialOptions.Usage);
                 Console.Error.WriteLine();
                 Console.Error.WriteLine(Rs50DrivingTrialOptions.Usage);
+                Console.Error.WriteLine();
+                Console.Error.WriteLine(Rs50ProductionRunOptions.Usage);
                 return 2;
             }
         }
@@ -82,6 +92,57 @@ internal class Program
             Console.Error.WriteLine(
                 $"LogiDynamicDash stopped safely: {exception.Message}");
             return 1;
+        }
+    }
+
+    private static async Task<int> RunProductionAsync(
+        Rs50ProductionRunOptions options)
+    {
+        using CancellationTokenSource cancellationSource = new();
+        ConsoleCancelEventHandler handler = (_, eventArgs) =>
+        {
+            eventArgs.Cancel = true;
+            cancellationSource.Cancel();
+        };
+        Console.CancelKeyPress += handler;
+        try
+        {
+            DashboardRuntimeSettings settings = new(
+                Rs50OledConfigurationFile.Load(options.ConfigurationPath),
+                options.ProfileDirectory,
+                options.AutomaticProfiles,
+                options.LastLapDisplaySeconds);
+            DashboardRuntime runtime = new();
+            DashboardRuntimeStatus? previous = null;
+            await runtime.RunAsync(
+                settings,
+                status =>
+                {
+                    if (status != previous)
+                    {
+                        Console.WriteLine(
+                            $"OLED={status.Oled}; " +
+                            $"iRacing={status.Telemetry}; " +
+                            $"Car={status.Car}; " +
+                            $"Category=" +
+                            $"{IRacingDisciplineDisplay.Name(
+                                status.Discipline)}; " +
+                            status.Message);
+                        previous = status;
+                    }
+                },
+                cancellationSource.Token);
+            return 0;
+        }
+        catch (Exception exception)
+        {
+            Console.Error.WriteLine(
+                $"LogiDynamicDash stopped safely: {exception.Message}");
+            return 1;
+        }
+        finally
+        {
+            Console.CancelKeyPress -= handler;
         }
     }
 

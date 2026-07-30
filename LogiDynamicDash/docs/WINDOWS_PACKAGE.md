@@ -7,17 +7,15 @@ self-contained `LogiDynamicDash-win-x64-self-contained` artifacts after
 build, tests, formatting, safety audit, dependency audit, and package smoke
 tests all pass.
 
-The artifact is unsigned and is not a release. It is retained temporarily for
-review and offline preview. It must not be presented as an official Logitech
-product.
+The artifact is an unsigned `0.3.0-alpha` candidate. It must not be presented
+as an official Logitech product.
 
 ## Requirements
 
 - 64-bit Windows
 - Microsoft .NET 10 Runtime, x64, only for the framework-dependent artifact
-- iRacing only for live console monitoring or a separately authorized
-  bounded OLED test
-- G HUB is not required for preview or simulation
+- iRacing for live dashboard telemetry
+- G HUB closed while LogiDynamicDash owns the OLED interface
 
 ## Integrity
 
@@ -50,14 +48,12 @@ These routes never enumerate or open HID devices. Recording requires iRacing
 telemetry and writes at most 5 Hz for 1–1,800 seconds. Preview, simulation,
 and replay run as package smoke tests before either artifact is uploaded.
 
-`LogiDynamicDash.Configurator.exe` is the hardware-free graphical editor. It
-can apply Sports Car, Formula Car, Oval, Dirt Oval, and Dirt Road
-recommendations, preview all four display modes, and open/save strict JSON
-configurations. Its **Inspect telemetry replay** action displays the exact car,
-category, track context, and profile decision from a schema 2 replay. Applying
-that recommendation remains a separate explicit action. The included
-`replays\session-identity.json` is a hardware-free example. The configurator
-cannot arm or access the OLED.
+`LogiDynamicDash.Configurator.exe` edits and previews configurations without
+hardware until the user explicitly selects **Start dashboard**. While running,
+it reports OLED, iRacing, car, and category state; applies automatic category
+or CarID profiles; and reconnects the exact validated OLED interface after
+sleep or disconnection. **Stop** disposes the OLED streams. The included
+`replays\session-identity.json` remains a hardware-free identity example.
 
 Running without arguments starts the console telemetry monitor:
 
@@ -67,11 +63,14 @@ Running without arguments starts the console telemetry monitor:
 
 ## Hardware Route
 
-The package contains separately armed stationary, 15-second Build L, and
-manually stopped continuous-driving validation routes, but their presence is
-not authorization to run them. Follow the matching checklist from the
-repository and obtain fresh authorization first.
+For daily use, open the configurator and select **Start dashboard**. The
+equivalent console route is:
 
-Build L fails closed above 20 km/h. The continuous-driving route has no speed
-or duration ceiling and requires `Ctrl+C` for normal shutdown, while retaining
-fail-closed invalid-telemetry, transport, and protocol behavior.
+```powershell
+.\LogiDynamicDash.exe --run-rs50-oled `
+  --config .\logidynamicdash.example.json
+```
+
+The package retains separately armed engineering-validation routes for
+maintainers. Their historical procedures and evidence remain on the research
+branch and they are not part of ordinary product use.
