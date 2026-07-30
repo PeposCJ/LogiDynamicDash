@@ -107,3 +107,37 @@ each accepted render trigger, state, mode, speed, and gear so one run can
 distinguish missing telemetry callbacks from a display scheduling or
 formatting fault. Only the intended stationary simulator session may remain
 open for that run.
+
+## Single-session diagnostic retry (`612f36b`)
+
+With only the intended iRacing simulator session active, one separately
+authorized 10-second stationary execution completed with exit code 0.
+
+The sanitized application log records:
+
+- connection established approximately 139 ms after the initial render;
+- an on-track session identity;
+- neutral gear (`0`);
+- speed between approximately `0.0003` and `0.0019 m/s`, safely inside the
+  stationary limit;
+- continuous normal-mode telemetry renders for the full bounded window;
+- clean application shutdown.
+
+The OLED diagnostic records an acknowledged initial Layout H connection
+frame, followed by acknowledged Layout E telemetry frames and clean close.
+Physical photo evidence confirms that the RS50 left `IRACING / WAITING` and
+displayed:
+
+```text
+0 KMH    N
+[graphical bar]
+```
+
+This passes the stationary end-to-end telemetry path from iRacing through
+formatting, HID++ transport, acknowledgement, and physical OLED rendering.
+The operator's post-check found FFB, LEDs, direction, pedals, buttons, and
+connection normal, with no apparent unexpected torque or movement.
+
+**Final result: the complete stationary production safety gate passed.**
+Moving-car validation remains a separate, explicitly bounded milestone and
+is not authorized by this result.
