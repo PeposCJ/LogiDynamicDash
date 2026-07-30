@@ -2,67 +2,110 @@
 
 namespace LogiDynamicDash.Displays;
 
-internal sealed class ConsoleDashboard : IApplicationDisplay
+internal sealed class ConsoleDashboard(bool? interactiveOverride = null)
+    : IApplicationDisplay
 {
     private const int DashboardWidth = 44;
+    private bool interactive =
+        interactiveOverride ?? !Console.IsOutputRedirected;
 
     public void Initialize()
     {
-        Console.Title = "LogiDynamicDash";
-        Console.CursorVisible = false;
-        Console.Clear();
+        if (!interactive)
+        {
+            return;
+        }
+
+        try
+        {
+            Console.Title = "LogiDynamicDash";
+            Console.CursorVisible = false;
+            Console.Clear();
+        }
+        catch (IOException)
+        {
+            interactive = false;
+        }
     }
 
     public void Render(
         TelemetrySnapshot snapshot,
         DisplayMode mode)
     {
-        Console.SetCursorPosition(0, 0);
-
-        WriteDashboardLine(
-            new string('=', DashboardWidth));
-
-        WriteCentered(
-            "LOGIDYNAMICDASH OLED PREVIEW");
-
-        WriteDashboardLine(
-            new string('=', DashboardWidth));
-
-        WriteDashboardLine();
-
-        switch (mode)
+        if (!interactive)
         {
-            case DisplayMode.BrakeBias:
-                RenderBrakeBias(snapshot);
-                break;
-
-            case DisplayMode.LastLap:
-                RenderLastLap(snapshot);
-                break;
-
-            case DisplayMode.ConnectionProblem:
-                RenderConnectionProblem(snapshot);
-                break;
-
-            default:
-                RenderNormal(snapshot);
-                break;
+            return;
         }
 
-        WriteDashboardLine(
-            new string('-', DashboardWidth));
+        try
+        {
+            Console.SetCursorPosition(0, 0);
 
-        WriteDashboardLine(
-            "Press Ctrl+C to stop.");
+            WriteDashboardLine(
+                new string('=', DashboardWidth));
+
+            WriteCentered(
+                "LOGIDYNAMICDASH OLED PREVIEW");
+
+            WriteDashboardLine(
+                new string('=', DashboardWidth));
+
+            WriteDashboardLine();
+
+            switch (mode)
+            {
+                case DisplayMode.BrakeBias:
+                    RenderBrakeBias(snapshot);
+                    break;
+
+                case DisplayMode.LastLap:
+                    RenderLastLap(snapshot);
+                    break;
+
+                case DisplayMode.ConnectionProblem:
+                    RenderConnectionProblem(snapshot);
+                    break;
+
+                default:
+                    RenderNormal(snapshot);
+                    break;
+            }
+
+            WriteDashboardLine(
+                new string('-', DashboardWidth));
+
+            WriteDashboardLine(
+                "Press Ctrl+C to stop.");
+        }
+        catch (IOException)
+        {
+            interactive = false;
+        }
     }
 
     public void Stop()
     {
-        Console.CursorVisible = true;
-        Console.Clear();
+        if (!interactive)
+        {
+            return;
+        }
 
-        Console.WriteLine(
-            "Telemetry monitoring stopped.");
+        try
+        {
+            Console.CursorVisible = true;
+            Console.Clear();
+
+            Console.WriteLine(
+                "Telemetry monitoring stopped.");
+        }
+        catch (IOException)
+        {
+            // A disappearing host console must not mask safe OLED shutdown.
+        }
+        finally
+        {
+            interactive = false;
+        }
     }
 
     private static void RenderNormal(

@@ -1,4 +1,5 @@
 using LogiDynamicDash.Configuration;
+using LogiDynamicDash.Displays;
 using LogiDynamicDash.Hidpp;
 using LogiDynamicDash.Models;
 
@@ -97,6 +98,25 @@ public sealed class ApplicationDisplayFactoryTests
                 out _));
 
         Assert.Equal(0, sessionFactoryCalls);
+    }
+
+    [Fact]
+    public void RedirectedConsole_DoesNotBlockStationarySessionInitialization()
+    {
+        FakeSession session = new();
+        Assert.True(
+            ApplicationDisplayFactory.TryCreate(
+                Rs50StationaryTrialOptionsTests.ValidArguments(),
+                () => session,
+                () => new ConsoleDashboard(interactiveOverride: false),
+                _ => new Rs50OledConfiguration(Rs50OledLayout.E),
+                out ApplicationDisplaySelection? selection));
+
+        selection!.Display.Initialize();
+
+        Assert.Equal(1, session.OpenCount);
+        selection.Display.Stop();
+        Assert.True(session.Disposed);
     }
 
     private sealed class FakeSession : IRs50OledSession

@@ -31,13 +31,18 @@ Completed offline components:
 - ten-second automatic cancellation;
 - moving-car rejection before the next frame is transmitted.
 
-No production executable from this branch has been run against hardware.
+One production executable was launched during the separately authorized
+stationary attempt on 2026-07-30. It stopped before constructing the physical
+session because its console dashboard required an interactive console handle.
+USBPcap confirmed that no production HID++ request reached the RS50. The
+result and correction are documented in
+`RS50_OLED_PRODUCTION_STATIONARY_RESULT_2026-07-30.md`.
 
 ## Offline Validation
 
 The current production branch passes:
 
-- 144 unit and integration tests, including one million scheduler submissions;
+- 146 unit and integration tests, including one million scheduler submissions;
 - Release build with warnings treated as errors;
 - `dotnet format --verify-no-changes`;
 - `git diff --check`;
@@ -240,9 +245,10 @@ raw responses, payload text, or exception messages.
 
 Before the draft production PR can be enabled for general driving:
 
-1. review a stationary production checklist;
-2. obtain fresh physical authorization;
-3. capture and verify one bounded production run;
+1. review the corrected stationary production checklist;
+2. obtain fresh physical authorization; the 2026-07-30 authorization was
+   consumed by the fail-safe attempt;
+3. capture and verify one bounded production retry;
 4. confirm OLED, FFB, LEDs, inputs, and simulator connection remain normal;
 5. keep the separately planned low-speed Build L postponed until explicitly
    resumed;

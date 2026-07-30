@@ -48,12 +48,16 @@ reconnection by unplugging the wheel.
 7. Start a video that clearly shows the OLED.
 8. Discover the current RS50 USB address. Do not reuse an old address after a
    reconnect or reboot.
-9. Start direct USBPcapCMD capture for only that address, with full snap
-   length and a 128 MiB buffer.
-10. Record at least ten seconds of untouched baseline.
+9. Prefer the Wireshark USBPcap GUI: choose the verified root hub, select only
+   the freshly discovered RS50 address, inject descriptors, and save directly
+   to the intended local file. This keeps capture state and stopping visible
+   to the operator.
+10. Use direct USBPcapCMD only as a reviewed fallback, with full snap length
+   and a 128 MiB buffer.
+11. Record at least ten seconds of untouched baseline.
 
-After replacing both placeholders with the freshly discovered values, the
-capture command shape is:
+When the CLI fallback is explicitly chosen, replace both placeholders with
+freshly discovered values before using this command shape:
 
 ```powershell
 & "C:\Program Files\USBPcap\USBPcapCMD.exe" `
