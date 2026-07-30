@@ -16,7 +16,7 @@ product.
 - 64-bit Windows
 - Microsoft .NET 10 Runtime, x64, only for the framework-dependent artifact
 - iRacing only for live console monitoring or a separately authorized
-  stationary OLED test
+  bounded OLED test
 - G HUB is not required for preview or simulation
 
 ## Integrity
@@ -67,9 +67,10 @@ Running without arguments starts the console telemetry monitor:
 
 ## Hardware Route
 
-The package contains a bounded stationary-validation route, but its presence
-is not authorization to run it. Follow
-`RS50_OLED_PRODUCTION_STATIONARY_CHECKLIST.md` from the repository and obtain
-fresh authorization first.
+The package contains separately armed stationary and 15-second Build L
+low-speed validation routes, but their presence is not authorization to run
+them. Follow the matching checklist from the repository and obtain fresh
+authorization first.
 
-No moving-car or full-lap mode is enabled in this package.
+Build L fails closed above 20 km/h. No full-lap or unrestricted moving-car
+mode is enabled in this package.

@@ -154,6 +154,33 @@ foreach ($token in $requiredArmingTokens) {
     }
 }
 
+$lowSpeedArmingPath =
+    Join-Path $productionRoot `
+        "Configuration\Rs50LowSpeedTrialOptions.cs"
+$lowSpeedArmingText =
+    Get-Content -LiteralPath $lowSpeedArmingPath -Raw
+
+$requiredLowSpeedTokens = @(
+    "--enable-rs50-oled-low-speed-trial",
+    "--confirm-ghub-closed",
+    "--confirm-iracing-running",
+    "--confirm-controlled-pit-lane",
+    "--confirm-rs50-dynamic-selected",
+    "--confirm-15-second-limit",
+    "--confirm-maximum-20-kmh",
+    "--acknowledge-stop-on-speed-limit",
+    "--confirm-settings",
+    "MaximumSpeedMetersPerSecond = 20f / 3.6f"
+)
+
+foreach ($token in $requiredLowSpeedTokens) {
+    if ($lowSpeedArmingText.IndexOf(
+            $token,
+            [StringComparison]::Ordinal) -lt 0) {
+        throw "The Build L arming contract is missing '$token'."
+    }
+}
+
 $sinkPath =
     Join-Path $productionRoot `
         "Displays\Rs50OledDisplaySink.cs"
@@ -171,5 +198,5 @@ Write-Output (
     "native-import, feature-report, or bootloader API was found; the " +
     "offline commands contain no physical adapter reference; and the " +
     "hardware-free configurator is isolated from the physical session; the " +
-    "physical route remains isolated behind the exact stationary arming " +
-    "contract and 0.5 m/s guard.")
+    "physical routes remain isolated behind exact stationary and Build L " +
+    "arming contracts with 0.5 m/s and 20 km/h guards.")

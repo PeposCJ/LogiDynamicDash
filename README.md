@@ -9,9 +9,11 @@ HID++ feature `0x8130` at runtime, validates exact acknowledgements, and does
 not expose arbitrary feature IDs, functions, report bytes, graphics, or fonts.
 
 The independently validated research remains separate from production code.
-The only compiled hardware route is an explicit, ten-second stationary
-validation gate; moving-car hardware validation remains postponed and is
-rejected by the application.
+The stationary production gate has passed on physical RS50 hardware. The
+compiled hardware routes remain disabled behind exact command-line arming:
+the approved ten-second stationary route and a separate 15-second Build L
+route that fails closed above 20 km/h. Build L still requires its own physical
+validation; full-lap and unrestricted moving modes are not enabled.
 
 Build and run the safe console-only mode:
 
@@ -61,7 +63,7 @@ hardware. Product scope, discipline rationale, and Free/Pro planning are
 documented in
 [`LogiDynamicDash/docs/PRODUCT_AND_MONETIZATION_PLAN.md`](LogiDynamicDash/docs/PRODUCT_AND_MONETIZATION_PLAN.md).
 
-Do not run the stationary hardware route without a separately reviewed
-checklist, fresh authorization, and capture. Its complete arming contract is
-documented in
-[`LogiDynamicDash/docs/RS50_OLED_PRODUCTION_ARCHITECTURE.md`](LogiDynamicDash/docs/RS50_OLED_PRODUCTION_ARCHITECTURE.md).
+Do not run either hardware route without its reviewed checklist and fresh
+authorization. The stationary result, Build L procedure, and complete arming
+contracts are documented in
+[`LogiDynamicDash/docs`](LogiDynamicDash/docs).

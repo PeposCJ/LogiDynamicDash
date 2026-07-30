@@ -13,16 +13,21 @@ internal enum OledDeviceState
 }
 
 /// <summary>
-/// Bounded stationary-validation sink. Moving telemetry fails closed before
-/// a frame is formatted or transmitted.
+/// Bounded physical-validation sink. Telemetry outside the configured speed
+/// envelope fails closed before a frame is formatted or transmitted.
 /// </summary>
 internal sealed class Rs50OledDisplaySink(
     Func<IRs50OledSession> sessionFactory,
-    Rs50TelemetryFrameFormatter formatter) : IApplicationDisplay
+    Rs50TelemetryFrameFormatter formatter,
+    float maximumPermittedSpeedMetersPerSecond =
+        Rs50OledDisplaySink.MaximumStationarySpeedMetersPerSecond)
+    : IApplicationDisplay
 {
-    private const float MaximumStationarySpeedMetersPerSecond = 0.5f;
+    internal const float MaximumStationarySpeedMetersPerSecond = 0.5f;
 
     private readonly object synchronization = new();
+    private readonly float maximumSpeedMetersPerSecond =
+        ValidateMaximumSpeed(maximumPermittedSpeedMetersPerSecond);
     private IRs50OledSession? session;
     private Rs50OledFrameScheduler? scheduler;
 
@@ -71,7 +76,7 @@ internal sealed class Rs50OledDisplaySink(
 
             try
             {
-                RequireStationary(snapshot);
+                RequireInsideSpeedEnvelope(snapshot);
                 Rs50OledFrame frame = formatter.Format(snapshot, mode);
                 scheduler.Submit(
                     frame,
@@ -123,7 +128,7 @@ internal sealed class Rs50OledDisplaySink(
         }
     }
 
-    private static void RequireStationary(TelemetrySnapshot snapshot)
+    private void RequireInsideSpeedEnvelope(TelemetrySnapshot snapshot)
     {
         if (snapshot.IsOnTrack != true)
         {
@@ -133,11 +138,22 @@ internal sealed class Rs50OledDisplaySink(
         if (snapshot.SpeedMetersPerSecond is not float speed ||
             !float.IsFinite(speed) ||
             speed < 0 ||
-            speed > MaximumStationarySpeedMetersPerSecond)
+            speed > maximumSpeedMetersPerSecond)
         {
             throw new InvalidOperationException(
                 "RS50 OLED output stopped because moving-car telemetry was " +
-                "detected. This build is limited to stationary validation.");
+                "outside the explicitly armed speed limit.");
         }
+    }
+
+    private static float ValidateMaximumSpeed(float maximumSpeed)
+    {
+        if (!float.IsFinite(maximumSpeed) || maximumSpeed <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(maximumPermittedSpeedMetersPerSecond));
+        }
+
+        return maximumSpeed;
     }
 }

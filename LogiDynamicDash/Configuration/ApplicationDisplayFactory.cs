@@ -7,7 +7,11 @@ namespace LogiDynamicDash.Configuration;
 
 internal sealed record ApplicationDisplaySelection(
     IApplicationDisplay Display,
-    bool IsBoundedHardwareTrial);
+    TimeSpan? HardwareTrialDuration)
+{
+    internal bool IsBoundedHardwareTrial =>
+        HardwareTrialDuration is not null;
+}
 
 internal static class ApplicationDisplayFactory
 {
@@ -46,25 +50,47 @@ internal static class ApplicationDisplayFactory
         {
             selection = new(
                 consoleFactory(),
-                IsBoundedHardwareTrial: false);
+                HardwareTrialDuration: null);
             return true;
         }
 
-        if (!Rs50StationaryTrialOptions.TryParse(
+        string configurationPath;
+        TimeSpan duration;
+        float maximumSpeedMetersPerSecond;
+        if (Rs50StationaryTrialOptions.TryParse(
                 arguments,
-                out Rs50StationaryTrialOptions? trial))
+                out Rs50StationaryTrialOptions? stationary))
+        {
+            configurationPath = stationary!.ConfigurationPath;
+            duration = Rs50StationaryTrialOptions.Duration;
+            maximumSpeedMetersPerSecond =
+                Rs50OledDisplaySink.MaximumStationarySpeedMetersPerSecond;
+        }
+        else if (Rs50LowSpeedTrialOptions.TryParse(
+                     arguments,
+                     out Rs50LowSpeedTrialOptions? lowSpeed))
+        {
+            configurationPath = lowSpeed!.ConfigurationPath;
+            duration = Rs50LowSpeedTrialOptions.Duration;
+            maximumSpeedMetersPerSecond =
+                Rs50LowSpeedTrialOptions.MaximumSpeedMetersPerSecond;
+        }
+        else
         {
             selection = null;
             return false;
         }
 
         Rs50TelemetryFrameFormatter formatter = new(
-            configurationLoader(trial!.ConfigurationPath));
+            configurationLoader(configurationPath));
         selection = new(
             new CompositeApplicationDisplay(
                 consoleFactory(),
-                new Rs50OledDisplaySink(sessionFactory, formatter)),
-            IsBoundedHardwareTrial: true);
+                new Rs50OledDisplaySink(
+                    sessionFactory,
+                    formatter,
+                    maximumSpeedMetersPerSecond)),
+            HardwareTrialDuration: duration);
         return true;
     }
 }

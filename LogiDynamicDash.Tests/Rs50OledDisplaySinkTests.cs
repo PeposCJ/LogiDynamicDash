@@ -71,6 +71,42 @@ public sealed class Rs50OledDisplaySinkTests
     }
 
     [Fact]
+    public void ExplicitLowSpeedEnvelope_AcceptsBelowAndRejectsAboveLimit()
+    {
+        FakeSession session = new();
+        Rs50OledDisplaySink sink = new(
+            () => session,
+            new Rs50TelemetryFrameFormatter(
+                new Rs50OledConfiguration(Rs50OledLayout.E)),
+            maximumPermittedSpeedMetersPerSecond: 20f / 3.6f);
+        sink.Initialize();
+        TelemetrySnapshot snapshot = ConnectedSnapshot();
+        snapshot.SpeedMetersPerSecond = 5;
+
+        sink.Render(snapshot, DisplayMode.Normal);
+
+        snapshot.SpeedMetersPerSecond = 6;
+        Assert.Throws<InvalidOperationException>(
+            () => sink.Render(snapshot, DisplayMode.Normal));
+        Assert.Single(session.Frames);
+        Assert.Equal(OledDeviceState.Faulted, sink.State);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(float.NaN)]
+    public void InvalidSpeedEnvelope_IsRejected(float maximumSpeed)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new Rs50OledDisplaySink(
+                () => new FakeSession(),
+                new Rs50TelemetryFrameFormatter(
+                    new Rs50OledConfiguration(Rs50OledLayout.E)),
+                maximumSpeed));
+    }
+
+    [Fact]
     public void RenderFailure_FaultsAndDoesNotReopenOrRetry()
     {
         FakeSession session = new()

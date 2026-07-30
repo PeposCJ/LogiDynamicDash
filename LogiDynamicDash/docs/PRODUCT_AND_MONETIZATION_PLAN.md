@@ -232,7 +232,7 @@ Official market references:
 - hardware-free configurator;
 - manual recommendations for all five current iRacing categories;
 - exact session category and driver-car identity capture;
-- stationary production smoke test still required.
+- stationary production gate passed on the physical RS50.
 
 ### 0.3 Hardware Beta
 

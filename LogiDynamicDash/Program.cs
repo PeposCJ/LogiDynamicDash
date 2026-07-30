@@ -37,6 +37,8 @@ internal class Program
                 Console.Error.WriteLine(OfflineCommandLine.Usage);
                 Console.Error.WriteLine();
                 Console.Error.WriteLine(Rs50StationaryTrialOptions.Usage);
+                Console.Error.WriteLine();
+                Console.Error.WriteLine(Rs50LowSpeedTrialOptions.Usage);
                 return 2;
             }
         }
@@ -48,10 +50,9 @@ internal class Program
         }
 
         using CancellationTokenSource cancellationSource = new();
-        if (selection!.IsBoundedHardwareTrial)
+        if (selection!.HardwareTrialDuration is TimeSpan trialDuration)
         {
-            cancellationSource.CancelAfter(
-                Rs50StationaryTrialOptions.Duration);
+            cancellationSource.CancelAfter(trialDuration);
         }
 
         Console.CancelKeyPress += (_, eventArgs) =>

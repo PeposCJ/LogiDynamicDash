@@ -70,6 +70,9 @@ public sealed class ApplicationDisplayFactoryTests
 
         Assert.NotNull(selection);
         Assert.True(selection.IsBoundedHardwareTrial);
+        Assert.Equal(
+            Rs50StationaryTrialOptions.Duration,
+            selection.HardwareTrialDuration);
         Assert.Equal(1, configurationLoaderCalls);
         Assert.Equal(0, sessionFactoryCalls);
 
@@ -78,6 +81,49 @@ public sealed class ApplicationDisplayFactoryTests
         Assert.Equal(1, session.OpenCount);
         selection.Display.Stop();
         Assert.True(session.Disposed);
+    }
+
+    [Fact]
+    public void LowSpeedArguments_SelectDistinctBoundedSafetyEnvelope()
+    {
+        FakeSession session = new();
+        Assert.True(
+            ApplicationDisplayFactory.TryCreate(
+                Rs50LowSpeedTrialOptionsTests.ValidArguments(),
+                () => session,
+                () => new FakeDisplay(),
+                _ => new Rs50OledConfiguration(Rs50OledLayout.E),
+                out ApplicationDisplaySelection? selection));
+
+        Assert.NotNull(selection);
+        Assert.Equal(
+            Rs50LowSpeedTrialOptions.Duration,
+            selection.HardwareTrialDuration);
+        selection.Display.Initialize();
+
+        selection.Display.Render(
+            new TelemetrySnapshot
+            {
+                ConnectionState = "CONNECTED",
+                IsOnTrack = true,
+                SpeedMetersPerSecond = 5,
+                Gear = 1,
+                Rpm = 1500
+            },
+            DisplayMode.Normal);
+
+        Assert.Throws<InvalidOperationException>(
+            () => selection.Display.Render(
+                new TelemetrySnapshot
+                {
+                    ConnectionState = "CONNECTED",
+                    IsOnTrack = true,
+                    SpeedMetersPerSecond = 6,
+                    Gear = 1,
+                    Rpm = 1500
+                },
+                DisplayMode.Normal));
+        selection.Display.Stop();
     }
 
     [Fact]
