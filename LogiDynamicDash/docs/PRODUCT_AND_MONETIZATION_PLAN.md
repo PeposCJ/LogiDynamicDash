@@ -165,6 +165,28 @@ Paid value should come from depth, convenience, and profile management:
 - priority support and early access to newly confirmed devices;
 - commercial venue licensing and managed multi-seat deployment.
 
+### Pro automatic car tuning
+
+The free runtime should continue to detect the official iRacing category and
+apply the safe built-in category profile. This is core usability, not a paid
+luxury.
+
+Pro may add exact-CarID automation:
+
+- activate a saved per-car profile automatically;
+- use simulator-provided redline or shift-light metadata as the preferred
+  maximum-RPM source when it is available and valid;
+- learn observed peak RPM only as a fallback, with validation and headroom;
+- learn peak speed over complete representative laps, round it upward with a
+  safety margin, persist it by CarID, and apply it on the next session;
+- never move RPM or speed gauge limits continuously during a live lap;
+- show the detected source and value and allow the user to override or reset
+  it.
+
+Category defaults remain the fallback when exact metadata or sufficient
+driving history is unavailable. Car-name guessing, a single short run, and
+unvalidated telemetry spikes must never overwrite a profile.
+
 Custom field assignment must remain constrained by each confirmed layout's
 field lengths and semantic types. Paid status cannot unlock unknown HID
 functions, raw reports, arbitrary graphics, firmware access, or unsafe rates.

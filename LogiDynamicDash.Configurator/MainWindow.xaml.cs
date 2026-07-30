@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using LogiDynamicDash.Configuration;
 using LogiDynamicDash.Displays;
 using LogiDynamicDash.Models;
@@ -50,6 +51,7 @@ public partial class MainWindow : Window
         DisciplineBox.ItemsSource =
             DisciplineProfileRecommendations.SupportedDisciplines;
         SpeedUnitBox.ItemsSource = Enum.GetValues<SpeedUnit>();
+        PreviewModeBox.ItemsSource = Enum.GetValues<DisplayMode>();
         foreach (ComboBox box in layoutBoxes)
         {
             box.ItemsSource = Enum.GetValues<Rs50OledLayout>();
@@ -60,9 +62,11 @@ public partial class MainWindow : Window
         SpeedUnitBox.SelectionChanged += (_, _) => UpdateRecommendation();
         MaximumRpmBox.TextChanged += (_, _) => UpdatePreview();
         GaugeSpeedBox.TextChanged += (_, _) => UpdatePreview();
+        PreviewModeBox.SelectionChanged += (_, _) => UpdatePreview();
 
         DisciplineBox.SelectedItem = IRacingDiscipline.SportsCar;
         SpeedUnitBox.SelectedItem = SpeedUnit.KilometersPerHour;
+        PreviewModeBox.SelectedItem = DisplayMode.Normal;
         ApplyRecommendation(IRacingDiscipline.SportsCar);
         LoadPersistedSettings();
         Closing += (_, _) =>
@@ -445,12 +449,15 @@ public partial class MainWindow : Window
                 BrakeBiasPercent = 52.3f,
                 LastLapTimeSeconds = 92.481f
             };
-            PreviewText.Text = string.Join(
-                Environment.NewLine,
-                Enum.GetValues<DisplayMode>().Select(mode =>
-                    $"{mode,-18} [{configuration.LayoutFor(mode)}] " +
-                    Rs50OledFrameDescription.Describe(
-                        formatter.Format(sample, mode))));
+            DisplayMode previewMode =
+                PreviewModeBox.SelectedItem is DisplayMode selected
+                    ? selected
+                    : DisplayMode.Normal;
+            Rs50OledFrame frame = formatter.Format(sample, previewMode);
+            PreviewText.Text =
+                $"{previewMode} [{configuration.LayoutFor(previewMode)}] " +
+                Rs50OledFrameDescription.Describe(frame);
+            RenderOledPreview(frame);
             StatusText.Text = "Configuration is valid.";
         }
         catch (Exception exception)
@@ -562,6 +569,157 @@ public partial class MainWindow : Window
                 $"Saved settings were ignored: {exception.Message}";
         }
     }
+
+    private void RenderOledPreview(Rs50OledFrame frame)
+    {
+        OledPreviewSurface.Children.Clear();
+        OledPreviewSurface.RowDefinitions.Clear();
+
+        switch (frame)
+        {
+            case Rs50LayoutAFrame:
+                AddCenteredText("LAYOUT A", 22);
+                AddCenteredText("NO DATA FIELDS", 12, secondary: true);
+                break;
+            case Rs50LayoutBFrame:
+                AddCenteredText("LAYOUT B", 22);
+                AddCenteredText("NO DATA FIELDS", 12, secondary: true);
+                break;
+            case Rs50LayoutCFrame layout:
+                AddCenteredText("RPM", 12, secondary: true);
+                AddGauge(layout.MainGauge, 28);
+                break;
+            case Rs50LayoutDFrame layout:
+                AddCenteredText(layout.Text, 28);
+                AddGauge(layout.MainGauge, 24);
+                AddGauge(layout.ThinIndicator, 7);
+                break;
+            case Rs50LayoutEFrame layout:
+                AddDualText(layout.LeftText, layout.RightText, 30);
+                AddGauge(layout.MainGauge, 24);
+                AddGauge(layout.ThinIndicator, 7);
+                break;
+            case Rs50LayoutFFrame layout:
+                AddDualText(layout.LeftText, layout.RightText, 42);
+                break;
+            case Rs50LayoutGFrame layout:
+                AddDualText(layout.LeftText, layout.RightText, 32);
+                break;
+            case Rs50LayoutHFrame layout:
+                AddCenteredText(layout.TopText, 19, secondary: true);
+                AddCenteredText(layout.BottomText, 34);
+                break;
+            case Rs50LayoutIFrame layout:
+                AddFourRows(
+                    layout.Line1,
+                    layout.Line2,
+                    layout.Line3,
+                    layout.Line4,
+                    20);
+                break;
+            case Rs50LayoutJFrame layout:
+                AddFourRows(
+                    layout.Line1,
+                    layout.Line2,
+                    layout.Line3,
+                    layout.Line4,
+                    23);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(frame));
+        }
+    }
+
+    private void AddCenteredText(
+        string text,
+        double size,
+        bool secondary = false)
+    {
+        int row = AddPreviewRow();
+        TextBlock block = PreviewTextBlock(text, size, secondary);
+        block.HorizontalAlignment = HorizontalAlignment.Center;
+        Grid.SetRow(block, row);
+        OledPreviewSurface.Children.Add(block);
+    }
+
+    private void AddDualText(string left, string right, double size)
+    {
+        int row = AddPreviewRow();
+        Grid line = new();
+        line.ColumnDefinitions.Add(new ColumnDefinition());
+        line.ColumnDefinitions.Add(new ColumnDefinition());
+        TextBlock leftBlock = PreviewTextBlock(left, size);
+        TextBlock rightBlock = PreviewTextBlock(right, size);
+        rightBlock.HorizontalAlignment = HorizontalAlignment.Right;
+        Grid.SetColumn(rightBlock, 1);
+        line.Children.Add(leftBlock);
+        line.Children.Add(rightBlock);
+        Grid.SetRow(line, row);
+        OledPreviewSurface.Children.Add(line);
+    }
+
+    private void AddGauge(Rs50GaugeLevel gauge, double height)
+    {
+        int row = AddPreviewRow();
+        ProgressBar bar = new()
+        {
+            Minimum = 0,
+            Maximum = byte.MaxValue,
+            Value = gauge.WireValue,
+            Height = height,
+            Margin = new Thickness(0, 5, 0, 2),
+            Foreground = OledBlue(),
+            Background = new SolidColorBrush(Color.FromRgb(20, 43, 52))
+        };
+        Grid.SetRow(bar, row);
+        OledPreviewSurface.Children.Add(bar);
+    }
+
+    private void AddFourRows(
+        string line1,
+        string line2,
+        string line3,
+        string line4,
+        double size)
+    {
+        string[] lines = [line1, line2, line3, line4];
+        foreach ((string line, int index) in lines.Select(
+                     (line, index) => (line, index)))
+        {
+            AddCenteredText(
+                string.IsNullOrEmpty(line) ? " " : line,
+                index % 2 == 0 ? size * 0.72 : size,
+                secondary: index % 2 == 0);
+        }
+    }
+
+    private int AddPreviewRow()
+    {
+        int row = OledPreviewSurface.RowDefinitions.Count;
+        OledPreviewSurface.RowDefinitions.Add(
+            new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        return row;
+    }
+
+    private static TextBlock PreviewTextBlock(
+        string text,
+        double size,
+        bool secondary = false) =>
+        new()
+        {
+            Text = text,
+            FontFamily = new FontFamily("Consolas"),
+            FontSize = size,
+            FontWeight = secondary ? FontWeights.Normal : FontWeights.SemiBold,
+            Foreground = secondary
+                ? new SolidColorBrush(Color.FromRgb(142, 221, 234))
+                : OledBlue(),
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis
+        };
+
+    private static SolidColorBrush OledBlue() =>
+        new(Color.FromRgb(93, 235, 255));
 
     private void SavePreferences()
     {
