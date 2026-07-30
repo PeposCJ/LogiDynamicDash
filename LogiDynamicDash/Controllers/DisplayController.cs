@@ -2,29 +2,33 @@
 
 namespace LogiDynamicDash.Controllers;
 
-internal sealed class DisplayController
+internal sealed class DisplayController(
+    TimeProvider? timeProvider = null,
+    TimeSpan? lastLapDuration = null)
 {
+    private readonly TimeProvider clock = timeProvider ?? TimeProvider.System;
+
     private static readonly TimeSpan BrakeBiasDuration =
         TimeSpan.FromSeconds(2);
 
-    private static readonly TimeSpan LastLapDuration =
-        TimeSpan.FromSeconds(3);
+    private readonly TimeSpan lastLapDisplayDuration =
+        ValidateLastLapDuration(lastLapDuration ?? TimeSpan.FromSeconds(5));
 
     private float? _previousBrakeBiasPercent;
     private float? _previousLastLapTimeSeconds;
 
     private bool _lastLapInitialized;
 
-    private DateTime _brakeBiasExpiresAt =
-        DateTime.MinValue;
+    private DateTimeOffset _brakeBiasExpiresAt =
+        DateTimeOffset.MinValue;
 
-    private DateTime _lastLapExpiresAt =
-        DateTime.MinValue;
+    private DateTimeOffset _lastLapExpiresAt =
+        DateTimeOffset.MinValue;
 
     public DisplayMode SelectMode(
         TelemetrySnapshot snapshot)
     {
-        DateTime now = DateTime.UtcNow;
+        DateTimeOffset now = clock.GetUtcNow();
 
         DetectCompletedLap(snapshot, now);
         DetectBrakeBiasChange(snapshot, now);
@@ -49,7 +53,7 @@ internal sealed class DisplayController
 
     private void DetectBrakeBiasChange(
         TelemetrySnapshot snapshot,
-        DateTime now)
+        DateTimeOffset now)
     {
         if (snapshot.BrakeBiasPercent is not float currentBrakeBias)
         {
@@ -81,7 +85,7 @@ internal sealed class DisplayController
 
     private void DetectCompletedLap(
         TelemetrySnapshot snapshot,
-        DateTime now)
+        DateTimeOffset now)
     {
         if (!_lastLapInitialized)
         {
@@ -99,24 +103,27 @@ internal sealed class DisplayController
             return;
         }
 
-        if (_previousLastLapTimeSeconds is float previousLastLap)
+        if (_previousLastLapTimeSeconds is not float previousLastLap)
         {
-            float difference =
-                MathF.Abs(
-                    currentLastLap -
-                    previousLastLap);
+            _previousLastLapTimeSeconds = currentLastLap;
+            return;
+        }
 
-            if (difference < 0.001f)
-            {
-                return;
-            }
+        float difference =
+            MathF.Abs(
+                currentLastLap -
+                previousLastLap);
+
+        if (difference < 0.001f)
+        {
+            return;
         }
 
         _previousLastLapTimeSeconds =
             currentLastLap;
 
         _lastLapExpiresAt =
-            now.Add(LastLapDuration);
+            now.Add(lastLapDisplayDuration);
     }
 
     private static bool IsConnected(
@@ -126,5 +133,17 @@ internal sealed class DisplayController
             snapshot.ConnectionState,
             "CONNECTED",
             StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static TimeSpan ValidateLastLapDuration(TimeSpan duration)
+    {
+        if (duration < TimeSpan.FromSeconds(1) ||
+            duration > TimeSpan.FromSeconds(15))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(lastLapDuration));
+        }
+
+        return duration;
     }
 }

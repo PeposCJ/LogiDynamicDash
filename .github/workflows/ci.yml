@@ -1,0 +1,143 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - codex/rs50-oled-production
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Install .NET 10 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore .\LogiDynamicDash.slnx
+
+      - name: Build with warnings as errors
+        run: >
+          dotnet build .\LogiDynamicDash.slnx
+          -c Release
+          --no-restore
+          -warnaserror
+
+      - name: Test
+        run: >
+          dotnet test .\LogiDynamicDash.slnx
+          -c Release
+          --no-build
+
+      - name: Verify formatting
+        run: >
+          dotnet format .\LogiDynamicDash.slnx
+          --verify-no-changes
+          --no-restore
+
+      - name: Audit RS50 production surface
+        shell: powershell
+        run: .\scripts\Test-Rs50OledProductionSurface.ps1
+
+      - name: Audit vulnerable packages
+        run: >
+          dotnet list .\LogiDynamicDash.slnx
+          package
+          --vulnerable
+          --include-transitive
+
+  package-windows:
+    needs: build-and-test
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Install .NET 10 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore Windows runtime
+        run: |
+          dotnet restore .\LogiDynamicDash\LogiDynamicDash.csproj -r win-x64
+          dotnet restore .\LogiDynamicDash.Configurator\LogiDynamicDash.Configurator.csproj -r win-x64
+
+      - name: Publish framework-dependent Windows package
+        run: >
+          dotnet publish .\LogiDynamicDash\LogiDynamicDash.csproj
+          -c Release
+          -r win-x64
+          --self-contained false
+          --no-restore
+          -o .\artifacts\LogiDynamicDash-win-x64
+
+      - name: Publish framework-dependent configurator
+        run: >
+          dotnet publish
+          .\LogiDynamicDash.Configurator\LogiDynamicDash.Configurator.csproj
+          -c Release
+          -r win-x64
+          --self-contained false
+          --no-restore
+          -o .\artifacts\LogiDynamicDash-win-x64
+
+      - name: Complete and smoke-test framework-dependent package
+        shell: powershell
+        run: >
+          .\scripts\Complete-WindowsPackage.ps1
+          -PackageRoot .\artifacts\LogiDynamicDash-win-x64
+          -Version 0.3.0-alpha
+
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v7
+        with:
+          name: LogiDynamicDash-win-x64
+          path: artifacts/LogiDynamicDash-win-x64
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish self-contained Windows package
+        run: >
+          dotnet publish .\LogiDynamicDash\LogiDynamicDash.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          --no-restore
+          -o .\artifacts\LogiDynamicDash-win-x64-self-contained
+
+      - name: Publish self-contained configurator
+        run: >
+          dotnet publish
+          .\LogiDynamicDash.Configurator\LogiDynamicDash.Configurator.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          --no-restore
+          -o .\artifacts\LogiDynamicDash-win-x64-self-contained
+
+      - name: Complete and smoke-test self-contained package
+        shell: powershell
+        run: >
+          .\scripts\Complete-WindowsPackage.ps1
+          -PackageRoot .\artifacts\LogiDynamicDash-win-x64-self-contained
+          -Version 0.3.0-alpha
+
+      - name: Upload self-contained Windows package
+        uses: actions/upload-artifact@v7
+        with:
+          name: LogiDynamicDash-win-x64-self-contained
+          path: artifacts/LogiDynamicDash-win-x64-self-contained
+          if-no-files-found: error
+          retention-days: 14

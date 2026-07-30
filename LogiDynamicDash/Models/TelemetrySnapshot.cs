@@ -14,4 +14,19 @@ internal sealed class TelemetrySnapshot
     public float? BrakeBiasPercent { get; set; }
 
     public float? LastLapTimeSeconds { get; set; }
+
+    public IRacingSessionIdentity? SessionIdentity { get; set; }
+
+    internal TelemetrySnapshot Copy() =>
+        new()
+        {
+            ConnectionState = ConnectionState,
+            IsOnTrack = IsOnTrack,
+            Gear = Gear,
+            Rpm = Rpm,
+            SpeedMetersPerSecond = SpeedMetersPerSecond,
+            BrakeBiasPercent = BrakeBiasPercent,
+            LastLapTimeSeconds = LastLapTimeSeconds,
+            SessionIdentity = SessionIdentity
+        };
 }

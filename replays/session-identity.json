@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 2,
+  "events": [
+    {
+      "atMilliseconds": 0,
+      "statusChanged": true,
+      "connectionState": "CONNECTED",
+      "isOnTrack": false,
+      "gear": 0,
+      "rpm": 900,
+      "speedMetersPerSecond": 0,
+      "brakeBiasPercent": 52.3,
+      "lastLapTimeSeconds": null,
+      "sessionIdentity": {
+        "discipline": "SportsCar",
+        "rawCategory": "SportsCar",
+        "trackType": "road course",
+        "car": {
+          "carId": 1001,
+          "carPath": "cars/example-gt",
+          "displayName": "Example GT",
+          "shortName": "GT",
+          "carClassId": 2001,
+          "carClassShortName": "GT Class",
+          "isElectric": false
+        }
+      }
+    }
+  ]
+}
