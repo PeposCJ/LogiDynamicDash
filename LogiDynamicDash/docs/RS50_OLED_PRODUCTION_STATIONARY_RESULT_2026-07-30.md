@@ -96,8 +96,14 @@ sha256: 32B09261A4C25EEA717C93E41A2ED5E757CAA69A3B27B66663FE33936252DC7B
 The full telemetry-rendering portion remains open because the OLED did not
 advance from `WAITING` to stationary speed and gear. A subsequent
 hardware-free recording proved that the iRacing SDK can connect and identify
-the active session, but that recording also contained moving-car telemetry
-and is not stationary-gate evidence. The next bounded build adds a separate
-sanitized application log that records each accepted render trigger, state,
-mode, speed, and gear so one run can distinguish missing telemetry callbacks
-from a display scheduling or formatting fault.
+an active session. The operator later confirmed that a separate dirt-oval
+iRacing window was open at the same time; that session produced the recorded
+moving-car telemetry and was not the intended stationary scenario. The
+recording is therefore neither stationary-gate evidence nor evidence of an
+SDK-reader defect.
+
+The next bounded build adds a separate sanitized application log that records
+each accepted render trigger, state, mode, speed, and gear so one run can
+distinguish missing telemetry callbacks from a display scheduling or
+formatting fault. Only the intended stationary simulator session may remain
+open for that run.
