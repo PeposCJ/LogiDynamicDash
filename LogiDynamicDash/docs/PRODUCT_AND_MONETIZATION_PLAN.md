@@ -18,7 +18,7 @@ customization," not custom fonts, unrestricted graphics, or pixel drawing.
 
 ## Current GUI Milestone
 
-The `LogiDynamicDash.Configurator` Windows application is hardware-free. It:
+The `LogiDynamicDash.Configurator` Windows application:
 
 - applies reviewed Sports Car, Formula Car, Oval, Dirt Oval, and Dirt Road
   recommendations;
@@ -30,10 +30,17 @@ The `LogiDynamicDash.Configurator` Windows application is hardware-free. It:
 - enables a recommendation only when both current category and exact `CarID`
   are present, then requires an explicit apply action;
 - opens strict schema v1/v2 files and saves schema v2;
-- never enumerates or opens HID devices.
+- starts and stops the daily-use runtime only after an explicit click;
+- reports OLED, telemetry, car, and category status;
+- waits for missing hardware and reconnects the exact validated OLED
+  interface after sleep or disconnection;
+- automatically selects exact CarID, category override, or reviewed category
+  defaults in that order;
+- saves one free category profile and exposes the planned per-car override as
+  an unenforced Pro preview.
 
-The first GUI deliberately does not start telemetry, arm a physical trial,
-manage licenses, sign users in, or write to the OLED.
+The GUI does not manage licenses, sign users in, touch FFB or LEDs, expose raw
+HID, or run hardware access before **Start dashboard** is selected.
 
 ## Discipline Recommendations
 
@@ -100,9 +107,9 @@ This matters because event classification can differ from what the track name
 or geometry suggests. A road-course week in another discipline must follow
 the category emitted for that event.
 
-Session metadata capture and normalization are implemented. Automatic
-activation remains deliberately separate until the physical production gate
-passes. Its fallback policy is:
+Session metadata capture, normalization, and automatic activation are
+implemented after passing the physical production gate. The fallback policy
+is:
 
 1. read simulator-provided category and driver-car metadata;
 2. normalize only recognized official values;
@@ -238,16 +245,19 @@ Official market references:
 
 - successful stationary production gate;
 - successful low-speed and continuous physical moving validation;
-- installer and signed release candidate;
+- daily-use GUI start/stop and automatic reconnection;
+- automatic five-category selection with `Unknown`/legacy fallback;
+- free category profile persistence;
+- per-car override matching as an unenforced Pro preview;
+- unsigned, integrity-manifested Windows alpha package;
 - surface detected category/car identity in diagnostics and GUI;
 - local crash/fault reporting with explicit opt-in.
 
-### 0.4 Profile Beta
+### 0.4 Distribution Beta
 
-- automatic five-category selection with `Unknown`/legacy fallback;
-- per-car override matching against the exact identity model;
-- free profile activation;
-- experimental Pro profile editor without billing enforcement;
+- installer and signed release candidate;
+- accessible onboarding and startup integration;
+- profile duplication and management UX;
 - user research on customization demand.
 
 ### 1.0 Free

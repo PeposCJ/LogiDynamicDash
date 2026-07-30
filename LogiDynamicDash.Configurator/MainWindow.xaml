@@ -149,7 +149,7 @@
                                     Background="#303946"
                                     Click="SaveCategoryProfile_Click" />
                             <Button x:Name="SaveCarProfileButton"
-                                    Content="Save for this car"
+                                    Content="Save for this car (Pro preview)"
                                     IsEnabled="False"
                                     Click="SaveCarProfile_Click" />
                         </StackPanel>

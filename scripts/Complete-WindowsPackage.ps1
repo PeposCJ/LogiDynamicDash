@@ -96,6 +96,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Get-ChildItem -LiteralPath $resolvedPackageRoot -File -Recurse |
+    Where-Object { $_.Name -ne "SHA256SUMS.txt" } |
     Sort-Object FullName |
     Get-FileHash -Algorithm SHA256 |
     ForEach-Object {

@@ -32,8 +32,9 @@ Automatic selection uses this order:
 4. the visible fallback configuration.
 
 Use **Save for category** to customize Sports Car, Formula Car, Oval, Dirt
-Oval, or Dirt Road. Use **Save for this car** after a live CarID is detected
-or after inspecting a schema 2 replay.
+Oval, or Dirt Road. **Save for this car (Pro preview)** exercises the planned
+per-car override model after a live CarID is detected or after inspecting a
+schema 2 replay. The alpha contains no billing or entitlement enforcement.
 
 Profiles and active settings are stored under:
 
