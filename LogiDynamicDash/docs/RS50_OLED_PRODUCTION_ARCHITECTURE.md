@@ -247,13 +247,11 @@ raw responses, payload text, or exception messages.
 
 Before the draft production PR can be enabled for general driving:
 
-1. preserve the successful Build L evidence in
-   `RS50_OLED_LOW_SPEED_RESULT_2026-07-30.md`;
-2. execute the separately armed, manually stopped continuous-driving
-   checklist;
-3. validate one complete driving session before enabling general moving use;
-4. design reconnection and long-duration ownership only after the relevant
-   physical stages pass.
+1. preserve the successful stationary, Build L, and continuous-driving
+   evidence;
+2. complete final code and product-scope review of the draft PR;
+3. keep Logitech PRO compatibility explicitly unclaimed until tested;
+4. design reconnection and longer-duration ownership as subsequent hardening.
 
 The draft may be reviewed as disabled-by-default code before those physical
 gates, but it should not advertise moving-car support.

@@ -14,8 +14,10 @@ compiled hardware routes remain disabled behind exact command-line arming:
 the approved ten-second stationary route and a separate 15-second Build L
 route that fails closed above 20 km/h. Both gates have passed on physical
 RS50 hardware. A third manually stopped continuous-driving route has no speed
-or duration ceiling but retains fail-closed transport/protocol handling; it
-requires its own physical validation.
+or duration ceiling but retains fail-closed transport/protocol handling. That
+route has also passed on the physical RS50 through 200.31 km/h, six forward
+gears, missing-ACK recovery, manual shutdown, and a live last-lap page
+transition.
 
 Build and run the safe console-only mode:
 

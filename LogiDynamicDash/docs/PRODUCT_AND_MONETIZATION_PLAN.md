@@ -237,7 +237,7 @@ Official market references:
 ### 0.3 Hardware Beta
 
 - successful stationary production gate;
-- explicitly authorized moving validation;
+- successful low-speed and continuous physical moving validation;
 - installer and signed release candidate;
 - surface detected category/car identity in diagnostics and GUI;
 - local crash/fault reporting with explicit opt-in.
