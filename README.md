@@ -12,8 +12,8 @@ The independently validated research remains separate from production code.
 The stationary production gate has passed on physical RS50 hardware. The
 compiled hardware routes remain disabled behind exact command-line arming:
 the approved ten-second stationary route and a separate 15-second Build L
-route that fails closed above 20 km/h. Build L still requires its own physical
-validation; full-lap and unrestricted moving modes are not enabled.
+route that fails closed above 20 km/h. Both gates have passed on physical
+RS50 hardware; full-lap and unrestricted moving modes are not enabled.
 
 Build and run the safe console-only mode:
 

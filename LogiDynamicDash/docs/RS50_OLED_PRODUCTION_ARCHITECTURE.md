@@ -245,13 +245,11 @@ raw responses, payload text, or exception messages.
 
 Before the draft production PR can be enabled for general driving:
 
-1. review and execute the separately armed 15-second Build L low-speed
-   checklist;
-2. confirm speed, gear, and gauge changes remain coherent below 20 km/h;
-3. confirm OLED, FFB, LEDs, inputs, and simulator connection remain normal;
-4. design a separately bounded higher-speed/full-lap stage only after Build L
-   passes;
-5. design reconnection and long-duration ownership only after the relevant
+1. preserve the successful Build L evidence in
+   `RS50_OLED_LOW_SPEED_RESULT_2026-07-30.md`;
+2. design a separately bounded higher-speed/full-lap stage;
+3. validate that stage before enabling unrestricted moving use;
+4. design reconnection and long-duration ownership only after the relevant
    physical stages pass.
 
 The draft may be reviewed as disabled-by-default code before those physical
