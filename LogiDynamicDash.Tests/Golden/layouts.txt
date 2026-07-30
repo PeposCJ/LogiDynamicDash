@@ -1,0 +1,50 @@
+LAYOUT A
+  Normal: blank
+  BrakeBias: blank
+  LastLap: blank
+  ConnectionProblem: blank
+LAYOUT B
+  Normal: firmware-test
+  BrakeBias: firmware-test
+  LastLap: firmware-test
+  ConnectionProblem: firmware-test
+LAYOUT C
+  Normal: main=207
+  BrakeBias: main=207
+  LastLap: main=207
+  ConnectionProblem: main=207
+LAYOUT D
+  Normal: main=207 thin=105 text="3 123K"
+  BrakeBias: main=207 thin=105 text="BB 52.3%"
+  LastLap: main=207 thin=105 text="L 1:32.481"
+  ConnectionProblem: main=207 thin=105 text="OFFLINE"
+LAYOUT E
+  Normal: main=207 thin=105 left="123 KMH" right="3"
+  BrakeBias: main=207 thin=105 left="52.3%" right="BB"
+  LastLap: main=207 thin=105 left="1:32.4" right="LAP"
+  ConnectionProblem: main=207 thin=105 left="OFFLINE" right="ERR"
+LAYOUT F
+  Normal: left="3" right="123"
+  BrakeBias: left="B" right="52"
+  LastLap: left="L" right="92"
+  ConnectionProblem: left="!" right="ERR"
+LAYOUT G
+  Normal: left="3" right="123"
+  BrakeBias: left="B" right="52"
+  LastLap: left="L" right="92"
+  ConnectionProblem: left="!" right="ERR"
+LAYOUT H
+  Normal: top="SPEED 123 KMH" bottom="GEAR 3"
+  BrakeBias: top="BRAKE BIAS" bottom="52.3%"
+  LastLap: top="LAST LAP" bottom="1:32.481"
+  ConnectionProblem: top="IRACING" bottom="ERROR"
+LAYOUT I
+  Normal: line1="SPEED" line2="123 KMH" line3="GEAR" line4="3"
+  BrakeBias: line1="BRAKE BIAS" line2="52.3%" line3="" line4=""
+  LastLap: line1="LAST LAP" line2="1:32.481" line3="" line4=""
+  ConnectionProblem: line1="IRACING" line2="ERROR" line3="" line4=""
+LAYOUT J
+  Normal: line1="SPEED" line2="123 KMH" line3="GEAR" line4="3"
+  BrakeBias: line1="BRAKE BIAS" line2="52.3%" line3="" line4=""
+  LastLap: line1="LAST LAP" line2="1:32.481" line3="" line4=""
+  ConnectionProblem: line1="IRACING" line2="ERROR" line3="" line4=""

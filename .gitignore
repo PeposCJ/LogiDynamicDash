@@ -379,6 +379,14 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
+# Local hardware-research artifacts
+.tmp/
+.logs/
+*.pcap
+*.pcapng
+*.mov
+*.MOV
+
 # VS Code files for those working on multiple tools
 .vscode/*
 !.vscode/settings.json

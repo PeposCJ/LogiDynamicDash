@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 2,
+  "layouts": {
+    "normal": "E",
+    "brakeBias": "H",
+    "lastLap": "J",
+    "connectionProblem": "H"
+  },
+  "speedUnit": "KMH",
+  "maximumRpm": 8000,
+  "gaugeMaximumSpeed": 300
+}

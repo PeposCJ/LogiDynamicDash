@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "events": [
+    {
+      "atMilliseconds": 0,
+      "statusChanged": true,
+      "connectionState": "CONNECTED",
+      "isOnTrack": true,
+      "gear": 0,
+      "rpm": 900,
+      "speedMetersPerSecond": 0,
+      "brakeBiasPercent": 52.3,
+      "lastLapTimeSeconds": null
+    },
+    {
+      "atMilliseconds": 250,
+      "statusChanged": false,
+      "connectionState": "CONNECTED",
+      "isOnTrack": true,
+      "gear": 1,
+      "rpm": 3500,
+      "speedMetersPerSecond": 8,
+      "brakeBiasPercent": 52.3,
+      "lastLapTimeSeconds": null
+    },
+    {
+      "atMilliseconds": 500,
+      "statusChanged": false,
+      "connectionState": "CONNECTED",
+      "isOnTrack": true,
+      "gear": 2,
+      "rpm": 6100,
+      "speedMetersPerSecond": 20,
+      "brakeBiasPercent": 52.3,
+      "lastLapTimeSeconds": null
+    },
+    {
+      "atMilliseconds": 750,
+      "statusChanged": false,
+      "connectionState": "CONNECTED",
+      "isOnTrack": true,
+      "gear": 3,
+      "rpm": 7600,
+      "speedMetersPerSecond": 35,
+      "brakeBiasPercent": 52.3,
+      "lastLapTimeSeconds": null
+    }
+  ]
+}

@@ -4,10 +4,9 @@ using SVappsLAB.iRacingTelemetrySDK;
 
 namespace LogiDynamicDash.Services;
 
-internal sealed class IRacingTelemetryService
+internal sealed class IRacingTelemetryService : ITelemetrySource
 {
     public async Task MonitorAsync(
-        TelemetrySnapshot snapshot,
         Action<TelemetrySnapshot> onTelemetryUpdated,
         Action<TelemetrySnapshot> onStatusChanged,
         CancellationToken cancellationToken)
@@ -16,15 +15,20 @@ internal sealed class IRacingTelemetryService
             TelemetryClient<TelemetryData>.Create(
                 NullLogger.Instance);
 
+        TelemetrySnapshot latest = new();
+        object synchronization = new();
         var handlers =
             new TelemetryHandlers<TelemetryData>
             {
                 OnConnectStateChanged = state =>
                 {
-                    snapshot.ConnectionState =
-                        state
-                            .ToString()
-                            .ToUpperInvariant();
+                    TelemetrySnapshot snapshot;
+                    lock (synchronization)
+                    {
+                        latest.ConnectionState =
+                            state.ToString().ToUpperInvariant();
+                        snapshot = latest.Copy();
+                    }
 
                     onStatusChanged(snapshot);
 
@@ -33,33 +37,46 @@ internal sealed class IRacingTelemetryService
 
                 OnTelemetryUpdate = data =>
                 {
-                    snapshot.IsOnTrack =
-                        data.IsOnTrackCar;
-
-                    snapshot.Gear =
-                        data.Gear;
-
-                    snapshot.Rpm =
-                        data.RPM;
-
-                    snapshot.SpeedMetersPerSecond =
-                        data.Speed;
-
-                    snapshot.BrakeBiasPercent =
-                        data.dcBrakeBias;
-
-                    snapshot.LastLapTimeSeconds =
-                        data.LapLastLapTime;
+                    TelemetrySnapshot snapshot;
+                    lock (synchronization)
+                    {
+                        latest.IsOnTrack = data.IsOnTrackCar;
+                        latest.Gear = data.Gear;
+                        latest.Rpm = data.RPM;
+                        latest.SpeedMetersPerSecond = data.Speed;
+                        latest.BrakeBiasPercent = data.dcBrakeBias;
+                        latest.LastLapTimeSeconds = data.LapLastLapTime;
+                        snapshot = latest.Copy();
+                    }
 
                     onTelemetryUpdated(snapshot);
 
                     return Task.CompletedTask;
                 },
 
+                OnSessionInfoUpdate = session =>
+                {
+                    TelemetrySnapshot snapshot;
+                    lock (synchronization)
+                    {
+                        latest.SessionIdentity =
+                            IRacingSessionIdentityResolver.Resolve(session);
+                        snapshot = latest.Copy();
+                    }
+
+                    onStatusChanged(snapshot);
+
+                    return Task.CompletedTask;
+                },
+
                 OnError = _ =>
                 {
-                    snapshot.ConnectionState =
-                        "ERROR";
+                    TelemetrySnapshot snapshot;
+                    lock (synchronization)
+                    {
+                        latest.ConnectionState = "ERROR";
+                        snapshot = latest.Copy();
+                    }
 
                     onStatusChanged(snapshot);
 

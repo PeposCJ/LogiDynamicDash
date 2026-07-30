@@ -4,6 +4,36 @@ This document defines the intended behavior of the Dynamic OLED display in LogiD
 
 The goal is not to show every available telemetry value. The display should present only information that can be understood with a quick glance while driving.
 
+## Confirmed hardware contract
+
+Controlled RS50 interoperability research established that Dynamic mode uses
+public HID++ feature `0x8130`, discovered through the Root feature at runtime.
+The feature is a firmware renderer with ten fixed layouts A-J, not a host
+framebuffer.
+
+The production encoder supports only the confirmed layout fields:
+
+| Layout | Host-controlled fields | Intended production use |
+|---|---|---|
+| A | None | Blank frame |
+| B | None | Firmware Test graphic |
+| C | One normalized gauge | RPM or progress |
+| D | Two normalized indicators and one 11-character text | Label/value plus indicators |
+| E | Two normalized indicators, 7-character left text, 3-character right text | Speed, gear, RPM, and secondary indicator |
+| F | 1-character left and 3-character right text | Large right-side value |
+| G | 1-character left and 3-character right text | Large left-side value |
+| H | 21-character top and 10-character bottom text | Two-row status page |
+| I | Text limits 19/10/19/10 | Four-row mixed-alignment page |
+| J | Text limits 19/10/19/10 | Four-row centered page |
+
+Layout E's visual text order is the reverse of its wire-field order. The
+production model names the fields by their visual positions and performs that
+permutation internally.
+
+The confirmed interface does not provide arbitrary pixels, custom fonts, font
+sizes, coordinates, images, Unicode, color, or partial updates. Layout
+selection determines the built-in graphics, typography, and alignment.
+
 ## Design principles
 
 - Keep the normal driving screen simple.
@@ -216,13 +246,18 @@ Different types of racing may require different normal screens.
 
 Potential profiles:
 
-- Road
+- Sports Car
+- Formula Car
 - Oval
-- Formula
+- Dirt Oval
+- Dirt Road
 - Endurance
 - Custom
 
-### Road and formula
+The first five names match current iRacing license/event categories.
+Endurance and Custom are profile variants, not inferred iRacing categories.
+
+### Sports Car and Formula Car
 
 Likely priorities:
 
@@ -242,6 +277,13 @@ Likely priorities:
 - Last lap
 
 Gear may be less important during long periods in the same gear.
+
+### Dirt Oval and Dirt Road
+
+Dirt Oval starts from the compact Oval presentation at a lower speed scale.
+Dirt Road starts from the shift-focused Sports Car presentation. Both remain
+separate categories so future slip, launch, and surface-specific information
+can be introduced without heuristic reclassification.
 
 ### Endurance
 
@@ -279,29 +321,30 @@ Values such as connection state and on-track state may remain visible in the con
 
 ## First implementation scope
 
-The first OLED implementation should aim for:
+The production formatter now implements:
 
-1. Normal gear and speed screen
-2. Temporary brake-bias screen
-3. Temporary last-lap screen
-4. ABS intervention indicator, if a reliable signal is confirmed
-5. Disconnection alert
+1. Normal gear and speed screens across layouts D-J
+2. RPM and speed gauges where the selected layout exposes them
+3. Temporary brake-bias screens
+4. Temporary last-lap screens
+5. Disconnection states
 6. Configurable km/h or mph
+7. Configurable RPM and speed gauge scales
 
-## Open technical questions
+ABS intervention remains out of scope until a reliable telemetry signal is
+confirmed. The application must not infer or label ABS activity from
+unvalidated data.
 
-The following must be verified before implementing pixel-perfect layouts:
+## Remaining technical questions
 
-- Exact OLED resolution
-- Supported image or text format
-- Display refresh rate
-- Maximum safe update frequency
-- Whether partial screen updates are supported
-- Whether G HUB must be running
-- How Dynamic mode receives display data
-- Whether Logitech provides a public or partner SDK
-- Differences between Logitech PRO and RS50
-- Behavior when another game or application controls the display
-- Whether the display supports inverted regions or only complete frames
+The following remain open for production integration:
 
-These questions should be answered through official documentation, SDK access, controlled testing, or protocol research.
+- Differences between Logitech PRO and RS50 behavior
+- Safe ownership and reconnect behavior across sleep or USB renumbering
+- User configuration for choosing layouts and telemetry mappings
+- Long-duration coexistence while driving
+- Fallback behavior when another application controls Dynamic mode
+
+The 5 Hz shared-HID++ stationary telemetry path has been independently
+validated with normal FFB and LEDs. Moving-car validation is postponed and
+must use a separately reviewed bounded stage before any full-lap claim.

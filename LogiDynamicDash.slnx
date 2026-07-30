@@ -1,3 +1,5 @@
 <Solution>
   <Project Path="LogiDynamicDash/LogiDynamicDash.csproj" />
+  <Project Path="LogiDynamicDash.Tests/LogiDynamicDash.Tests.csproj" />
+  <Project Path="LogiDynamicDash.Configurator/LogiDynamicDash.Configurator.csproj" />
 </Solution>
