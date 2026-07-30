@@ -12,7 +12,9 @@ not command steering, pedals, FFB, LEDs, torque, or vehicle controls.
 No speed or elapsed-time condition stops this route. These protections remain:
 
 - invalid or non-finite on-track speed fails closed;
-- USB, HID++, protocol, or acknowledgement failure fails closed;
+- USB, device, or protocol failure fails closed;
+- an isolated missing setter acknowledgement is recorded and skipped without
+  retrying that frame;
 - `Ctrl+C` performs normal cancellation and hardware-session disposal;
 - every OLED request is written once; there is no automatic write retry.
 
@@ -66,7 +68,8 @@ Accept only if:
 - displayed speed and gear remain coherent throughout the run;
 - RPM and speed gauges update without persistent stale frames;
 - the application log contains continuous connected telemetry;
-- OLED results are acknowledged, unchanged, or rate-limited, with no failure;
+- OLED results are acknowledged, unacknowledged, unchanged, or rate-limited,
+  with no fatal failure; any unacknowledged count is reported explicitly;
 - manual `Ctrl+C` produces a clean stopped state and close event;
 - FFB, LEDs, steering, pedals, buttons, and simulator connection remain
   normal;

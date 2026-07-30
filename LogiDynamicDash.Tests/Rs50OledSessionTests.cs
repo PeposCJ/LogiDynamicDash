@@ -1,4 +1,5 @@
 using LogiDynamicDash.Hidpp;
+using LogiDynamicDash.Hidpp.Transport;
 using LogiDynamicDash.Models;
 
 namespace LogiDynamicDash.Tests;
@@ -114,6 +115,54 @@ public sealed class Rs50OledSessionTests
 
         Assert.Throws<Rs50OledProtocolException>(
             () => session.Send(new Rs50LayoutAFrame()));
+        Assert.Throws<InvalidOperationException>(
+            () => session.Send(new Rs50LayoutAFrame()));
+        Assert.Equal(2, exchange.Transactions.Count);
+    }
+
+    [Fact]
+    public void MissingLayoutAcknowledgement_ContinuesWithoutRetryingFrame()
+    {
+        ManualTimeProvider clock = new();
+        FakeExchange exchange = new();
+        exchange.Enqueue(DiscoveryResponse());
+        using Rs50OledSession session = new(exchange, clock);
+        session.Open();
+        Rs50LayoutFFrame unacknowledged = new("1", "100");
+        exchange.Exception =
+            new Rs50OledAcknowledgementTimeoutException(5);
+
+        Assert.Equal(
+            Rs50OledSendResult.Unacknowledged,
+            session.Send(unacknowledged));
+        Assert.Equal(
+            Rs50OledSendResult.Unchanged,
+            session.Send(unacknowledged));
+        Assert.Equal(2, exchange.Transactions.Count);
+
+        clock.Advance(TimeSpan.FromMilliseconds(200));
+        exchange.Exception = null;
+        exchange.Enqueue(LayoutResponse());
+        Assert.Equal(
+            Rs50OledSendResult.Transmitted,
+            session.Send(new Rs50LayoutFFrame("2", "120")));
+        Assert.Equal(3, exchange.Transactions.Count);
+    }
+
+    [Fact]
+    public void OtherTransportFailure_PermanentlyFaultsSession()
+    {
+        FakeExchange exchange = new();
+        exchange.Enqueue(DiscoveryResponse());
+        using Rs50OledSession session = new(exchange);
+        session.Open();
+        exchange.Exception = new IOException("device unavailable");
+
+        Assert.Throws<IOException>(
+            () => session.Send(new Rs50LayoutAFrame()));
+
+        exchange.Exception = null;
+        exchange.Enqueue(LayoutResponse());
         Assert.Throws<InvalidOperationException>(
             () => session.Send(new Rs50LayoutAFrame()));
         Assert.Equal(2, exchange.Transactions.Count);

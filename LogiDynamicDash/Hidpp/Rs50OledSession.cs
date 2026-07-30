@@ -1,3 +1,4 @@
+using LogiDynamicDash.Hidpp.Transport;
 using LogiDynamicDash.Models;
 
 namespace LogiDynamicDash.Hidpp;
@@ -5,6 +6,7 @@ namespace LogiDynamicDash.Hidpp;
 internal enum Rs50OledSendResult
 {
     Transmitted,
+    Unacknowledged,
     Unchanged,
     RateLimited
 }
@@ -33,7 +35,7 @@ internal sealed class Rs50OledSession(
     private readonly object synchronization = new();
 
     private byte? runtimeIndex;
-    private Rs50OledFrame? lastAcknowledgedFrame;
+    private Rs50OledFrame? lastSubmittedFrame;
     private long lastTransmissionTimestamp;
     private bool hasTransmitted;
     private bool faulted;
@@ -80,7 +82,7 @@ internal sealed class Rs50OledSession(
                     "The RS50 OLED session is not open.");
             }
 
-            if (frame == lastAcknowledgedFrame)
+            if (frame == lastSubmittedFrame)
             {
                 return Rs50OledSendResult.Unchanged;
             }
@@ -103,10 +105,17 @@ internal sealed class Rs50OledSession(
                     transaction,
                     response);
 
-                lastAcknowledgedFrame = frame;
+                lastSubmittedFrame = frame;
                 lastTransmissionTimestamp = clock.GetTimestamp();
                 hasTransmitted = true;
                 return Rs50OledSendResult.Transmitted;
+            }
+            catch (Rs50OledAcknowledgementTimeoutException)
+            {
+                lastSubmittedFrame = frame;
+                lastTransmissionTimestamp = clock.GetTimestamp();
+                hasTransmitted = true;
+                return Rs50OledSendResult.Unacknowledged;
             }
             catch
             {
@@ -127,7 +136,7 @@ internal sealed class Rs50OledSession(
 
             disposed = true;
             runtimeIndex = null;
-            lastAcknowledgedFrame = null;
+            lastSubmittedFrame = null;
             hasTransmitted = false;
             exchange.Dispose();
         }

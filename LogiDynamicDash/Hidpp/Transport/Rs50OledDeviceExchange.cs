@@ -145,9 +145,7 @@ internal sealed class Rs50OledDeviceExchange : IRs50OledExchange
             }
         }
 
-        throw new IOException(
-            "No matching Display Game Data response was received within " +
-            $"{reportsRead} reports and the bounded response window.");
+        throw new Rs50OledAcknowledgementTimeoutException(reportsRead);
     }
 
     private static bool Matches(

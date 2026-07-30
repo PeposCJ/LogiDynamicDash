@@ -13,6 +13,7 @@ Completed offline components:
 - exact request and acknowledgement validation;
 - strict RS50 MI_01 COL01/COL03 collection selection;
 - bounded multiplexed-ACK scanning without request retries;
+- nonfatal missing layout acknowledgements with explicit diagnostics;
 - fail-closed session lifecycle;
 - identical-frame suppression, 5 Hz change limit, and latest-frame scheduler;
 - km/h and mph telemetry formatting for all layouts;
@@ -43,7 +44,7 @@ normal. The complete result is documented in
 
 The current production branch passes:
 
-- 161 unit and integration tests, including one million scheduler submissions;
+- 164 unit and integration tests, including one million scheduler submissions;
 - Release build with warnings treated as errors;
 - `dotnet format --verify-no-changes`;
 - `git diff --check`;

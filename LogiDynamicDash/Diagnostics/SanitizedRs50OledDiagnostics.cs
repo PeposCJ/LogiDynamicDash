@@ -109,6 +109,7 @@ internal sealed class SanitizedRs50OledDiagnostics(
         result switch
         {
             Rs50OledSendResult.Transmitted => "acknowledged",
+            Rs50OledSendResult.Unacknowledged => "unacknowledged",
             Rs50OledSendResult.Unchanged => "unchanged",
             Rs50OledSendResult.RateLimited => "rate_limited",
             _ => throw new ArgumentOutOfRangeException(nameof(result))

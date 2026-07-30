@@ -136,8 +136,11 @@ public sealed class Rs50OledDeviceExchangeTests
             Rs50OledDeviceExchange.Open(
                 new FakeCatalog(shortCollection, longCollection));
 
-        Assert.Throws<IOException>(
-            () => exchange.Exchange(Rs50OledProtocol.CreateDiscovery()));
+        Rs50OledAcknowledgementTimeoutException exception =
+            Assert.Throws<Rs50OledAcknowledgementTimeoutException>(
+                () => exchange.Exchange(
+                    Rs50OledProtocol.CreateDiscovery()));
+        Assert.Equal(256, exception.ReportsRead);
         Assert.Single(shortCollection.Stream.Writes);
         Assert.Equal(256, longCollection.Stream.ReadCount);
     }

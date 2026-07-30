@@ -86,6 +86,30 @@ public sealed class SanitizedRs50OledDiagnosticsTests
     }
 
     [Fact]
+    public void UnacknowledgedFrame_IsRecordedAsTypedNonFailure()
+    {
+        ManualTimeProvider clock = new();
+        FakeSession inner = new(clock)
+        {
+            Result = Rs50OledSendResult.Unacknowledged
+        };
+        StringWriter writer = new();
+        using DiagnosticRs50OledSession session = new(
+            inner,
+            new SanitizedRs50OledDiagnostics(writer, clock),
+            clock);
+        session.Open();
+
+        Assert.Equal(
+            Rs50OledSendResult.Unacknowledged,
+            session.Send(new Rs50LayoutAFrame()));
+
+        string text = writer.ToString();
+        Assert.Contains("\"result\":\"unacknowledged\"", text);
+        Assert.DoesNotContain("\"event\":\"failure\"", text);
+    }
+
+    [Fact]
     public void DiagnosticWriteFailure_PropagatesAndOriginalFailureIsNotMasked()
     {
         ManualTimeProvider clock = new();
@@ -119,6 +143,8 @@ public sealed class SanitizedRs50OledDiagnosticsTests
         : IRs50OledSession
     {
         public Exception? SendException { get; set; }
+        public Rs50OledSendResult Result { get; set; } =
+            Rs50OledSendResult.Transmitted;
 
         public void Open() =>
             clock.Advance(TimeSpan.FromMilliseconds(2));
@@ -131,7 +157,7 @@ public sealed class SanitizedRs50OledDiagnosticsTests
                 throw SendException;
             }
 
-            return Rs50OledSendResult.Transmitted;
+            return Result;
         }
 
         public void Dispose()
